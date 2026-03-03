@@ -1,0 +1,29 @@
+{
+  "chapters": [
+    { "id": 1, "title": "Exploration des Nombres et de l'Arithmétique" },
+    { "id": 2, "title": "Techniques de Calcul : Puissances et Racines" },
+    { "id": 3, "title": "L'Art du Calcul Littéral : Développer et Factoriser" }
+  ],
+  "fiches": {
+    "1": {
+      "titre": "Exploration des Nombres et de l'Arithmétique",
+      "definitions": [
+        { "terme": "Ensembles", "def": "Classification des nombres : $\\mathbb{N}$ (entiers naturels)..." }
+      ],
+      "formules": [],
+      "points_cles": []
+    }
+  },
+  "quizzes": {
+    "1": [
+      {
+        "question": "Quel est le résultat de $3^4$ ?",
+        "options": ["12", "81", "27", "64"],
+        "correctIndex": 1
+      }
+    ]
+  },
+  "lessons": {
+    "1": "<h1>1. Exploration des Nombres...</h1> (colle ton texte HTML ici)"
+  }
+}
