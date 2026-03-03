@@ -1,3 +1,9 @@
+/* --- CONFIGURATION SUPABASE --- */
+// Remplace bien par TES vraies infos trouvées dans Supabase (Settings > API)
+const supabaseUrl = 'https://kuuxhzyfnqrdoewfoiyf.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dXhoenlmbnFyZG9ld2ZvaXlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NjA2NzQsImV4cCI6MjA4ODEzNjY3NH0.ar-162v-HZ91M80xpDfE_mavK6xyE1Ciu7bZh-PNhHM';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
 /* --- DONNÉES DE BASE --- */
 const levelsData = {
     lycee: [
@@ -15,7 +21,6 @@ const subjectsData = {
 };
 
 let state = { currentLevelGroup: '', currentClassCode: '', currentSubject: '', currentMode: 'lesson' };
-let currentCourseData = null;
 
 /* --- LES FONCTIONS QUI FONT TOUT TOURNER --- */
 
@@ -54,48 +59,79 @@ function openSubjectsPage(classCode, className) {
     navigateTo('view-subjects');
 }
 
+// --- MODIFICATION : On récupère les chapitres depuis Supabase ---
 async function checkContentAndNavigate(subject) {
     state.currentSubject = subject;
-    // On va chercher le fichier dans le dossier /data/
-    const fileName = `${subject.toLowerCase()}_${state.currentClassCode.toLowerCase()}`;
-    try {
-        const response = await fetch(`./data/${fileName}.json`);
-        currentCourseData = await response.json();
-        openChaptersPage();
-    } catch (e) {
-        alert("Contenu non disponible pour " + subject);
+    
+    // On demande à Supabase tous les chapitres pour cette matière et cette classe
+    const { data, error } = await supabase
+        .from('lessons')
+        .select('chapter_number, content') // On prend le numéro et le texte pour extraire le titre
+        .eq('class_id', state.currentClassCode)
+        .eq('subject_id', subject.toLowerCase())
+        .order('chapter_number', { ascending: true });
+
+    if (error || !data || data.length === 0) {
+        alert("Contenu non disponible pour " + subject + " en " + state.currentClassCode);
+        return;
     }
+
+    openChaptersPage(data);
 }
 
-function openChaptersPage() {
+function openChaptersPage(chaptersList) {
     const grid = document.getElementById('chapters-grid');
     grid.innerHTML = '';
-    currentCourseData.chapters.forEach(chap => {
+    
+    chaptersList.forEach(lesson => {
+        // Petite astuce pour extraire le titre du <h1> de ton HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = lesson.content;
+        const chapterTitle = tempDiv.querySelector('h1') ? tempDiv.querySelector('h1').innerText : "Chapitre " + lesson.chapter_number;
+
         const card = document.createElement('div');
         card.className = 'card';
-        card.innerHTML = `<h3>${chap.title}</h3>`;
-        card.onclick = () => displayLesson(chap.id);
+        card.innerHTML = `<h3>${chapterTitle}</h3>`;
+        // On passe le chapter_number à la fonction display
+        card.onclick = () => displayLesson(lesson.chapter_number); 
         grid.appendChild(card);
     });
     navigateTo('view-chapters');
 }
 
-function displayLesson(id) {
-    const content = currentCourseData.lessons[id];
-    document.getElementById('lesson-container').innerHTML = content;
+// --- MODIFICATION : On charge le HTML depuis la colonne 'content' ---
+async function displayLesson(chapterNum) {
+    const { data, error } = await supabase
+        .from('lessons')
+        .select('content')
+        .eq('chapter_number', chapterNum)
+        .eq('class_id', state.currentClassCode)
+        .eq('subject_id', state.currentSubject.toLowerCase())
+        .single();
+
+    if (error || !data) {
+        alert("Erreur lors du chargement de la leçon.");
+        return;
+    }
+
+    document.getElementById('lesson-container').innerHTML = data.content;
+    
+    // On remonte en haut de page
+    window.scrollTo(0,0);
+    
+    // On demande à MathJax de retraiter les formules
     if(window.MathJax) MathJax.typesetPromise();
+    
     navigateTo('view-lesson');
 }
+
 /* --- FONCTIONS DE RETOUR --- */
 
 function goBackToClasses() {
-    // Utilise le groupe enregistré (lycee ou college) pour réafficher les classes
     openLevelPage(state.currentLevelGroup);
 }
 
 function goBackToSubjects() {
-    // Utilise le code classe enregistré (seconde, premiere...) pour réafficher les matières
-    // On trouve le nom propre dans levelsData pour le titre
     const levels = levelsData[state.currentLevelGroup];
     const currentClass = levels.find(c => c.code === state.currentClassCode);
     openSubjectsPage(state.currentClassCode, currentClass ? currentClass.name : "");
