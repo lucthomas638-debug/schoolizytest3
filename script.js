@@ -1,8 +1,9 @@
 /* --- CONFIGURATION SUPABASE --- */
-// Remplace bien par TES vraies infos trouvées dans Supabase (Settings > API)
 const supabaseUrl = 'https://kuuxhzyfnqrdoewfoiyf.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dXhoenlmbnFyZG9ld2ZvaXlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NjA2NzQsImV4cCI6MjA4ODEzNjY3NH0.ar-162v-HZ91M80xpDfE_mavK6xyE1Ciu7bZh-PNhHM';
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+// On utilise 'sb' pour éviter le conflit avec la bibliothèque 'supabase'
+const sb = supabase.createClient(supabaseUrl, supabaseKey);
 
 /* --- DONNÉES DE BASE --- */
 const levelsData = {
@@ -22,7 +23,7 @@ const subjectsData = {
 
 let state = { currentLevelGroup: '', currentClassCode: '', currentSubject: '', currentMode: 'lesson' };
 
-/* --- LES FONCTIONS QUI FONT TOUT TOURNER --- */
+/* --- LES FONCTIONS DE NAVIGATION --- */
 
 function navigateTo(viewId) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
@@ -59,14 +60,15 @@ function openSubjectsPage(classCode, className) {
     navigateTo('view-subjects');
 }
 
-// --- MODIFICATION : On récupère les chapitres depuis Supabase ---
+/* --- RÉCUPÉRATION DES DONNÉES SUPABASE --- */
+
 async function checkContentAndNavigate(subject) {
     state.currentSubject = subject;
     
-    // On demande à Supabase tous les chapitres pour cette matière et cette classe
-    const { data, error } = await supabase
+    // On appelle la table 'lessons' via notre client 'sb'
+    const { data, error } = await sb
         .from('lessons')
-        .select('chapter_number, content') // On prend le numéro et le texte pour extraire le titre
+        .select('chapter_number, content')
         .eq('class_id', state.currentClassCode)
         .eq('subject_id', subject.toLowerCase())
         .order('chapter_number', { ascending: true });
@@ -84,7 +86,7 @@ function openChaptersPage(chaptersList) {
     grid.innerHTML = '';
     
     chaptersList.forEach(lesson => {
-        // Petite astuce pour extraire le titre du <h1> de ton HTML
+        // On extrait le titre du <h1> contenu dans le HTML pour l'affichage du bouton
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = lesson.content;
         const chapterTitle = tempDiv.querySelector('h1') ? tempDiv.querySelector('h1').innerText : "Chapitre " + lesson.chapter_number;
@@ -92,16 +94,14 @@ function openChaptersPage(chaptersList) {
         const card = document.createElement('div');
         card.className = 'card';
         card.innerHTML = `<h3>${chapterTitle}</h3>`;
-        // On passe le chapter_number à la fonction display
         card.onclick = () => displayLesson(lesson.chapter_number); 
         grid.appendChild(card);
     });
     navigateTo('view-chapters');
 }
 
-// --- MODIFICATION : On charge le HTML depuis la colonne 'content' ---
 async function displayLesson(chapterNum) {
-    const { data, error } = await supabase
+    const { data, error } = await sb
         .from('lessons')
         .select('content')
         .eq('chapter_number', chapterNum)
@@ -114,12 +114,12 @@ async function displayLesson(chapterNum) {
         return;
     }
 
+    // Injection du HTML de Supabase dans le container
     document.getElementById('lesson-container').innerHTML = data.content;
     
-    // On remonte en haut de page
     window.scrollTo(0,0);
     
-    // On demande à MathJax de retraiter les formules
+    // Relance le rendu des formules MathJax
     if(window.MathJax) MathJax.typesetPromise();
     
     navigateTo('view-lesson');
