@@ -86,3 +86,17 @@ function displayLesson(id) {
     if(window.MathJax) MathJax.typesetPromise();
     navigateTo('view-lesson');
 }
+/* --- FONCTIONS DE RETOUR --- */
+
+function goBackToClasses() {
+    // Utilise le groupe enregistré (lycee ou college) pour réafficher les classes
+    openLevelPage(state.currentLevelGroup);
+}
+
+function goBackToSubjects() {
+    // Utilise le code classe enregistré (seconde, premiere...) pour réafficher les matières
+    // On trouve le nom propre dans levelsData pour le titre
+    const levels = levelsData[state.currentLevelGroup];
+    const currentClass = levels.find(c => c.code === state.currentClassCode);
+    openSubjectsPage(state.currentClassCode, currentClass ? currentClass.name : "");
+}
