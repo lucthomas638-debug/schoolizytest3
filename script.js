@@ -73,6 +73,13 @@ async function checkContentAndNavigate(subject) {
         .eq('subject_id', subject.toLowerCase())
         .order('chapter_number', { ascending: true });
 
+    // --- AJOUTE LES LIGNES ICI (Ligne 75 environ) ---
+    console.log("DEBUG - Sujet cherché :", subject.toLowerCase());
+    console.log("DEBUG - Classe cherchée :", state.currentClassCode);
+    console.log("DEBUG - Réponse Supabase :", data);
+    console.log("DEBUG - Erreur éventuelle :", error);
+    // ------------------------------------------------
+
     if (error || !data || data.length === 0) {
         alert("Contenu non disponible pour " + subject + " en " + state.currentClassCode);
         return;
