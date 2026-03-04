@@ -134,78 +134,1319 @@ async function displayLesson(num) {
     }
 }
 
-/* =============================================================================
-   4. TABLEAU PÉRIODIQUE (COMPLET)
-   ============================================================================= */
-const fullElements = [
-    {z:1, s:"H", n:"Hydrogène", a:1.008, x:1, y:1}, {z:2, s:"He", n:"Hélium", a:4.003, x:18, y:1},
-    {z:3, s:"Li", n:"Lithium", a:6.941, x:1, y:2}, {z:4, s:"Be", n:"Béryllium", a:9.012, x:2, y:2},
-    {z:5, s:"B", n:"Bore", a:10.81, x:13, y:2}, {z:6, s:"C", n:"Carbone", a:12.01, x:14, y:2},
-    {z:7, s:"N", n:"Azote", a:14.01, x:15, y:2}, {z:8, s:"O", n:"Oxygène", a:16.00, x:16, y:2},
-    {z:9, s:"F", n:"Fluor", a:19.00, x:17, y:2}, {z:10, s:"Ne", n:"Néon", a:20.18, x:18, y:2},
-    {z:11, s:"Na", n:"Sodium", a:22.99, x:1, y:3}, {z:12, s:"Mg", n:"Magnésium", a:24.31, x:2, y:3},
-    {z:13, s:"Al", n:"Aluminium", a:26.98, x:13, y:3}, {z:14, s:"Si", n:"Silicium", a:28.09, x:14, y:3},
-    {z:15, s:"P", n:"Phosphore", a:30.97, x:15, y:3}, {z:16, s:"S", n:"Soufre", a:32.06, x:16, y:3},
-    {z:17, s:"Cl", n:"Chlore", a:35.45, x:17, y:3}, {z:18, s:"Ar", n:"Argon", a:39.95, x:18, y:3}
-    // Note: Pour limiter la taille du message, j'ai mis les 3 premières périodes. 
-    // Tu peux copier les autres de ton ancien fichier ou me demander la suite si besoin.
-];
+/* --- LOGIQUE DES OUTILS (À coller dans le SCRIPT) --- */
 
-function initTableau() {
-    const grid = document.getElementById('periodic-grid');
-    if(!grid) return;
-    grid.innerHTML = '';
-    for (let y = 1; y <= 7; y++) {
-        for (let x = 1; x <= 18; x++) {
-            const el = fullElements.find(e => e.x === x && e.y === y);
-            if (el) {
-                const d = document.createElement('div');
-                d.className = 'element-card';
-                d.innerHTML = `<small>${el.z}</small><br><strong>${el.s}</strong>`;
-                d.onmouseover = () => document.getElementById('periodic-details').innerHTML = `<strong>${el.n}</strong>: ${el.a} g/mol`;
-                grid.appendChild(d);
-            } else {
-                const empty = document.createElement('div'); empty.className = 'empty-cell'; grid.appendChild(empty);
+        /* 1. CERCLE TRIGONOMÉTRIQUE (Version Valeurs Remarquables) */
+        let trigoCanvas = document.getElementById('trigoCanvas');
+        let tCtx = trigoCanvas ? trigoCanvas.getContext('2d') : null;
+        let isDraggingTrigo = false;
+        let lastRenderedIndex = -1; // Pour éviter de rafraichir MathJax inutilement
+
+        // Base de données des valeurs remarquables
+        /* --- DONNÉES CERCLE TRIGO (Format : "Positif ; Négatif") --- */
+        const remarkableValues = [
+            // 0 et 2pi
+            { val: 0, label: "0 \\text{ ; } 2\\pi", cos: "1", sin: "0", tan: "0" },
+            
+            // --- CADRAN 1 (Haut Droite) ---
+            { val: Math.PI/6, label: "\\frac{\\pi}{6}", cos: "\\frac{\\sqrt{3}}{2}", sin: "\\frac{1}{2}", tan: "\\frac{\\sqrt{3}}{3}" },
+            { val: Math.PI/4, label: "\\frac{\\pi}{4}", cos: "\\frac{\\sqrt{2}}{2}", sin: "\\frac{\\sqrt{2}}{2}", tan: "1" },
+            { val: Math.PI/3, label: "\\frac{\\pi}{3}", cos: "\\frac{1}{2}", sin: "\\frac{\\sqrt{3}}{2}", tan: "\\sqrt{3}" },
+            
+            // PI/2 (Haut)
+            { val: Math.PI/2, label: "\\frac{\\pi}{2}", cos: "0", sin: "1", tan: "\\infty" },
+            
+            // --- CADRAN 2 (Haut Gauche) ---
+            { val: 2*Math.PI/3, label: "\\frac{2\\pi}{3}", cos: "-\\frac{1}{2}", sin: "\\frac{\\sqrt{3}}{2}", tan: "-\\sqrt{3}" },
+            { val: 3*Math.PI/4, label: "\\frac{3\\pi}{4}", cos: "-\\frac{\\sqrt{2}}{2}", sin: "\\frac{\\sqrt{2}}{2}", tan: "-1" },
+            { val: 5*Math.PI/6, label: "\\frac{5\\pi}{6}", cos: "-\\frac{\\sqrt{3}}{2}", sin: "\\frac{1}{2}", tan: "-\\frac{\\sqrt{3}}{3}" },
+            
+            // PI (Gauche)
+            { val: Math.PI, label: "\\pi \\text{ ; } -\\pi", cos: "-1", sin: "0", tan: "0" },
+            
+            // --- CADRAN 3 (Bas Gauche) -> Double affichage ---
+            { val: 7*Math.PI/6, label: "\\frac{7\\pi}{6} \\text{ ; } -\\frac{5\\pi}{6}", cos: "-\\frac{\\sqrt{3}}{2}", sin: "-\\frac{1}{2}", tan: "\\frac{\\sqrt{3}}{3}" },
+            { val: 5*Math.PI/4, label: "\\frac{5\\pi}{4} \\text{ ; } -\\frac{3\\pi}{4}", cos: "-\\frac{\\sqrt{2}}{2}", sin: "-\\frac{\\sqrt{2}}{2}", tan: "1" },
+            { val: 4*Math.PI/3, label: "\\frac{4\\pi}{3} \\text{ ; } -\\frac{2\\pi}{3}", cos: "-\\frac{1}{2}", sin: "-\\frac{\\sqrt{3}}{2}", tan: "\\sqrt{3}" },
+            
+            // 3PI/2 (Bas)
+            { val: 3*Math.PI/2, label: "\\frac{3\\pi}{2} \\text{ ; } -\\frac{\\pi}{2}", cos: "0", sin: "-1", tan: "\\infty" },
+
+            // --- CADRAN 4 (Bas Droite) -> Double affichage ---
+            { val: 5*Math.PI/3, label: "\\frac{5\\pi}{3} \\text{ ; } -\\frac{\\pi}{3}", cos: "\\frac{1}{2}", sin: "-\\frac{\\sqrt{3}}{2}", tan: "-\\sqrt{3}" },
+            { val: 7*Math.PI/4, label: "\\frac{7\\pi}{4} \\text{ ; } -\\frac{\\pi}{4}", cos: "\\frac{\\sqrt{2}}{2}", sin: "-\\frac{\\sqrt{2}}{2}", tan: "-1" },
+            { val: 11*Math.PI/6, label: "\\frac{11\\pi}{6} \\text{ ; } -\\frac{\\pi}{6}", cos: "\\frac{\\sqrt{3}}{2}", sin: "-\\frac{1}{2}", tan: "-\\frac{\\sqrt{3}}{3}" },
+            
+            // Bouclage (360°)
+            { val: 2*Math.PI, label: "0 \\text{ ; } 2\\pi", cos: "1", sin: "0", tan: "0" }
+        ];
+
+        function initTrigo() { if(tCtx) drawTrigo(0); }
+
+        function drawTrigo(rawAngle) {
+            if(!tCtx) return;
+
+            // 1. Normaliser l'angle (de -PI/PI à 0/2PI)
+            let normalizedAngle = rawAngle;
+            if (normalizedAngle < 0) normalizedAngle += 2 * Math.PI;
+
+            // 2. Trouver la valeur remarquable la plus proche
+            let closest = remarkableValues.reduce((prev, curr) => {
+                return (Math.abs(curr.val - normalizedAngle) < Math.abs(prev.val - normalizedAngle) ? curr : prev);
+            });
+
+            // Gérer le cas cyclique (proche de 0 ou 2PI)
+            if (Math.abs(normalizedAngle - 0) < 0.2) closest = remarkableValues[0];
+            if (Math.abs(normalizedAngle - 2*Math.PI) < 0.2) closest = remarkableValues[0]; // Retour à 0 visuellement
+
+            // 3. Dessiner le Canvas
+            const w = trigoCanvas.width; const h = trigoCanvas.height;
+            const cx = w / 2; const cy = h / 2; const r = 150;
+            const angle = closest.val; // On utilise l'angle "aimanté"
+
+            tCtx.clearRect(0, 0, w, h);
+
+            // Axes
+            tCtx.beginPath(); tCtx.strokeStyle = '#ddd';
+            tCtx.moveTo(0, cy); tCtx.lineTo(w, cy); tCtx.moveTo(cx, 0); tCtx.lineTo(cx, h); tCtx.stroke();
+            // Cercle
+            tCtx.beginPath(); tCtx.strokeStyle = '#333'; tCtx.lineWidth = 2;
+            tCtx.arc(cx, cy, r, 0, Math.PI * 2); tCtx.stroke();
+            
+            // Calculs coords
+            let px = cx + r * Math.cos(angle); 
+            let py = cy - r * Math.sin(angle); // Y inversé en canvas
+
+            // Lignes projection
+            tCtx.setLineDash([5, 3]);
+            // Cos (rouge)
+            tCtx.beginPath(); tCtx.strokeStyle = 'red'; tCtx.lineWidth = 2;
+            tCtx.moveTo(px, py); tCtx.lineTo(px, cy); tCtx.moveTo(cx, cy); tCtx.lineTo(px, cy); tCtx.stroke();
+            // Sin (bleu)
+            tCtx.beginPath(); tCtx.strokeStyle = 'blue';
+            tCtx.moveTo(px, py); tCtx.lineTo(cx, py); tCtx.moveTo(cx, cy); tCtx.lineTo(cx, py); tCtx.stroke();
+            tCtx.setLineDash([]);
+
+            // Rayon et Point
+            tCtx.beginPath(); tCtx.strokeStyle = '#666'; tCtx.lineWidth = 1; 
+            tCtx.moveTo(cx, cy); tCtx.lineTo(px, py); tCtx.stroke();
+            
+            tCtx.beginPath(); tCtx.fillStyle = '#8459cf'; 
+            tCtx.arc(px, py, 6, 0, Math.PI * 2); tCtx.fill();
+
+            // Tangente (Vert) - Sauf si pi/2 ou 3pi/2
+            if(closest.label !== "\\frac{\\pi}{2}" && closest.label !== "\\frac{3\\pi}{2}") {
+                let tanVal = Math.tan(angle);
+                let tanLen = tanVal * r;
+                // Dessin simple de la tangente à droite (x = r)
+                tCtx.beginPath(); tCtx.strokeStyle = 'green';
+                tCtx.moveTo(cx + r, cy); 
+                tCtx.lineTo(cx + r, cy - tanLen); 
+                tCtx.stroke();
+            }
+
+            // 4. Mettre à jour le texte (Seulement si l'angle a changé)
+            // On utilise l'index dans le tableau comme identifiant unique
+            let currentIndex = remarkableValues.indexOf(closest);
+            if(currentIndex !== lastRenderedIndex) {
+                lastRenderedIndex = currentIndex;
+                
+                document.getElementById('val-angle-deg').innerText = (angle * 180 / Math.PI).toFixed(0);
+                
+                // Injection MathJax
+                document.getElementById('val-angle-rad').innerHTML = `$${closest.label}$`;
+                document.getElementById('val-cos').innerHTML = `$${closest.cos}$`;
+                document.getElementById('val-sin').innerHTML = `$${closest.sin}$`;
+                document.getElementById('val-tan').innerHTML = `$${closest.tan}$`;
+
+                if(window.MathJax) {
+                    MathJax.typesetPromise([
+                        document.getElementById('val-angle-rad'),
+                        document.getElementById('val-cos'),
+                        document.getElementById('val-sin'),
+                        document.getElementById('val-tan')
+                    ]).catch(err => console.log(err));
+                }
             }
         }
+
+        function getTrigoAngle(evt) {
+            const rect = trigoCanvas.getBoundingClientRect();
+            const scaleX = trigoCanvas.width / rect.width;
+            const scaleY = trigoCanvas.height / rect.height;
+            const x = (evt.clientX - rect.left) * scaleX;
+            const y = (evt.clientY - rect.top) * scaleY;
+            return Math.atan2(-(y - trigoCanvas.height/2), x - trigoCanvas.width/2);
+        }
+
+        if(trigoCanvas) {
+            trigoCanvas.addEventListener('mousedown', (e) => { isDraggingTrigo = true; drawTrigo(getTrigoAngle(e)); });
+            trigoCanvas.addEventListener('mousemove', (e) => { if(isDraggingTrigo) drawTrigo(getTrigoAngle(e)); });
+            window.addEventListener('mouseup', () => isDraggingTrigo = false);
+            // Support tactile basique
+            trigoCanvas.addEventListener('touchstart', (e) => { isDraggingTrigo = true; e.preventDefault(); }, {passive: false});
+            trigoCanvas.addEventListener('touchmove', (e) => { 
+                if(isDraggingTrigo) {
+                    let touch = e.touches[0];
+                    let mouseEvent = new MouseEvent("mousemove", { clientX: touch.clientX, clientY: touch.clientY });
+                    drawTrigo(getTrigoAngle(mouseEvent));
+                    e.preventDefault();
+                }
+            }, {passive: false});
+        }
+
+/* =========================================
+       2. REPÈRE INTERACTIF (Version Clic par Clic - CORRIGÉE)
+       ========================================= */
+    let repCanvas = document.getElementById('repereCanvas');
+    let rCtx = repCanvas ? repCanvas.getContext('2d') : null;
+    
+    let rObjects = { points: [], vectors: [] };
+    let rConfig = { pixelsPerUnit: 20, step: 1, cx: 200, cy: 200, mode: 'point' };
+    let rState = { dragging: null, vectorStart: null, currentMouse: {x:0, y:0}, hover: null };
+
+    function initRepere() {
+        rObjects = { points: [], vectors: [] };
+        if(repCanvas) {
+            rConfig.cx = repCanvas.width / 2;
+            rConfig.cy = repCanvas.height / 2;
+            setRepereMode('point'); 
+            drawRepere();
+        }
     }
-}
 
-/* =============================================================================
-   5. AUTRES OUTILS (CONVERTISSEUR, GRAPHIQUE, POMODORO)
-   ============================================================================= */
+    function setRepereMode(mode) {
+        rConfig.mode = mode;
+        rState.vectorStart = null; 
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        const btn = document.getElementById('btn-mode-' + mode);
+        if(btn) btn.classList.add('active');
+        updateInstructions(); 
+        drawRepere();
+    }
 
-// CONVERTISSEUR (Exemple simple)
-function calculateConv(source) {
-    const i1 = document.getElementById('conv-input-1'), i2 = document.getElementById('conv-input-2');
-    const u1 = parseFloat(document.getElementById('conv-unit-1').value), u2 = parseFloat(document.getElementById('conv-unit-2').value);
-    if(source === 1) i2.value = (i1.value * u1 / u2).toFixed(4);
-    else i1.value = (i2.value * u2 / u1).toFixed(4);
-}
+    function updateInstructions() {
+        const txt = document.getElementById('repere-instruction');
+        if(!txt) return;
+        if(rConfig.mode === 'point') txt.innerHTML = "<strong>Mode Point :</strong> Cliquez sur la grille pour placer un point (aimanté à 0,25).";
+        if(rConfig.mode === 'vector') {
+            if(rState.vectorStart) txt.innerHTML = "<strong style='color:var(--brand-school)'>Mode Vecteur :</strong> Cliquez sur le <strong>point d'arrivée</strong>.";
+            else txt.innerHTML = "<strong>Mode Vecteur :</strong> Cliquez d'abord sur le <strong>point de départ</strong>.";
+        }
+        if(rConfig.mode === 'move') txt.innerHTML = "<strong>Mode Déplacer :</strong> Maintenez le clic sur un point pour le bouger.";
+        if(rConfig.mode === 'delete') txt.innerHTML = "<strong>Mode Gomme :</strong> Cliquez sur un point ou un vecteur pour le supprimer.";
+    }
 
-// POMODORO
-let pTime = 25*60, pInt = null;
+    function drawRepere() {
+        if(!rCtx) return;
+        const w = repCanvas.width; const h = repCanvas.height;
+        rCtx.clearRect(0, 0, w, h);
+
+        const stepPx = rConfig.pixelsPerUnit * rConfig.step; 
+        rCtx.lineWidth = 1;
+        for(let x = rConfig.cx; x <= w; x += stepPx) drawGridLine(x, 0, x, h, x);
+        for(let x = rConfig.cx; x >= 0; x -= stepPx) drawGridLine(x, 0, x, h, x);
+        for(let y = rConfig.cy; y <= h; y += stepPx) drawGridLine(0, y, w, y, y);
+        for(let y = rConfig.cy; y >= 0; y -= stepPx) drawGridLine(0, y, w, y, y);
+
+        rCtx.strokeStyle = '#000'; rCtx.lineWidth = 2; rCtx.beginPath();
+        rCtx.moveTo(0, rConfig.cy); rCtx.lineTo(w, rConfig.cy);
+        rCtx.moveTo(rConfig.cx, 0); rCtx.lineTo(rConfig.cx, h);
+        rCtx.stroke();
+
+        rObjects.vectors.forEach(v => {
+            const p1 = rObjects.points.find(p => p.id === v.from);
+            const p2 = rObjects.points.find(p => p.id === v.to);
+            if(p1 && p2) drawArrow(rCtx, p1.x, p1.y, p2.x, p2.y, 'blue');
+        });
+
+        rObjects.points.forEach(p => {
+            rCtx.beginPath(); rCtx.arc(p.x, p.y, 5, 0, Math.PI*2);
+            if(rState.vectorStart === p) rCtx.fillStyle = '#2ecc71'; 
+            else if(rState.hover === p) rCtx.fillStyle = '#FFD700'; 
+            else rCtx.fillStyle = 'red'; 
+            rCtx.fill(); rCtx.strokeStyle = 'black'; rCtx.lineWidth = 1; rCtx.stroke();
+            rCtx.fillStyle = '#333'; rCtx.font = "11px Arial"; rCtx.fillText(`${p.name}`, p.x + 8, p.y - 8);
+        });
+
+        if(rConfig.mode === 'vector' && rState.vectorStart) {
+            rCtx.beginPath(); rCtx.strokeStyle = '#2ecc71'; rCtx.lineWidth = 2; rCtx.setLineDash([5, 3]);
+            rCtx.moveTo(rState.vectorStart.x, rState.vectorStart.y);
+            rCtx.lineTo(rState.currentMouse.x, rState.currentMouse.y);
+            rCtx.stroke(); rCtx.setLineDash([]);
+        }
+    }
+
+    function drawGridLine(x1, y1, x2, y2, val) {
+        rCtx.beginPath();
+        let dist = Math.abs(val - (x1 === x2 ? rConfig.cx : rConfig.cy));
+        let isUnit = Math.abs(dist % rConfig.pixelsPerUnit) < 1;
+        rCtx.strokeStyle = isUnit ? '#ccc' : '#f4f4f4';
+        rCtx.moveTo(x1, y1); rCtx.lineTo(x2, y2); rCtx.stroke();
+    }
+
+    function getSnappedPos(evt) {
+        const rect = repCanvas.getBoundingClientRect();
+        const scaleX = repCanvas.width / rect.width;
+        const scaleY = repCanvas.height / rect.height;
+        const mx = (evt.clientX - rect.left) * scaleX;
+        const my = (evt.clientY - rect.top) * scaleY;
+        let mathX = (mx - rConfig.cx) / rConfig.pixelsPerUnit;
+        let mathY = -(my - rConfig.cy) / rConfig.pixelsPerUnit;
+        mathX = Math.round(mathX / rConfig.step) * rConfig.step;
+        mathY = Math.round(mathY / rConfig.step) * rConfig.step;
+        return { 
+            pixelX: rConfig.cx + mathX * rConfig.pixelsPerUnit, 
+            pixelY: rConfig.cy - mathY * rConfig.pixelsPerUnit, 
+            mathX: mathX, 
+            mathY: mathY, 
+            rawX: mx, 
+            rawY: my 
+        };
+    }
+
+    function drawArrow(ctx, fromx, fromy, tox, toy, color) {
+        const headlen = 10; const dx = tox - fromx; const dy = toy - fromy; const angle = Math.atan2(dy, dx);
+        ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 2;
+        ctx.moveTo(fromx, fromy); ctx.lineTo(tox, toy);
+        ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
+        ctx.moveTo(tox, toy); ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
+        ctx.stroke();
+    }
+
+    function getHoverPoint(mx, my) { return rObjects.points.find(p => Math.hypot(p.x - mx, p.y - my) < 15); }
+    function getHoverVector(mx, my) {
+        return rObjects.vectors.find(v => {
+            const p1 = rObjects.points.find(p => p.id === v.from);
+            const p2 = rObjects.points.find(p => p.id === v.to);
+            if(!p1 || !p2) return false;
+            return Math.hypot((p1.x+p2.x)/2 - mx, (p1.y+p2.y)/2 - my) < 10;
+        });
+    }
+
+    if(repCanvas) {
+        repCanvas.addEventListener('mousedown', (e) => {
+            const pos = getSnappedPos(e);
+            const targetPoint = getHoverPoint(pos.rawX, pos.rawY);
+            const targetVector = getHoverVector(pos.rawX, pos.rawY);
+
+            if(rConfig.mode === 'delete') {
+                if(targetPoint) {
+                    rObjects.points = rObjects.points.filter(p => p !== targetPoint);
+                    rObjects.vectors = rObjects.vectors.filter(v => v.from !== targetPoint.id && v.to !== targetPoint.id);
+                    if(rState.vectorStart === targetPoint) rState.vectorStart = null;
+                } else if(targetVector) {
+                    rObjects.vectors = rObjects.vectors.filter(v => v !== targetVector);
+                }
+                drawRepere(); return;
+            }
+            if(rConfig.mode === 'point') {
+                if(!targetPoint) {
+                    let name = String.fromCharCode(65 + rObjects.points.length);
+                    rObjects.points.push({ id: Date.now(), x: pos.pixelX, y: pos.pixelY, name: name });
+                    drawRepere();
+                }
+                return;
+            }
+            if(rConfig.mode === 'vector') {
+                if(targetPoint) {
+                    if(!rState.vectorStart) { rState.vectorStart = targetPoint; } 
+                    else if(targetPoint !== rState.vectorStart) {
+                        const exists = rObjects.vectors.find(v => v.from === rState.vectorStart.id && v.to === targetPoint.id);
+                        if(!exists) rObjects.vectors.push({ from: rState.vectorStart.id, to: targetPoint.id });
+                        rState.vectorStart = null;
+                    }
+                    updateInstructions(); drawRepere();
+                } else if(rState.vectorStart) { rState.vectorStart = null; updateInstructions(); drawRepere(); }
+                return;
+            }
+            if(rConfig.mode === 'move' && targetPoint) { rState.dragging = targetPoint; }
+        });
+
+        repCanvas.addEventListener('mousemove', (e) => {
+            const pos = getSnappedPos(e);
+            rState.currentMouse = {x: pos.rawX, y: pos.rawY};
+            
+            // --- MODIFICATION ICI : Mise à jour sécurisée des deux affichages ---
+            const coordsText = `x: ${pos.mathX.toFixed(2)}, y: ${pos.mathY.toFixed(2)}`;
+            
+            // 1. Mise à jour dans le panneau de contrôle
+            const panelCoords = document.getElementById('mouse-coords');
+            if(panelCoords) panelCoords.innerText = coordsText;
+
+            // 2. Mise à jour de la bulle flottante (si le HTML a été corrigé)
+            const tooltip = document.getElementById('mouse-tooltip');
+            if(tooltip) tooltip.innerText = coordsText;
+            // ------------------------------------------------------------------
+
+            rState.hover = getHoverPoint(pos.rawX, pos.rawY);
+            repCanvas.style.cursor = rState.hover ? 'pointer' : 'default';
+            if(rState.dragging && rConfig.mode === 'move') { rState.dragging.x = pos.pixelX; rState.dragging.y = pos.pixelY; }
+            drawRepere();
+        });
+
+        repCanvas.addEventListener('mouseup', () => { if(rConfig.mode === 'move') rState.dragging = null; });
+        repCanvas.addEventListener('mouseleave', () => { if(rConfig.mode === 'move') rState.dragging = null; });
+    }
+
+    function clearRepere() {
+        rObjects = { points: [], vectors: [] }; rState.vectorStart = null; updateInstructions(); drawRepere();
+    }
+
+        /* 3. TABLEAU PÉRIODIQUE */
+        const fullElements = [
+        // --- Période 1 ---
+        {z:1, s:"H", n:"Hydrogène", a:1.008, x:1, y:1},
+        {z:2, s:"He", n:"Hélium", a:4.003, x:18, y:1},
+
+        // --- Période 2 ---
+        {z:3, s:"Li", n:"Lithium", a:6.941, x:1, y:2},
+        {z:4, s:"Be", n:"Béryllium", a:9.012, x:2, y:2},
+        {z:5, s:"B", n:"Bore", a:10.81, x:13, y:2},
+        {z:6, s:"C", n:"Carbone", a:12.01, x:14, y:2},
+        {z:7, s:"N", n:"Azote", a:14.01, x:15, y:2},
+        {z:8, s:"O", n:"Oxygène", a:16.00, x:16, y:2},
+        {z:9, s:"F", n:"Fluor", a:19.00, x:17, y:2},
+        {z:10, s:"Ne", n:"Néon", a:20.18, x:18, y:2},
+
+        // --- Période 3 ---
+        {z:11, s:"Na", n:"Sodium", a:22.99, x:1, y:3},
+        {z:12, s:"Mg", n:"Magnésium", a:24.31, x:2, y:3},
+        {z:13, s:"Al", n:"Aluminium", a:26.98, x:13, y:3},
+        {z:14, s:"Si", n:"Silicium", a:28.09, x:14, y:3},
+        {z:15, s:"P", n:"Phosphore", a:30.97, x:15, y:3},
+        {z:16, s:"S", n:"Soufre", a:32.06, x:16, y:3},
+        {z:17, s:"Cl", n:"Chlore", a:35.45, x:17, y:3},
+        {z:18, s:"Ar", n:"Argon", a:39.95, x:18, y:3},
+
+        // --- Période 4 ---
+        {z:19, s:"K", n:"Potassium", a:39.10, x:1, y:4},
+        {z:20, s:"Ca", n:"Calcium", a:40.08, x:2, y:4},
+        {z:21, s:"Sc", n:"Scandium", a:44.96, x:3, y:4},
+        {z:22, s:"Ti", n:"Titane", a:47.87, x:4, y:4},
+        {z:23, s:"V", n:"Vanadium", a:50.94, x:5, y:4},
+        {z:24, s:"Cr", n:"Chrome", a:52.00, x:6, y:4},
+        {z:25, s:"Mn", n:"Manganèse", a:54.94, x:7, y:4},
+        {z:26, s:"Fe", n:"Fer", a:55.85, x:8, y:4},
+        {z:27, s:"Co", n:"Cobalt", a:58.93, x:9, y:4},
+        {z:28, s:"Ni", n:"Nickel", a:58.69, x:10, y:4},
+        {z:29, s:"Cu", n:"Cuivre", a:63.55, x:11, y:4},
+        {z:30, s:"Zn", n:"Zinc", a:65.38, x:12, y:4},
+        {z:31, s:"Ga", n:"Gallium", a:69.72, x:13, y:4},
+        {z:32, s:"Ge", n:"Germanium", a:72.63, x:14, y:4},
+        {z:33, s:"As", n:"Arsenic", a:74.92, x:15, y:4},
+        {z:34, s:"Se", n:"Sélénium", a:78.96, x:16, y:4},
+        {z:35, s:"Br", n:"Brome", a:79.90, x:17, y:4},
+        {z:36, s:"Kr", n:"Krypton", a:83.80, x:18, y:4},
+
+        // --- Période 5 ---
+        {z:37, s:"Rb", n:"Rubidium", a:85.47, x:1, y:5},
+        {z:38, s:"Sr", n:"Strontium", a:87.62, x:2, y:5},
+        {z:39, s:"Y", n:"Yttrium", a:88.91, x:3, y:5},
+        {z:40, s:"Zr", n:"Zirconium", a:91.22, x:4, y:5},
+        {z:41, s:"Nb", n:"Niobium", a:92.91, x:5, y:5},
+        {z:42, s:"Mo", n:"Molybdène", a:95.94, x:6, y:5},
+        {z:43, s:"Tc", n:"Technétium", a:98, x:7, y:5},
+        {z:44, s:"Ru", n:"Ruthénium", a:101.07, x:8, y:5},
+        {z:45, s:"Rh", n:"Rhodium", a:102.91, x:9, y:5},
+        {z:46, s:"Pd", n:"Palladium", a:106.42, x:10, y:5},
+        {z:47, s:"Ag", n:"Argent", a:107.87, x:11, y:5},
+        {z:48, s:"Cd", n:"Cadmium", a:112.41, x:12, y:5},
+        {z:49, s:"In", n:"Indium", a:114.82, x:13, y:5},
+        {z:50, s:"Sn", n:"Étain", a:118.71, x:14, y:5},
+        {z:51, s:"Sb", n:"Antimoine", a:121.76, x:15, y:5},
+        {z:52, s:"Te", n:"Tellure", a:127.60, x:16, y:5},
+        {z:53, s:"I", n:"Iode", a:126.90, x:17, y:5},
+        {z:54, s:"Xe", n:"Xénon", a:131.29, x:18, y:5},
+
+        // --- Période 6 ---
+        {z:55, s:"Cs", n:"Césium", a:132.91, x:1, y:6},
+        {z:56, s:"Ba", n:"Baryum", a:137.33, x:2, y:6},
+        // Lanthanides (voir plus bas)
+        {z:72, s:"Hf", n:"Hafnium", a:178.49, x:4, y:6},
+        {z:73, s:"Ta", n:"Tantale", a:180.95, x:5, y:6},
+        {z:74, s:"W", n:"Tungstène", a:183.84, x:6, y:6},
+        {z:75, s:"Re", n:"Rhénium", a:186.21, x:7, y:6},
+        {z:76, s:"Os", n:"Osmium", a:190.23, x:8, y:6},
+        {z:77, s:"Ir", n:"Iridium", a:192.22, x:9, y:6},
+        {z:78, s:"Pt", n:"Platine", a:195.08, x:10, y:6},
+        {z:79, s:"Au", n:"Or", a:196.97, x:11, y:6},
+        {z:80, s:"Hg", n:"Mercure", a:200.59, x:12, y:6},
+        {z:81, s:"Tl", n:"Thallium", a:204.38, x:13, y:6},
+        {z:82, s:"Pb", n:"Plomb", a:207.20, x:14, y:6},
+        {z:83, s:"Bi", n:"Bismuth", a:208.98, x:15, y:6},
+        {z:84, s:"Po", n:"Polonium", a:209, x:16, y:6},
+        {z:85, s:"At", n:"Astate", a:210, x:17, y:6},
+        {z:86, s:"Rn", n:"Radon", a:222, x:18, y:6},
+
+        // --- Période 7 ---
+        {z:87, s:"Fr", n:"Francium", a:223, x:1, y:7},
+        {z:88, s:"Ra", n:"Radium", a:226, x:2, y:7},
+        // Actinides (voir plus bas)
+        {z:104, s:"Rf", n:"Rutherfordium", a:267, x:4, y:7},
+        {z:105, s:"Db", n:"Dubnium", a:268, x:5, y:7},
+        {z:106, s:"Sg", n:"Seaborgium", a:271, x:6, y:7},
+        {z:107, s:"Bh", n:"Bohrium", a:272, x:7, y:7},
+        {z:108, s:"Hs", n:"Hassium", a:270, x:8, y:7},
+        {z:109, s:"Mt", n:"Meitnerium", a:276, x:9, y:7},
+        {z:110, s:"Ds", n:"Darmstadtium", a:281, x:10, y:7},
+        {z:111, s:"Rg", n:"Roentgenium", a:280, x:11, y:7},
+        {z:112, s:"Cn", n:"Copernicium", a:285, x:12, y:7},
+        {z:113, s:"Nh", n:"Nihonium", a:284, x:13, y:7},
+        {z:114, s:"Fl", n:"Flérovium", a:289, x:14, y:7},
+        {z:115, s:"Mc", n:"Moscovium", a:288, x:15, y:7},
+        {z:116, s:"Lv", n:"Livermorium", a:293, x:16, y:7},
+        {z:117, s:"Ts", n:"Tennesse", a:294, x:17, y:7},
+        {z:118, s:"Og", n:"Oganesson", a:294, x:18, y:7},
+
+        // --- Lanthanides (Affichés en bas, ligne 9 fictive pour CSS) ---
+        {z:57, s:"La", n:"Lanthane", a:138.91, x:3, y:9}, // Décalage pour affichage
+        {z:58, s:"Ce", n:"Cérium", a:140.12, x:4, y:9},
+        {z:59, s:"Pr", n:"Braséodyme", a:140.91, x:5, y:9},
+        {z:60, s:"Nd", n:"Néodyme", a:144.24, x:6, y:9},
+        {z:61, s:"Pm", n:"Prométhium", a:145, x:7, y:9},
+        {z:62, s:"Sm", n:"Samarium", a:150.36, x:8, y:9},
+        {z:63, s:"Eu", n:"Europium", a:151.96, x:9, y:9},
+        {z:64, s:"Gd", n:"Gadolinium", a:157.25, x:10, y:9},
+        {z:65, s:"Tb", n:"Terbium", a:158.93, x:11, y:9},
+        {z:66, s:"Dy", n:"Dysprosium", a:162.50, x:12, y:9},
+        {z:67, s:"Ho", n:"Holmium", a:164.93, x:13, y:9},
+        {z:68, s:"Er", n:"Erbium", a:167.26, x:14, y:9},
+        {z:69, s:"Tm", n:"Thulium", a:168.93, x:15, y:9},
+        {z:70, s:"Yb", n:"Ytterbium", a:173.04, x:16, y:9},
+        {z:71, s:"Lu", n:"Lutécium", a:174.97, x:17, y:9},
+
+        // --- Actinides (Affichés en bas, ligne 10 fictive pour CSS) ---
+        {z:89, s:"Ac", n:"Actinium", a:227, x:3, y:10},
+        {z:90, s:"Th", n:"Thorium", a:232.04, x:4, y:10},
+        {z:91, s:"Pa", n:"Protactinium", a:231.04, x:5, y:10},
+        {z:92, s:"U", n:"Uranium", a:238.03, x:6, y:10},
+        {z:93, s:"Np", n:"Neptunium", a:237, x:7, y:10},
+        {z:94, s:"Pu", n:"Plutonium", a:244, x:8, y:10},
+        {z:95, s:"Am", n:"Américium", a:243, x:9, y:10},
+        {z:96, s:"Cm", n:"Curium", a:247, x:10, y:10},
+        {z:97, s:"Bk", n:"Berkélium", a:247, x:11, y:10},
+        {z:98, s:"Cf", n:"Californium", a:251, x:12, y:10},
+        {z:99, s:"Es", n:"Einsteinium", a:252, x:13, y:10},
+        {z:100, s:"Fm", n:"Fermium", a:257, x:14, y:10},
+        {z:101, s:"Md", n:"Mendélévium", a:258, x:15, y:10},
+        {z:102, s:"No", n:"Nobélium", a:259, x:16, y:10},
+        {z:103, s:"Lr", n:"Lawrencium", a:262, x:17, y:10}
+        ];
+        
+function initTableau() {
+            const grid = document.getElementById('periodic-grid');
+            if(!grid) return; // Sécurité si l'élément n'est pas trouvé
+            
+            grid.innerHTML = '';
+            // On s'assure que la grille est bien configurée
+            grid.style.display = 'grid';
+            grid.style.gridTemplateColumns = 'repeat(18, 1fr)';
+            grid.style.gap = '2px';
+
+            // Création de la map pour positionner les éléments
+            const tableMap = {};
+            fullElements.forEach(el => {
+                tableMap[`${el.x}-${el.y}`] = el;
+            });
+
+            // Boucle sur les 10 lignes (7 périodes + vide + 2 familles rares)
+            for (let y = 1; y <= 10; y++) {
+                
+                // Ligne 8 sert d'espace vide
+                if(y === 8) {
+                    for(let k=0; k<18; k++) createEmpty(grid);
+                    continue;
+                }
+            
+                for (let x = 1; x <= 18; x++) {
+                    const data = tableMap[`${x}-${y}`];
+                    if (data) {
+                        createCell(grid, data);
+                    } else {
+                        createEmpty(grid);
+                    }
+                }
+            }
+        }
+
+// Fonction pour déterminer la famille (couleur)
+        function getFamilyClass(data) {
+            const { x, y, z } = data;
+
+            // Cas spéciaux (Lignes du bas)
+            if (y === 9) return 'fam-lanthanide';
+            if (y === 10) return 'fam-actinide';
+            
+            // Hydrogène (Non-métal mais colonne 1)
+            if (z === 1) return 'fam-nonmetal';
+
+            // Par Colonne
+            if (x === 1) return 'fam-alkali';
+            if (x === 2) return 'fam-alkaline';
+            if (x >= 3 && x <= 12) return 'fam-transition';
+            if (x === 17) return 'fam-halogen';
+            if (x === 18) return 'fam-noble';
+
+            // Zone complexe à droite (Escalier Métalloïdes / Métaux pauvres / Non métaux)
+            // Simplification pour l'affichage :
+            if (x >= 13 && x <= 16) {
+                // Al, Ga, In, Sn, Tl, Pb, Bi, Po (Métaux pauvres - approximation visuelle)
+                const isPostTransition = [13, 31, 49, 50, 81, 82, 83, 84, 113, 114, 115, 116].includes(z);
+                // B, Si, Ge, As, Sb, Te, At (Métalloïdes)
+                const isMetalloid = [5, 14, 32, 33, 51, 52, 85].includes(z);
+                
+                if (isMetalloid) return 'fam-metalloid';
+                if (isPostTransition) return 'fam-post-trans';
+                return 'fam-nonmetal'; // C, N, O, P, S, Se
+            }
+
+            return ''; // Défaut
+        }
+
+        function createCell(container, data) {
+            const div = document.createElement('div');
+            // On récupère la classe de couleur
+            const colorClass = getFamilyClass(data);
+            
+            div.className = `element-card ${colorClass}`;
+            
+            // Nouvelle structure HTML pour éviter le chevauchement
+            div.innerHTML = `
+                <div class="elem-header">
+                    <span class="element-number">${data.z}</span>
+                </div>
+                <div class="elem-body">
+                    <span class="element-symbol">${data.s}</span>
+                </div>
+                <div class="elem-footer">
+                    <span class="element-molar">${data.a}</span>
+                </div>
+            `;
+            
+            div.onmouseover = () => {
+                const details = document.getElementById('periodic-details');
+                if(details) {
+                    // On détermine le nom de la famille pour l'affichage
+                    let familyName = "Élément";
+                    if(colorClass === 'fam-alkali') familyName = "Métal Alcalin";
+                    if(colorClass === 'fam-alkaline') familyName = "Métal Alcalino-terreux";
+                    if(colorClass === 'fam-transition') familyName = "Métal de Transition";
+                    if(colorClass === 'fam-halogen') familyName = "Halogène";
+                    if(colorClass === 'fam-noble') familyName = "Gaz Noble";
+                    if(colorClass === 'fam-lanthanide') familyName = "Lanthanide";
+                    if(colorClass === 'fam-actinide') familyName = "Actinide";
+                    if(colorClass === 'fam-nonmetal') familyName = "Non-métaux";
+                    if(colorClass === 'fam-metalloid') familyName = "Métalloïde";
+                    if(colorClass === 'fam-post-trans') familyName = "Métaux pauvres";
+                    
+                    details.innerHTML = `
+                        <div style="font-size:1.4rem; color:var(--brand-school)"><strong>${data.n} (${data.s})</strong></div>
+                        <div style="margin-top:5px;">${familyName}</div>
+                        <div style="font-size:0.9rem; color:#666; margin-top:5px;">
+                            Numéro atomique (Z) : <strong>${data.z}</strong> &nbsp;|&nbsp; 
+                            Masse molaire : <strong>${data.a}</strong> g/mol
+                        </div>
+                    `;
+                }
+            };
+            container.appendChild(div);
+        }
+
+        function createEmpty(container) {
+            const div = document.createElement('div'); 
+            div.className = 'empty-cell'; 
+            container.appendChild(div);
+        }
+
+/* =========================================
+           4. CONVERTISSEUR UNIVERSEL
+           ========================================= */
+        const convData = {
+            'length': {
+                name: 'Longueur',
+                units: {
+                    'km': 1000, 'hm': 100, 'dam': 10, 'm': 1, 
+                    'dm': 0.1, 'cm': 0.01, 'mm': 0.001, 
+                    'mi': 1609.34 // Mile
+                }
+            },
+            'mass': {
+                name: 'Masse',
+                units: {
+                    't': 1000000, 'kg': 1000, 'hg': 100, 'dag': 10, 'g': 1,
+                    'dg': 0.1, 'cg': 0.01, 'mg': 0.001
+                }
+            },
+            'time': {
+                name: 'Temps',
+                units: {
+                    'an': 31536000, 'j': 86400, 'h': 3600, 'min': 60, 's': 1, 'ms': 0.001
+                }
+            },
+            'speed': {
+                name: 'Vitesse',
+                units: {
+                    'km/h': 1/3.6, // Base est m/s. 1 km/h = 1/3.6 m/s
+                    'm/s': 1,
+                    'mph': 0.44704
+                }
+            },
+            'volume': {
+                name: 'Volume',
+                units: {
+                    'm³': 1000, 'dm³': 1, 'cm³': 0.001, // Base est le Litre
+                    'L': 1, 'dL': 0.1, 'cL': 0.01, 'mL': 0.001,
+                    'hL': 100
+                }
+            },
+            'data': {
+                name: 'Données',
+                units: {
+                    'To': 1000000000000, 'Go': 1000000000, 'Mo': 1000000, 'Ko': 1000, 'o': 1
+                }
+            }
+        };
+
+        let currentCategory = 'length';
+
+        function initConverter() {
+            setConvCategory('length');
+        }
+
+        function setConvCategory(cat) {
+            currentCategory = cat;
+            
+            // Mise à jour visuelle des onglets
+            document.querySelectorAll('.conv-tab').forEach(b => b.classList.remove('active'));
+            // Astuce : on trouve le bouton qui a le onclick correspondant
+            const tabs = document.querySelectorAll('.conv-tab');
+            for(let t of tabs) {
+                if(t.getAttribute('onclick').includes(cat)) t.classList.add('active');
+            }
+
+            // Remplir les Selects
+            const units = convData[cat].units;
+            const select1 = document.getElementById('conv-unit-1');
+            const select2 = document.getElementById('conv-unit-2');
+            
+            select1.innerHTML = ''; select2.innerHTML = '';
+            
+            for (let [u, val] of Object.entries(units)) {
+                let opt1 = document.createElement('option'); opt1.value = val; opt1.innerText = u;
+                let opt2 = document.createElement('option'); opt2.value = val; opt2.innerText = u;
+                select1.appendChild(opt1);
+                select2.appendChild(opt2);
+            }
+
+            // Sélection par défaut intelligente
+            if(cat === 'length') { select1.value = 1000; select2.value = 1; } // km -> m
+            if(cat === 'speed') { select1.value = 1/3.6; select2.value = 1; } // km/h -> m/s
+            if(cat === 'time') { select1.value = 3600; select2.value = 60; } // h -> min
+
+            calculateConv(1);
+        }
+
+        function calculateConv(sourceParams) {
+            const input1 = document.getElementById('conv-input-1');
+            const input2 = document.getElementById('conv-input-2');
+            const unit1 = parseFloat(document.getElementById('conv-unit-1').value);
+            const unit2 = parseFloat(document.getElementById('conv-unit-2').value);
+            
+            // sourceParams = 1 si on écrit dans input 1, 2 si on écrit dans input 2
+            let val;
+
+            if(sourceParams === 1) {
+                val = parseFloat(input1.value);
+                if(isNaN(val)) { input2.value = ''; return; }
+                
+                // Formule : Val * (Facteur Départ / Facteur Arrivée)
+                let res = val * (unit1 / unit2);
+                
+                // Arrondi propre pour éviter 0.30000000004
+                if(res < 0.000001) input2.value = res.toExponential(4);
+                else input2.value = parseFloat(res.toPrecision(10)); // Nettoie les décimales folles
+            } else {
+                val = parseFloat(input2.value);
+                if(isNaN(val)) { input1.value = ''; return; }
+                let res = val * (unit2 / unit1);
+                
+                if(res < 0.000001) input1.value = res.toExponential(4);
+                else input1.value = parseFloat(res.toPrecision(10));
+            }
+
+            // Affichage de la formule pour aider l'élève
+            const u1Name = document.getElementById('conv-unit-1').options[document.getElementById('conv-unit-1').selectedIndex].text;
+            const u2Name = document.getElementById('conv-unit-2').options[document.getElementById('conv-unit-2').selectedIndex].text;
+            
+            // Facteur explicatif
+            let factor = unit1 / unit2;
+            let operator = factor >= 1 ? '×' : '÷';
+            let displayFactor = factor >= 1 ? factor : (1/factor);
+            
+            // Affichage joli
+            displayFactor = parseFloat(displayFactor.toPrecision(6)); // Propre
+            
+            document.getElementById('conv-formula').innerText = 
+                `Pour passer de ${u1Name} à ${u2Name}, on multiplie par ${factor < 1 ? (1/factor).toFixed(4) : factor} (ou div par ${factor < 1 ? factor : (1/factor).toFixed(4)})`;
+        }
+
+/* LOGIQUE JS */
+        let pomoInterval = null;
+        let pomoTime = 25 * 60; 
+        let isPomoRunning = false;
+
+        function updatePomoDisplay() {
+            const minutes = Math.floor(pomoTime / 60);
+            const seconds = pomoTime % 60;
+            const displayMin = minutes < 10 ? '0' + minutes : minutes;
+            const displaySec = seconds < 10 ? '0' + seconds : seconds;
+            document.getElementById('pomo-timer').innerText = `${displayMin}:${displaySec}`;
+        }
+
 function togglePomodoro() {
-    if(pInt) { clearInterval(pInt); pInt = null; }
-    else { pInt = setInterval(() => { pTime--; updatePDisplay(); if(pTime<=0) clearInterval(pInt); }, 1000); }
-}
-function updatePDisplay() {
-    const m = Math.floor(pTime/60), s = pTime%60;
-    document.getElementById('pomo-timer').innerText = `${m}:${s<10?'0'+s:s}`;
+            const btn = document.getElementById('pomo-btn');
+            const container = document.getElementById('pomo-container');
+            
+            // Les dessins SVG (Codes bruts)
+            const iconPlay = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 5V19L19 12L8 5Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
+            
+            const iconPause = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 5V19" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M16 5V19" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>`;
+            
+            if (isPomoRunning) {
+                // --- PAUSE ---
+                clearInterval(pomoInterval);
+                isPomoRunning = false;
+                
+                btn.innerHTML = iconPlay; // On remet le dessin Play
+                container.classList.remove('running');
+                
+            } else {
+                // --- DÉMARRAGE ---
+                isPomoRunning = true;
+                
+                btn.innerHTML = iconPause; // On met le dessin Pause (barres arrondies)
+                container.classList.add('running');
+                
+                pomoInterval = setInterval(() => {
+                    if (pomoTime > 0) {
+                        pomoTime--;
+                        updatePomoDisplay();
+                    } else {
+                        clearInterval(pomoInterval);
+                        isPomoRunning = false;
+                        btn.innerHTML = iconPlay;
+                        container.classList.remove('running');
+                        alert("🔔 Ding Dong ! C'est la pause !");
+                    }
+                }, 1000);
+            }
+        }
+        
+        // Pensez aussi à mettre à jour le bouton Reset pour qu'il remette l'icone Play
+        function resetPomodoro() {
+            clearInterval(pomoInterval);
+            isPomoRunning = false;
+            pomoTime = 25 * 60; 
+            updatePomoDisplay();
+            
+            // On remet l'icône Play
+            const iconPlay = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 5V19L19 12L8 5Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
+            document.getElementById('pomo-btn').innerHTML = iconPlay;
+            
+            document.getElementById('pomo-container').classList.remove('running');
+        }
+
+        /* =========================================
+           5. CALCULATRICE GRAPHIQUE (TRACEUR)
+           ========================================= */
+        let graphCanvas = document.getElementById('graphCanvas');
+        let gCtx = graphCanvas ? graphCanvas.getContext('2d') : null;
+        let graphScale = 40; // Pixels par unité
+
+        function initGraph() {
+            // Initialisation au premier chargement
+            drawGraph();
+        }
+
+        function updateZoom(val) {
+            graphScale = parseInt(val);
+            document.getElementById('zoom-val').innerText = val;
+            drawGraph();
+        }
+
+        function drawGraph() {
+            if(!gCtx) return;
+            const w = graphCanvas.width;
+            const h = graphCanvas.height;
+            const cx = w / 2; // Centre X
+            const cy = h / 2; // Centre Y
+
+            // 1. Nettoyer
+            gCtx.clearRect(0, 0, w, h);
+
+            // 2. Dessiner la grille et les axes
+            gCtx.lineWidth = 1;
+            
+            // Grille légère
+            gCtx.beginPath();
+            gCtx.strokeStyle = '#eee';
+            for(let x = cx % graphScale; x < w; x += graphScale) { gCtx.moveTo(x, 0); gCtx.lineTo(x, h); }
+            for(let y = cy % graphScale; y < h; y += graphScale) { gCtx.moveTo(0, y); gCtx.lineTo(w, y); }
+            gCtx.stroke();
+
+            // Axes principaux
+            gCtx.beginPath();
+            gCtx.strokeStyle = '#333';
+            gCtx.lineWidth = 2;
+            gCtx.moveTo(0, cy); gCtx.lineTo(w, cy); // Axe X
+            gCtx.moveTo(cx, 0); gCtx.lineTo(cx, h); // Axe Y
+            gCtx.stroke();
+
+            // 3. Récupérer et préparer la fonction
+            let expr = document.getElementById('func-input').value.toLowerCase();
+            
+            // "Traduction" mathématique pour que JS comprenne (ex: x^2 -> x**2, sin -> Math.sin)
+            // On remplace d'abord les puissances ^ par **
+            expr = expr.replace(/\^/g, '**');
+            // On ajoute 'Math.' devant les fonctions usuelles si elles ne l'ont pas déjà
+            ['sin', 'cos', 'tan', 'sqrt', 'log', 'exp', 'abs'].forEach(fn => {
+                // Regex pour remplacer "sin(" par "Math.sin(" sans casser "Math.sin(" si déjà présent
+                let regex = new RegExp(`\\b${fn}\\(`, 'g');
+                expr = expr.replace(regex, `Math.${fn}(`);
+            });
+
+            // 4. Tracer la courbe pixel par pixel
+            gCtx.beginPath();
+            gCtx.strokeStyle = '#6C63FF'; // Couleur Schoolizy
+            gCtx.lineWidth = 2;
+
+            let firstPoint = true;
+
+            // On parcourt chaque pixel de l'écran en largeur
+            for (let px = 0; px <= w; px++) {
+                // On convertit le pixel écran en coordonnée mathématique X
+                // (pixel - centre) / echelle
+                let x = (px - cx) / graphScale;
+                
+                try {
+                    // Évaluation sécurisée de la fonction
+                    // On crée une petite fonction temporaire JS qui retourne le résultat
+                    let yMath = new Function('x', `try { return ${expr}; } catch(e) { return NaN; }`)(x);
+                    
+                    if (isNaN(yMath) || !isFinite(yMath)) {
+                        firstPoint = true; // Si erreur (ex: racine de négatif), on lève le crayon
+                        continue;
+                    }
+
+                    // On convertit le Y mathématique en pixel écran
+                    // Attention : en canvas, Y descend, donc on inverse (-yMath)
+                    let py = cy - (yMath * graphScale);
+
+                    if (firstPoint) {
+                        gCtx.moveTo(px, py);
+                        firstPoint = false;
+                    } else {
+                        gCtx.lineTo(px, py);
+                    }
+                } catch (e) {
+                    // Erreur de syntaxe (ex: utilisateur en train de taper)
+                    // On ignore silencieusement
+                }
+            }
+            gCtx.stroke();
+        }
+
+        /* --- GESTION DES ANNALES --- */
+
+        // TA BASE DE DONNÉES DE FICHIERS
+        const annalesData = [
+            {
+                id: 1,
+                year: 2024,
+                subject: 'Maths',
+                title: 'Métropole - Test',
+                chapters: ['Probabilités', 'Logarithme'],
+                // C'est ICI que ça fait le lien avec ton dossier :
+                linkSujet: 'Documents/Fichier_Schoolizy/annales/sujet-test.pdf', 
+                linkCorrige: '#' // Pas de corrigé pour le test
+            },
+            {
+                id: 2,
+                year: 2023,
+                subject: 'Physique',
+                title: 'Amérique du Nord',
+                chapters: ['Mécanique', 'Newton'],
+                linkSujet: '#', // Lien vide pour l'instant
+                linkCorrige: '#'
+            }
+        ];
+
+        function initBiblio() {
+            renderAnnales(annalesData);
+        }
+
+        function renderAnnales(data) {
+            const grid = document.getElementById('biblio-grid');
+            const noResult = document.getElementById('no-result');
+            grid.innerHTML = '';
+
+            if (data.length === 0) {
+                noResult.style.display = 'block';
+                return;
+            } else {
+                noResult.style.display = 'none';
+            }
+
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = `annale-card ${item.subject.toLowerCase()}`;
+                
+                let tagsHtml = '';
+                item.chapters.forEach(chap => {
+                    tagsHtml += `<span class="tag">${chap}</span>`;
+                });
+
+                // On vérifie si le lien est vide (#) pour désactiver le bouton visuellement si besoin
+                const linkAttr = item.linkSujet === '#' ? 'onclick="alert(\'Fichier pas encore disponible !\'); return false;"' : `target="_blank"`;
+
+                card.innerHTML = `
+                    <div class="annale-header">
+                        <span class="annale-subject">${item.subject}</span>
+                        <span class="annale-year">${item.year}</span>
+                    </div>
+                    <div class="annale-title">${item.title}</div>
+                    <div class="annale-tags">${tagsHtml}</div>
+                    
+                    <div class="annale-actions">
+                        <a href="${item.linkSujet}" ${linkAttr} class="btn-pdf btn-sujet">📄 Sujet</a>
+                        <a href="${item.linkCorrige}" class="btn-pdf btn-corrige">📝 Corrigé</a>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterAnnales() {
+            const searchText = document.getElementById('biblio-search').value.toLowerCase();
+            const selectedYear = document.getElementById('filter-year').value;
+            const selectedSubject = document.getElementById('filter-subject').value;
+
+            const filtered = annalesData.filter(item => {
+                const matchYear = (selectedYear === 'all') || (item.year.toString() === selectedYear);
+                const matchSubject = (selectedSubject === 'all') || (item.subject === selectedSubject);
+                const inTitle = item.title.toLowerCase().includes(searchText);
+                const inChapters = item.chapters.some(chap => chap.toLowerCase().includes(searchText));
+                
+                return matchYear && matchSubject && (searchText === '' || inTitle || inChapters);
+            });
+
+            renderAnnales(filtered);
+        }
+
+        /* =================================================================
+        OUTIL : CALCULATEUR DE MASSE MOLAIRE (COMPLET)
+        Gère : Coefficients (2H2O), Parenthèses (Ca(OH)2), Détails
+        ================================================================= */
+
+        // 1. BASE DE DONNÉES DES MASSES ATOMIQUES (g/mol)
+        const atomMasses = {
+            H: 1.008, He: 4.003, Li: 6.941, Be: 9.012, B: 10.81, C: 12.01, N: 14.01, O: 16.00, F: 19.00, Ne: 20.18,
+            Na: 22.99, Mg: 24.31, Al: 26.98, Si: 28.09, P: 30.97, S: 32.06, Cl: 35.45, K: 39.10, Ca: 40.08,
+            Ti: 47.87, Fe: 55.85, Cu: 63.55, Zn: 65.38, Br: 79.90, Ag: 107.87, I: 126.90, Au: 196.97, Pb: 207.2
+        };
+
+        // Variable pour stocker la formule brute (ex: "Ca(OH)2")
+        let currentMolString = ""; 
+
+        // 2. FONCTION POUR AJOUTER UN CARACTÈRE (Liée aux boutons)
+                
+        function addMolChar(char) {
+            const display = document.getElementById('mol-display');
+            const placeholder = document.getElementById('mol-placeholder');
+
+            // Gestion visuelle des indices
+            if (!isNaN(char)) {
+                // Si c'est un chiffre...
+                if (currentMolString.length === 0) {
+                    // Premier caractère = Coefficient (Grand)
+                    display.innerHTML += `<span>${char}</span>`;
+                } else {
+                    // Caractère suivant = Indice (Petit en bas)
+                    // Note : On utilise <sub> qui est stylisé par le CSS
+                    display.innerHTML += `<sub>${char}</sub>`;
+                }
+            } else {
+                // Lettre ou parenthèse
+                display.innerHTML += char;
+            }
+            
+            currentMolString += char;
+            if(placeholder) placeholder.style.display = 'none';
+        }
+
+        // 3. FONCTION EFFACER (Liée au bouton rouge)
+        function deleteMolChar() {
+            currentMolString = "";
+            document.getElementById('mol-display').innerHTML = "";
+            document.getElementById('mol-placeholder').style.display = 'block';
+            document.getElementById('mol-result-box').style.display = 'none';
+        }
+
+        // 4. LE CERVEAU : CALCULATEUR AVEC PARENTHÈSES
+        function calculateComplexMass() {
+            if(!currentMolString) return;
+
+            let formula = currentMolString;
+            let multiplier = 1;
+
+            // A. GESTION DU COEFFICIENT STŒCHIOMÉTRIQUE (Le chiffre devant, ex: 2H2O)
+            // On regarde si la formule commence par un chiffre
+            const startMatch = formula.match(/^(\d+)(.*)/);
+            if (startMatch) {
+                multiplier = parseInt(startMatch[1]); // On récupère le chiffre (ex: 2)
+                formula = startMatch[2]; // On garde le reste (ex: H2O)
+            }
+
+            // B. ANALYSE DES PARENTHÈSES (Algorithme de la Pile)
+            // Regex qui découpe la formule en : Atome+Chiffre OU ( OU )
+            const regex = /([A-Z][a-z]?)(\d*)|(\()|(\))(\d*)/g;
+            
+            let stack = [ {} ]; // Une pile de "boîtes". On commence avec une boîte vide.
+            let match;
+
+            // On lit la formule morceau par morceau
+            while ((match = regex.exec(formula)) !== null) {
+                
+                // Cas 1 : Parenthèse Ouvrante "("
+                if (match[3]) {
+                    stack.push({}); // On ouvre une nouvelle boîte vide par-dessus la précédente
+                } 
+                
+                // Cas 2 : Parenthèse Fermante ")"
+                else if (match[4]) {
+                    let closingCount = match[5] === '' ? 1 : parseInt(match[5]); // Chiffre après la parenthèse
+                    let currentGroup = stack.pop(); // On récupère la boîte du dessus (celle qui se ferme)
+                    let parentGroup = stack[stack.length - 1]; // La boîte d'en dessous (qui reçoit le contenu)
+
+                    // On vide le contenu de la boîte fermée dans la boîte parente en multipliant
+                    for (let atom in currentGroup) {
+                        if (!parentGroup[atom]) parentGroup[atom] = 0;
+                        parentGroup[atom] += currentGroup[atom] * closingCount;
+                    }
+                } 
+                
+                // Cas 3 : C'est un Atome (Ex: C6)
+                else if (match[1]) {
+                    let atom = match[1];
+                    let count = match[2] === '' ? 1 : parseInt(match[2]);
+                    let currentGroup = stack[stack.length - 1]; // On met ça dans la boîte active
+
+                    if (atomMasses[atom]) {
+                        if (!currentGroup[atom]) currentGroup[atom] = 0;
+                        currentGroup[atom] += count;
+                    } else {
+                        alert("Erreur : Atome inconnu (" + atom + ")");
+                        return;
+                    }
+                }
+            }
+
+            // À la fin, tous les atomes sont redescendus dans la première boîte (stack[0])
+            let finalCounts = stack[0];
+            
+            // C. GÉNÉRATION DE L'AFFICHAGE HTML
+            let totalMass = 0;
+            // En-tête du résultat
+            let detailsHTML = `<h4 style="margin:0 0 15px 0; color:#333;">Détail du calcul :</h4>`;
+
+            // On boucle sur chaque atome trouvé pour afficher la ligne de calcul
+            for (let atom in finalCounts) {
+                let count = finalCounts[atom];
+                let mass = atomMasses[atom];
+                let subTotal = count * mass;
+                
+                totalMass += subTotal;
+
+                // Ligne de détail (Ex: C : 6 x 12.01 = 72.06)
+                detailsHTML += `
+                <div class="step-line">
+                    <span style="font-weight:bold; width:30px; display:inline-block; color:var(--brand-school);">${atom}</span> : 
+                    ${count} <small>atomes</small> &times; ${mass} = <b>${subTotal.toFixed(2)}</b>
+                </div>`;
+            }
+
+            // Calcul final avec le coefficient multiplicateur
+            let grandTotal = totalMass * multiplier;
+
+            // Si on avait un coefficient (ex: 2 molécules), on l'affiche
+            if(multiplier > 1) {
+                detailsHTML += `<div style="border-top:1px dashed #ccc; margin-top:10px; padding-top:10px; color:#555;">
+                    Masse d'une molécule : ${totalMass.toFixed(2)}<br>
+                    Multiplicateur (x${multiplier}) : <b>${grandTotal.toFixed(2)}</b>
+                </div>`;
+            }
+
+            // Total final en gros
+            detailsHTML += `<div class="step-total">M = ${grandTotal.toFixed(2)} g/mol</div>`;
+
+            // Affichage dans la boîte de résultat
+            const resBox = document.getElementById('mol-result-box');
+            if(resBox) {
+                resBox.innerHTML = detailsHTML;
+                resBox.style.display = 'block';
+            }
+        }
+function openExercises(courseKey, chapId) {
+    const list = courseContent[courseKey]?.exercises?.[chapId];
+    const container = document.getElementById('exercise-list-container');
+    container.innerHTML = '';
+
+    if (list && list.length > 0) {
+        // 1. On affiche chaque exercice
+        list.forEach((ex, idx) => {
+            const card = document.createElement('div');
+            card.className = 'exercise-card';
+            
+            const corrId = `corr-ex-${chapId}-${idx}`;
+            
+            let stars = "";
+            for(let i=0; i<5; i++) {
+                stars += (i < ex.difficulte) ? "★" : "☆";
+            }
+            
+            card.innerHTML = `
+                <div class="exercise-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 0.8rem;">
+                    <span class="exercise-badge" style="background: var(--brand-school); color: white; padding: 4px 12px; border-radius: 8px; font-weight: bold; font-size: 0.9rem;">Exercice ${idx + 1}</span>
+                    <div class="exercise-meta" style="display: flex; gap: 15px; align-items: center;">
+                        <span class="difficulty-stars" style="color: var(--brand-school); font-size: 1.2rem; letter-spacing: 2px;">${stars}</span>
+                        <span class="estimated-time" style="background: #f0f0f0; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; color: #666; font-weight: 600;">⏱️ ${ex.temps} min</span>
+                    </div>
+                </div>
+
+                <div class="exercise-body" style="color: black !important; margin-bottom: 1rem;">${ex.enonce}</div>
+                
+                <button class="btn-reveal" onclick="toggleCorrection('${corrId}')">
+                    <span>👁️</span> Voir la correction
+                </button>
+                
+                <div id="${corrId}" class="correction-box" style="display:none">
+                    <span class="correction-title" style="color: var(--accent-green); font-weight: bold; display: block; margin-bottom: 0.5rem; text-transform: uppercase; font-size: 0.9rem;">✅ Correction détaillée</span>
+                    <div style="color: #333;">${ex.correction}</div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+
+        // 2. AJOUT DES BOUTONS DE NAVIGATION RAPIDE EN BAS
+        const footer = document.createElement('div');
+        footer.className = 'quick-nav-footer';
+        footer.innerHTML = `
+            <button class="btn-nav-quick" onclick="chooseMode('lesson'); openLesson('${courseKey}', ${chapId})">📖 Relire la Leçon</button>
+            <button class="btn-nav-quick" onclick="chooseMode('quiz'); openQuiz('${courseKey}', ${chapId})">✍️ Faire le Quiz</button>
+        `;
+        container.appendChild(footer);
+
+        // 3. Finalisation de l'affichage
+        if(window.MathJax) MathJax.typesetPromise();
+        navigateTo('view-exercise');
+    } else {
+        alert("Pas d'exercices disponibles pour ce chapitre.");
+    }
 }
 
-// GRAPHIQUE
-function drawGraph() {
-    const c = document.getElementById('graphCanvas'), ctx = c.getContext('2d');
-    ctx.clearRect(0,0,400,400);
-    ctx.beginPath(); ctx.moveTo(0,200); ctx.lineTo(400,200); ctx.moveTo(200,0); ctx.lineTo(200,400); ctx.stroke();
-    ctx.beginPath(); ctx.strokeStyle = "purple";
-    for(let px=0; px<400; px++) {
-        let x = (px-200)/40; let y = Math.pow(x,2);
-        ctx.lineTo(px, 200 - y*40);
+// Garde cette fonction séparée, elle est appelée par les boutons des exercices
+function toggleCorrection(id) {
+    const div = document.getElementById(id);
+    const btn = div.previousElementSibling; 
+    
+    if (div.style.display === 'none') {
+        div.style.display = 'block';
+        btn.innerHTML = '<span>🙈</span> Cacher la correction';
+    } else {
+        div.style.display = 'none';
+        btn.innerHTML = '<span>👁️</span> Voir la correction';
     }
-    ctx.stroke();
 }
+
+let currentFlashcardIndex = 0;
+
+function openFlashcards(courseKey, chapId) {
+    const allCards = courseContent[courseKey]?.flashcards?.[chapId] || [];
+    const container = document.getElementById('flashcards-grid-container');
+    
+    // On vide et on prépare le conteneur
+    container.innerHTML = '';
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.alignItems = 'center';
+
+    if (allCards.length > 0) {
+        // --- LOGIQUE DE HASARD ---
+        // 1. On crée une copie de la banque pour ne pas mélanger l'original
+        let shuffled = [...allCards];
+        
+        // 2. Mélange de l'array (Algorithme de Fisher-Yates)
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+
+        // 3. On ne prend que les 4 premières cartes du mélange
+        const cardsToShow = shuffled.slice(0, 4);
+
+        // --- AFFICHAGE DE LA GRILLE ---
+        const grid = document.createElement('div');
+        grid.className = 'flashcards-grid';
+        grid.style.width = '100%';
+        
+        cardsToShow.forEach((cardData) => {
+            const cardEl = document.createElement('div');
+            cardEl.className = 'flashcard';
+            cardEl.onclick = function() { this.classList.toggle('flipped'); };
+            cardEl.innerHTML = `
+                <div class="flashcard-front">
+                    <span class="flashcard-hint">Question</span>
+                    <div>${cardData.question}</div>
+                </div>
+                <div class="flashcard-back">
+                    <span class="flashcard-hint">Réponse</span>
+                    <div>${cardData.reponse}</div>
+                </div>
+            `;
+            grid.appendChild(cardEl);
+        });
+        container.appendChild(grid);
+
+        // --- BOUTON PIOCHER 4 AUTRES (HASARD) ---
+        const btnNext = document.createElement('button');
+        btnNext.className = 'btn-nav-quick';
+        btnNext.style.margin = "30px 0";
+        btnNext.style.borderColor = "#ffca28";
+        btnNext.innerHTML = "🎲 Piocher 4 autres cartes";
+        btnNext.onclick = () => {
+            // On relance simplement la fonction pour un nouveau tirage
+            openFlashcards(courseKey, chapId);
+        };
+        container.appendChild(btnNext);
+
+        // --- BARRE DE NAVIGATION EN BAS ---
+        const footer = document.createElement('div');
+        footer.className = 'quick-nav-footer';
+        footer.style.width = '100%';
+        footer.style.marginTop = '2rem';
+        footer.innerHTML = `
+            <button class="btn-nav-quick" onclick="chooseMode('lesson'); openLesson('${courseKey}', ${chapId})">📖 Cours</button>
+            <button class="btn-nav-quick" onclick="chooseMode('quiz'); openQuiz('${courseKey}', ${chapId})">✍️ Quiz</button>
+            <button class="btn-nav-quick primary" onclick="chooseMode('exercise'); openExercises('${courseKey}', ${chapId})">🧠 Exercices</button>
+        `;
+        container.appendChild(footer);
+
+        if(window.MathJax) MathJax.typesetPromise();
+        navigateTo('view-flashcards');
+    } else {
+        alert("Pas de flashcards disponibles pour ce chapitre.");
+    }
 
 /* INITIALISATION */
 document.addEventListener('DOMContentLoaded', () => {
