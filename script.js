@@ -221,7 +221,7 @@ function shuffleArray(array) {
 
 // --- FONCTION POUR CHARGER LE QUIZ DEPUIS SUPABASE ---
 async function openQuiz(chapterNum) {
-    // 1. On récupère les questions du chapitre choisi
+    // 1. Récupération des données depuis Supabase
     const { data, error } = await sb
         .from('quizzes')
         .select('*')
@@ -230,59 +230,103 @@ async function openQuiz(chapterNum) {
         .eq('chapter_number', chapterNum);
 
     if (error || !data || data.length === 0) {
-        return alert("Pas de quiz disponible pour ce chapitre (Vérifie ta table Supabase !)");
+        return alert("Pas de quiz disponible pour ce chapitre.");
     }
 
-    const container = document.getElementById('quiz-container');
-    container.innerHTML = ''; // On vide le conteneur avant d'afficher
+    // 2. Mélanger et prendre 5 questions (comme dans ton ancienne fonction)
+    let qList = [...data].sort(() => 0.5 - Math.random()).slice(0, 5);
     
-    // 2. On mélange les questions (pour ne pas avoir toujours les mêmes 10 premières)
-    const shuffledQuestions = shuffleArray([...data]).slice(0, 15); // On en prend 15 max
+    const container = document.getElementById('quiz-container');
+    container.innerHTML = ''; // On vide pour commencer propre
 
-    shuffledQuestions.forEach((q, idx) => {
+    // Variables pour le score (tes variables originales)
+    let score = 0;
+    let answeredCount = 0;
+    const totalQuestions = qList.length;
+
+    qList.forEach((q, idx) => {
         const card = document.createElement('div');
         card.className = 'quiz-question-card';
-        
-        // On prépare les options : on transforme le JSON en objets avec un marqueur "isCorrect"
-        let options = q.options.map((opt, i) => ({
-            text: opt,
-            isCorrect: i === q.correct_index
-        }));
-
-        // On mélange l'ordre des réponses
-        options = shuffleArray(options);
-
         card.innerHTML = `<div class="quiz-question-text">Question ${idx + 1} : ${q.question}</div>`;
         
-        const optionsWrapper = document.createElement('div');
-        optionsWrapper.className = 'quiz-options-wrapper';
-
-        options.forEach(opt => {
+        // On crée les boutons d'options
+        q.options.forEach((opt, optIdx) => {
             const btn = document.createElement('div');
             btn.className = 'quiz-option';
-            btn.innerHTML = opt.text; // Utilise innerHTML pour le LaTeX ($...$)
-
-            btn.onclick = () => {
+            btn.innerHTML = opt; // Utilise innerHTML pour le LaTeX
+            
+            btn.onclick = function() {
                 if (card.classList.contains('answered')) return;
+                
                 card.classList.add('answered');
+                answeredCount++;
 
-                if (opt.isCorrect) {
+                // Vérification avec l'index correct de la base de données
+                if (optIdx === q.correct_index) {
                     btn.classList.add('correct');
                     btn.innerHTML += " ✅";
+                    score++;
                 } else {
                     btn.classList.add('wrong');
                     btn.innerHTML += " ❌";
+                    // On montre la bonne réponse en vert
+                    const allButtons = card.querySelectorAll('.quiz-option');
+                    allButtons[q.correct_index].classList.add('correct');
+                }
+
+                // Si fini, on affiche ton tableau de score personnalisé
+                if (answeredCount === totalQuestions) {
+                    showQuizResult(score, totalQuestions, container, chapterNum);
                 }
             };
             card.appendChild(btn);
         });
         container.appendChild(card);
     });
-    
-    // 3. On force MathJax à transformer les $...$ en jolies formules
-    if(window.MathJax) MathJax.typesetPromise();
-    
+
+    if (window.MathJax) MathJax.typesetPromise();
     navigateTo('view-quiz');
+}
+
+function showQuizResult(score, total, container, chapterNum) {
+    const resultDiv = document.createElement('div');
+    resultDiv.className = 'quiz-result-box';
+    
+    let message = "";
+    let percentage = (score / total) * 100;
+    if (percentage === 100) message = "🏆 Excellent ! Un sans faute !";
+    else if (percentage >= 80) message = "😎 Très bien joué !";
+    else if (percentage >= 50) message = "👍 Pas mal, continue comme ça !";
+    else message = "💪 Tu peux faire mieux, réessaie !";
+
+    // On utilise les variables de l'état global (state) pour les boutons
+    resultDiv.innerHTML = `
+        <h3 style="margin-bottom:10px;">Résultat du Quiz</h3>
+        <div class="quiz-score">${score} / ${total}</div>
+        <p style="margin-bottom:20px;">${message}</p>
+        <button class="btn-restart" id="btn-restart-quiz">🔄 Recommencer</button>
+        
+        <div class="quick-nav-footer">
+            <button class="btn-nav-quick" onclick="chooseMode('lesson'); displayLesson(${chapterNum})">
+                📖 Revoir la Leçon
+            </button>
+            <button class="btn-nav-quick primary" onclick="alert('Bientôt disponible !')">
+                🧠 Faire les Exercices
+            </button>
+        </div>
+    `;
+
+    container.appendChild(resultDiv);
+
+    // Bouton recommencer
+    document.getElementById('btn-restart-quiz').onclick = function() {
+        document.querySelector('main').scrollTop = 0;
+        openQuiz(chapterNum);
+    };
+
+    setTimeout(() => {
+        resultDiv.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
 }
 
 /* =============================================================================
