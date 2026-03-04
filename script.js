@@ -1253,6 +1253,77 @@ function togglePomodoro() {
             }, {passive: false});
         }
 
+/* ==========================================
+   OUTILS : ANNALES & PDF STORAGE
+   ========================================== */
+
+async function initBiblio() {
+    // On récupère les données de la table 'annales'
+    const { data, error } = await sb
+        .from('annales')
+        .select('*')
+        .order('year', { ascending: false });
+
+    if (error) {
+        console.error("Erreur annales:", error.message);
+        return;
+    }
+
+    // On garde une copie pour le filtrage
+    window.allAnnales = data; 
+    renderAnnales(data);
+}
+
+function renderAnnales(data) {
+    const grid = document.getElementById('biblio-grid');
+    const noResult = document.getElementById('no-result');
+    if(!grid) return;
+    
+    grid.innerHTML = '';
+
+    if (!data || data.length === 0) {
+        if(noResult) noResult.style.display = 'block';
+        return;
+    } else {
+        if(noResult) noResult.style.display = 'none';
+    }
+
+    // URL de base de ton bucket public 'annales'
+    const baseUrl = `https://kuuxhzyfnqrdoewfoiyf.supabase.co/storage/v1/object/public/annales/`;
+
+    data.forEach(item => {
+        const card = document.createElement('div');
+        card.className = `annale-card ${item.subject.toLowerCase()}`;
+        
+        // On parse les chapitres (JSON)
+        let chapters = [];
+        try {
+            chapters = typeof item.chapters === 'string' ? JSON.parse(item.chapters) : item.chapters;
+        } catch(e) { chapters = []; }
+
+        let tagsHtml = (chapters || []).map(chap => `<span class="tag">${chap}</span>`).join('');
+
+        // Liens dynamiques vers le Storage
+        const linkSujet = item.file_sujet ? baseUrl + item.file_sujet : "#";
+        const linkCorrige = item.file_corrige ? baseUrl + item.file_corrige : "#";
+
+        card.innerHTML = `
+            <div class="annale-header">
+                <span class="annale-subject">${item.subject}</span>
+                <span class="annale-year">${item.year}</span>
+            </div>
+            <div class="annale-title">${item.title}</div>
+            <div class="annale-tags">${tagsHtml}</div>
+            
+            <div class="annale-actions">
+                <a href="${linkSujet}" target="_blank" class="btn-pdf btn-sujet" ${linkSujet === "#" ? 'style="opacity:0.5;pointer-events:none"' : ''}>📄 Sujet</a>
+                <a href="${linkCorrige}" target="_blank" class="btn-pdf btn-corrige" ${linkCorrige === "#" ? 'style="opacity:0.5;pointer-events:none"' : ''}>📝 Corrigé</a>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
 /* INITIALISATION */
 document.addEventListener('DOMContentLoaded', () => {
     updatePDisplay();
