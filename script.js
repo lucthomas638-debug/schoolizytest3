@@ -1092,6 +1092,166 @@ function togglePomodoro() {
         rObjects = { points: [], vectors: [] }; rState.vectorStart = null; updateInstructions(); drawRepere();
     }
 
+/* --- LOGIQUE DES OUTILS (À coller dans le SCRIPT) --- */
+
+        /* 1. CERCLE TRIGONOMÉTRIQUE (Version Valeurs Remarquables) */
+        let trigoCanvas = document.getElementById('trigoCanvas');
+        let tCtx = trigoCanvas ? trigoCanvas.getContext('2d') : null;
+        let isDraggingTrigo = false;
+        let lastRenderedIndex = -1; // Pour éviter de rafraichir MathJax inutilement
+
+        // Base de données des valeurs remarquables
+        /* --- DONNÉES CERCLE TRIGO (Format : "Positif ; Négatif") --- */
+        const remarkableValues = [
+            // 0 et 2pi
+            { val: 0, label: "0 \\text{ ; } 2\\pi", cos: "1", sin: "0", tan: "0" },
+            
+            // --- CADRAN 1 (Haut Droite) ---
+            { val: Math.PI/6, label: "\\frac{\\pi}{6}", cos: "\\frac{\\sqrt{3}}{2}", sin: "\\frac{1}{2}", tan: "\\frac{\\sqrt{3}}{3}" },
+            { val: Math.PI/4, label: "\\frac{\\pi}{4}", cos: "\\frac{\\sqrt{2}}{2}", sin: "\\frac{\\sqrt{2}}{2}", tan: "1" },
+            { val: Math.PI/3, label: "\\frac{\\pi}{3}", cos: "\\frac{1}{2}", sin: "\\frac{\\sqrt{3}}{2}", tan: "\\sqrt{3}" },
+            
+            // PI/2 (Haut)
+            { val: Math.PI/2, label: "\\frac{\\pi}{2}", cos: "0", sin: "1", tan: "\\infty" },
+            
+            // --- CADRAN 2 (Haut Gauche) ---
+            { val: 2*Math.PI/3, label: "\\frac{2\\pi}{3}", cos: "-\\frac{1}{2}", sin: "\\frac{\\sqrt{3}}{2}", tan: "-\\sqrt{3}" },
+            { val: 3*Math.PI/4, label: "\\frac{3\\pi}{4}", cos: "-\\frac{\\sqrt{2}}{2}", sin: "\\frac{\\sqrt{2}}{2}", tan: "-1" },
+            { val: 5*Math.PI/6, label: "\\frac{5\\pi}{6}", cos: "-\\frac{\\sqrt{3}}{2}", sin: "\\frac{1}{2}", tan: "-\\frac{\\sqrt{3}}{3}" },
+            
+            // PI (Gauche)
+            { val: Math.PI, label: "\\pi \\text{ ; } -\\pi", cos: "-1", sin: "0", tan: "0" },
+            
+            // --- CADRAN 3 (Bas Gauche) -> Double affichage ---
+            { val: 7*Math.PI/6, label: "\\frac{7\\pi}{6} \\text{ ; } -\\frac{5\\pi}{6}", cos: "-\\frac{\\sqrt{3}}{2}", sin: "-\\frac{1}{2}", tan: "\\frac{\\sqrt{3}}{3}" },
+            { val: 5*Math.PI/4, label: "\\frac{5\\pi}{4} \\text{ ; } -\\frac{3\\pi}{4}", cos: "-\\frac{\\sqrt{2}}{2}", sin: "-\\frac{\\sqrt{2}}{2}", tan: "1" },
+            { val: 4*Math.PI/3, label: "\\frac{4\\pi}{3} \\text{ ; } -\\frac{2\\pi}{3}", cos: "-\\frac{1}{2}", sin: "-\\frac{\\sqrt{3}}{2}", tan: "\\sqrt{3}" },
+            
+            // 3PI/2 (Bas)
+            { val: 3*Math.PI/2, label: "\\frac{3\\pi}{2} \\text{ ; } -\\frac{\\pi}{2}", cos: "0", sin: "-1", tan: "\\infty" },
+
+            // --- CADRAN 4 (Bas Droite) -> Double affichage ---
+            { val: 5*Math.PI/3, label: "\\frac{5\\pi}{3} \\text{ ; } -\\frac{\\pi}{3}", cos: "\\frac{1}{2}", sin: "-\\frac{\\sqrt{3}}{2}", tan: "-\\sqrt{3}" },
+            { val: 7*Math.PI/4, label: "\\frac{7\\pi}{4} \\text{ ; } -\\frac{\\pi}{4}", cos: "\\frac{\\sqrt{2}}{2}", sin: "-\\frac{\\sqrt{2}}{2}", tan: "-1" },
+            { val: 11*Math.PI/6, label: "\\frac{11\\pi}{6} \\text{ ; } -\\frac{\\pi}{6}", cos: "\\frac{\\sqrt{3}}{2}", sin: "-\\frac{1}{2}", tan: "-\\frac{\\sqrt{3}}{3}" },
+            
+            // Bouclage (360°)
+            { val: 2*Math.PI, label: "0 \\text{ ; } 2\\pi", cos: "1", sin: "0", tan: "0" }
+        ];
+
+        function initTrigo() { if(tCtx) drawTrigo(0); }
+
+        function drawTrigo(rawAngle) {
+            if(!tCtx) return;
+
+            // 1. Normaliser l'angle (de -PI/PI à 0/2PI)
+            let normalizedAngle = rawAngle;
+            if (normalizedAngle < 0) normalizedAngle += 2 * Math.PI;
+
+            // 2. Trouver la valeur remarquable la plus proche
+            let closest = remarkableValues.reduce((prev, curr) => {
+                return (Math.abs(curr.val - normalizedAngle) < Math.abs(prev.val - normalizedAngle) ? curr : prev);
+            });
+
+            // Gérer le cas cyclique (proche de 0 ou 2PI)
+            if (Math.abs(normalizedAngle - 0) < 0.2) closest = remarkableValues[0];
+            if (Math.abs(normalizedAngle - 2*Math.PI) < 0.2) closest = remarkableValues[0]; // Retour à 0 visuellement
+
+            // 3. Dessiner le Canvas
+            const w = trigoCanvas.width; const h = trigoCanvas.height;
+            const cx = w / 2; const cy = h / 2; const r = 150;
+            const angle = closest.val; // On utilise l'angle "aimanté"
+
+            tCtx.clearRect(0, 0, w, h);
+
+            // Axes
+            tCtx.beginPath(); tCtx.strokeStyle = '#ddd';
+            tCtx.moveTo(0, cy); tCtx.lineTo(w, cy); tCtx.moveTo(cx, 0); tCtx.lineTo(cx, h); tCtx.stroke();
+            // Cercle
+            tCtx.beginPath(); tCtx.strokeStyle = '#333'; tCtx.lineWidth = 2;
+            tCtx.arc(cx, cy, r, 0, Math.PI * 2); tCtx.stroke();
+            
+            // Calculs coords
+            let px = cx + r * Math.cos(angle); 
+            let py = cy - r * Math.sin(angle); // Y inversé en canvas
+
+            // Lignes projection
+            tCtx.setLineDash([5, 3]);
+            // Cos (rouge)
+            tCtx.beginPath(); tCtx.strokeStyle = 'red'; tCtx.lineWidth = 2;
+            tCtx.moveTo(px, py); tCtx.lineTo(px, cy); tCtx.moveTo(cx, cy); tCtx.lineTo(px, cy); tCtx.stroke();
+            // Sin (bleu)
+            tCtx.beginPath(); tCtx.strokeStyle = 'blue';
+            tCtx.moveTo(px, py); tCtx.lineTo(cx, py); tCtx.moveTo(cx, cy); tCtx.lineTo(cx, py); tCtx.stroke();
+            tCtx.setLineDash([]);
+
+            // Rayon et Point
+            tCtx.beginPath(); tCtx.strokeStyle = '#666'; tCtx.lineWidth = 1; 
+            tCtx.moveTo(cx, cy); tCtx.lineTo(px, py); tCtx.stroke();
+            
+            tCtx.beginPath(); tCtx.fillStyle = '#8459cf'; 
+            tCtx.arc(px, py, 6, 0, Math.PI * 2); tCtx.fill();
+
+            // Tangente (Vert) - Sauf si pi/2 ou 3pi/2
+            if(closest.label !== "\\frac{\\pi}{2}" && closest.label !== "\\frac{3\\pi}{2}") {
+                let tanVal = Math.tan(angle);
+                let tanLen = tanVal * r;
+                // Dessin simple de la tangente à droite (x = r)
+                tCtx.beginPath(); tCtx.strokeStyle = 'green';
+                tCtx.moveTo(cx + r, cy); 
+                tCtx.lineTo(cx + r, cy - tanLen); 
+                tCtx.stroke();
+            }
+
+            // 4. Mettre à jour le texte (Seulement si l'angle a changé)
+            // On utilise l'index dans le tableau comme identifiant unique
+            let currentIndex = remarkableValues.indexOf(closest);
+            if(currentIndex !== lastRenderedIndex) {
+                lastRenderedIndex = currentIndex;
+                
+                document.getElementById('val-angle-deg').innerText = (angle * 180 / Math.PI).toFixed(0);
+                
+                // Injection MathJax
+                document.getElementById('val-angle-rad').innerHTML = `$${closest.label}$`;
+                document.getElementById('val-cos').innerHTML = `$${closest.cos}$`;
+                document.getElementById('val-sin').innerHTML = `$${closest.sin}$`;
+                document.getElementById('val-tan').innerHTML = `$${closest.tan}$`;
+
+                if(window.MathJax) {
+                    MathJax.typesetPromise([
+                        document.getElementById('val-angle-rad'),
+                        document.getElementById('val-cos'),
+                        document.getElementById('val-sin'),
+                        document.getElementById('val-tan')
+                    ]).catch(err => console.log(err));
+                }
+            }
+        }
+
+        function getTrigoAngle(evt) {
+            const rect = trigoCanvas.getBoundingClientRect();
+            const scaleX = trigoCanvas.width / rect.width;
+            const scaleY = trigoCanvas.height / rect.height;
+            const x = (evt.clientX - rect.left) * scaleX;
+            const y = (evt.clientY - rect.top) * scaleY;
+            return Math.atan2(-(y - trigoCanvas.height/2), x - trigoCanvas.width/2);
+        }
+
+        if(trigoCanvas) {
+            trigoCanvas.addEventListener('mousedown', (e) => { isDraggingTrigo = true; drawTrigo(getTrigoAngle(e)); });
+            trigoCanvas.addEventListener('mousemove', (e) => { if(isDraggingTrigo) drawTrigo(getTrigoAngle(e)); });
+            window.addEventListener('mouseup', () => isDraggingTrigo = false);
+            // Support tactile basique
+            trigoCanvas.addEventListener('touchstart', (e) => { isDraggingTrigo = true; e.preventDefault(); }, {passive: false});
+            trigoCanvas.addEventListener('touchmove', (e) => { 
+                if(isDraggingTrigo) {
+                    let touch = e.touches[0];
+                    let mouseEvent = new MouseEvent("mousemove", { clientX: touch.clientX, clientY: touch.clientY });
+                    drawTrigo(getTrigoAngle(mouseEvent));
+                    e.preventDefault();
+                }
+            }, {passive: false});
+        }
 
 /* INITIALISATION */
 document.addEventListener('DOMContentLoaded', () => {
