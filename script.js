@@ -696,41 +696,402 @@ function initTableau() {
             container.appendChild(div);
         }
 
-/* =============================================================================
-   5. AUTRES OUTILS (CONVERTISSEUR, GRAPHIQUE, POMODORO)
-   ============================================================================= */
+        /* =========================================
+           4. CONVERTISSEUR UNIVERSEL
+           ========================================= */
+        const convData = {
+            'length': {
+                name: 'Longueur',
+                units: {
+                    'km': 1000, 'hm': 100, 'dam': 10, 'm': 1, 
+                    'dm': 0.1, 'cm': 0.01, 'mm': 0.001, 
+                    'mi': 1609.34 // Mile
+                }
+            },
+            'mass': {
+                name: 'Masse',
+                units: {
+                    't': 1000000, 'kg': 1000, 'hg': 100, 'dag': 10, 'g': 1,
+                    'dg': 0.1, 'cg': 0.01, 'mg': 0.001
+                }
+            },
+            'time': {
+                name: 'Temps',
+                units: {
+                    'an': 31536000, 'j': 86400, 'h': 3600, 'min': 60, 's': 1, 'ms': 0.001
+                }
+            },
+            'speed': {
+                name: 'Vitesse',
+                units: {
+                    'km/h': 1/3.6, // Base est m/s. 1 km/h = 1/3.6 m/s
+                    'm/s': 1,
+                    'mph': 0.44704
+                }
+            },
+            'volume': {
+                name: 'Volume',
+                units: {
+                    'm³': 1000, 'dm³': 1, 'cm³': 0.001, // Base est le Litre
+                    'L': 1, 'dL': 0.1, 'cL': 0.01, 'mL': 0.001,
+                    'hL': 100
+                }
+            },
+            'data': {
+                name: 'Données',
+                units: {
+                    'To': 1000000000000, 'Go': 1000000000, 'Mo': 1000000, 'Ko': 1000, 'o': 1
+                }
+            }
+        };
 
-// CONVERTISSEUR (Exemple simple)
-function calculateConv(source) {
-    const i1 = document.getElementById('conv-input-1'), i2 = document.getElementById('conv-input-2');
-    const u1 = parseFloat(document.getElementById('conv-unit-1').value), u2 = parseFloat(document.getElementById('conv-unit-2').value);
-    if(source === 1) i2.value = (i1.value * u1 / u2).toFixed(4);
-    else i1.value = (i2.value * u2 / u1).toFixed(4);
-}
+        let currentCategory = 'length';
 
-// POMODORO
-let pTime = 25*60, pInt = null;
+        function initConverter() {
+            setConvCategory('length');
+        }
+
+        function setConvCategory(cat) {
+            currentCategory = cat;
+            
+            // Mise à jour visuelle des onglets
+            document.querySelectorAll('.conv-tab').forEach(b => b.classList.remove('active'));
+            // Astuce : on trouve le bouton qui a le onclick correspondant
+            const tabs = document.querySelectorAll('.conv-tab');
+            for(let t of tabs) {
+                if(t.getAttribute('onclick').includes(cat)) t.classList.add('active');
+            }
+
+            // Remplir les Selects
+            const units = convData[cat].units;
+            const select1 = document.getElementById('conv-unit-1');
+            const select2 = document.getElementById('conv-unit-2');
+            
+            select1.innerHTML = ''; select2.innerHTML = '';
+            
+            for (let [u, val] of Object.entries(units)) {
+                let opt1 = document.createElement('option'); opt1.value = val; opt1.innerText = u;
+                let opt2 = document.createElement('option'); opt2.value = val; opt2.innerText = u;
+                select1.appendChild(opt1);
+                select2.appendChild(opt2);
+            }
+
+            // Sélection par défaut intelligente
+            if(cat === 'length') { select1.value = 1000; select2.value = 1; } // km -> m
+            if(cat === 'speed') { select1.value = 1/3.6; select2.value = 1; } // km/h -> m/s
+            if(cat === 'time') { select1.value = 3600; select2.value = 60; } // h -> min
+
+            calculateConv(1);
+        }
+
+        function calculateConv(sourceParams) {
+            const input1 = document.getElementById('conv-input-1');
+            const input2 = document.getElementById('conv-input-2');
+            const unit1 = parseFloat(document.getElementById('conv-unit-1').value);
+            const unit2 = parseFloat(document.getElementById('conv-unit-2').value);
+            
+            // sourceParams = 1 si on écrit dans input 1, 2 si on écrit dans input 2
+            let val;
+
+            if(sourceParams === 1) {
+                val = parseFloat(input1.value);
+                if(isNaN(val)) { input2.value = ''; return; }
+                
+                // Formule : Val * (Facteur Départ / Facteur Arrivée)
+                let res = val * (unit1 / unit2);
+                
+                // Arrondi propre pour éviter 0.30000000004
+                if(res < 0.000001) input2.value = res.toExponential(4);
+                else input2.value = parseFloat(res.toPrecision(10)); // Nettoie les décimales folles
+            } else {
+                val = parseFloat(input2.value);
+                if(isNaN(val)) { input1.value = ''; return; }
+                let res = val * (unit2 / unit1);
+                
+                if(res < 0.000001) input1.value = res.toExponential(4);
+                else input1.value = parseFloat(res.toPrecision(10));
+            }
+
+            // Affichage de la formule pour aider l'élève
+            const u1Name = document.getElementById('conv-unit-1').options[document.getElementById('conv-unit-1').selectedIndex].text;
+            const u2Name = document.getElementById('conv-unit-2').options[document.getElementById('conv-unit-2').selectedIndex].text;
+            
+            // Facteur explicatif
+            let factor = unit1 / unit2;
+            let operator = factor >= 1 ? '×' : '÷';
+            let displayFactor = factor >= 1 ? factor : (1/factor);
+            
+            // Affichage joli
+            displayFactor = parseFloat(displayFactor.toPrecision(6)); // Propre
+            
+            document.getElementById('conv-formula').innerText = 
+                `Pour passer de ${u1Name} à ${u2Name}, on multiplie par ${factor < 1 ? (1/factor).toFixed(4) : factor} (ou div par ${factor < 1 ? factor : (1/factor).toFixed(4)})`;
+        }
+
+/* LOGIQUE JS */
+        let pomoInterval = null;
+        let pomoTime = 25 * 60; 
+        let isPomoRunning = false;
+
+        function updatePomoDisplay() {
+            const minutes = Math.floor(pomoTime / 60);
+            const seconds = pomoTime % 60;
+            const displayMin = minutes < 10 ? '0' + minutes : minutes;
+            const displaySec = seconds < 10 ? '0' + seconds : seconds;
+            document.getElementById('pomo-timer').innerText = `${displayMin}:${displaySec}`;
+        }
+
 function togglePomodoro() {
-    if(pInt) { clearInterval(pInt); pInt = null; }
-    else { pInt = setInterval(() => { pTime--; updatePDisplay(); if(pTime<=0) clearInterval(pInt); }, 1000); }
-}
-function updatePDisplay() {
-    const m = Math.floor(pTime/60), s = pTime%60;
-    document.getElementById('pomo-timer').innerText = `${m}:${s<10?'0'+s:s}`;
-}
+            const btn = document.getElementById('pomo-btn');
+            const container = document.getElementById('pomo-container');
+            
+            // Les dessins SVG (Codes bruts)
+            const iconPlay = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 5V19L19 12L8 5Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
+            
+            const iconPause = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 5V19" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M16 5V19" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>`;
+            
+            if (isPomoRunning) {
+                // --- PAUSE ---
+                clearInterval(pomoInterval);
+                isPomoRunning = false;
+                
+                btn.innerHTML = iconPlay; // On remet le dessin Play
+                container.classList.remove('running');
+                
+            } else {
+                // --- DÉMARRAGE ---
+                isPomoRunning = true;
+                
+                btn.innerHTML = iconPause; // On met le dessin Pause (barres arrondies)
+                container.classList.add('running');
+                
+                pomoInterval = setInterval(() => {
+                    if (pomoTime > 0) {
+                        pomoTime--;
+                        updatePomoDisplay();
+                    } else {
+                        clearInterval(pomoInterval);
+                        isPomoRunning = false;
+                        btn.innerHTML = iconPlay;
+                        container.classList.remove('running');
+                        alert("🔔 Ding Dong ! C'est la pause !");
+                    }
+                }, 1000);
+            }
+        }
+        
+        // Pensez aussi à mettre à jour le bouton Reset pour qu'il remette l'icone Play
+        function resetPomodoro() {
+            clearInterval(pomoInterval);
+            isPomoRunning = false;
+            pomoTime = 25 * 60; 
+            updatePomoDisplay();
+            
+            // On remet l'icône Play
+            const iconPlay = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 5V19L19 12L8 5Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
+            document.getElementById('pomo-btn').innerHTML = iconPlay;
+            
+            document.getElementById('pomo-container').classList.remove('running');
+        }
 
-// GRAPHIQUE
-function drawGraph() {
-    const c = document.getElementById('graphCanvas'), ctx = c.getContext('2d');
-    ctx.clearRect(0,0,400,400);
-    ctx.beginPath(); ctx.moveTo(0,200); ctx.lineTo(400,200); ctx.moveTo(200,0); ctx.lineTo(200,400); ctx.stroke();
-    ctx.beginPath(); ctx.strokeStyle = "purple";
-    for(let px=0; px<400; px++) {
-        let x = (px-200)/40; let y = Math.pow(x,2);
-        ctx.lineTo(px, 200 - y*40);
+      /* =========================================
+       REPÈRE INTERACTIF (Version Clic par Clic - CORRIGÉE)
+       ========================================= */
+    let repCanvas = document.getElementById('repereCanvas');
+    let rCtx = repCanvas ? repCanvas.getContext('2d') : null;
+    
+    let rObjects = { points: [], vectors: [] };
+    let rConfig = { pixelsPerUnit: 20, step: 1, cx: 200, cy: 200, mode: 'point' };
+    let rState = { dragging: null, vectorStart: null, currentMouse: {x:0, y:0}, hover: null };
+
+    function initRepere() {
+        rObjects = { points: [], vectors: [] };
+        if(repCanvas) {
+            rConfig.cx = repCanvas.width / 2;
+            rConfig.cy = repCanvas.height / 2;
+            setRepereMode('point'); 
+            drawRepere();
+        }
     }
-    ctx.stroke();
-}
+
+    function setRepereMode(mode) {
+        rConfig.mode = mode;
+        rState.vectorStart = null; 
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        const btn = document.getElementById('btn-mode-' + mode);
+        if(btn) btn.classList.add('active');
+        updateInstructions(); 
+        drawRepere();
+    }
+
+    function updateInstructions() {
+        const txt = document.getElementById('repere-instruction');
+        if(!txt) return;
+        if(rConfig.mode === 'point') txt.innerHTML = "<strong>Mode Point :</strong> Cliquez sur la grille pour placer un point (aimanté à 0,25).";
+        if(rConfig.mode === 'vector') {
+            if(rState.vectorStart) txt.innerHTML = "<strong style='color:var(--brand-school)'>Mode Vecteur :</strong> Cliquez sur le <strong>point d'arrivée</strong>.";
+            else txt.innerHTML = "<strong>Mode Vecteur :</strong> Cliquez d'abord sur le <strong>point de départ</strong>.";
+        }
+        if(rConfig.mode === 'move') txt.innerHTML = "<strong>Mode Déplacer :</strong> Maintenez le clic sur un point pour le bouger.";
+        if(rConfig.mode === 'delete') txt.innerHTML = "<strong>Mode Gomme :</strong> Cliquez sur un point ou un vecteur pour le supprimer.";
+    }
+
+    function drawRepere() {
+        if(!rCtx) return;
+        const w = repCanvas.width; const h = repCanvas.height;
+        rCtx.clearRect(0, 0, w, h);
+
+        const stepPx = rConfig.pixelsPerUnit * rConfig.step; 
+        rCtx.lineWidth = 1;
+        for(let x = rConfig.cx; x <= w; x += stepPx) drawGridLine(x, 0, x, h, x);
+        for(let x = rConfig.cx; x >= 0; x -= stepPx) drawGridLine(x, 0, x, h, x);
+        for(let y = rConfig.cy; y <= h; y += stepPx) drawGridLine(0, y, w, y, y);
+        for(let y = rConfig.cy; y >= 0; y -= stepPx) drawGridLine(0, y, w, y, y);
+
+        rCtx.strokeStyle = '#000'; rCtx.lineWidth = 2; rCtx.beginPath();
+        rCtx.moveTo(0, rConfig.cy); rCtx.lineTo(w, rConfig.cy);
+        rCtx.moveTo(rConfig.cx, 0); rCtx.lineTo(rConfig.cx, h);
+        rCtx.stroke();
+
+        rObjects.vectors.forEach(v => {
+            const p1 = rObjects.points.find(p => p.id === v.from);
+            const p2 = rObjects.points.find(p => p.id === v.to);
+            if(p1 && p2) drawArrow(rCtx, p1.x, p1.y, p2.x, p2.y, 'blue');
+        });
+
+        rObjects.points.forEach(p => {
+            rCtx.beginPath(); rCtx.arc(p.x, p.y, 5, 0, Math.PI*2);
+            if(rState.vectorStart === p) rCtx.fillStyle = '#2ecc71'; 
+            else if(rState.hover === p) rCtx.fillStyle = '#FFD700'; 
+            else rCtx.fillStyle = 'red'; 
+            rCtx.fill(); rCtx.strokeStyle = 'black'; rCtx.lineWidth = 1; rCtx.stroke();
+            rCtx.fillStyle = '#333'; rCtx.font = "11px Arial"; rCtx.fillText(`${p.name}`, p.x + 8, p.y - 8);
+        });
+
+        if(rConfig.mode === 'vector' && rState.vectorStart) {
+            rCtx.beginPath(); rCtx.strokeStyle = '#2ecc71'; rCtx.lineWidth = 2; rCtx.setLineDash([5, 3]);
+            rCtx.moveTo(rState.vectorStart.x, rState.vectorStart.y);
+            rCtx.lineTo(rState.currentMouse.x, rState.currentMouse.y);
+            rCtx.stroke(); rCtx.setLineDash([]);
+        }
+    }
+
+    function drawGridLine(x1, y1, x2, y2, val) {
+        rCtx.beginPath();
+        let dist = Math.abs(val - (x1 === x2 ? rConfig.cx : rConfig.cy));
+        let isUnit = Math.abs(dist % rConfig.pixelsPerUnit) < 1;
+        rCtx.strokeStyle = isUnit ? '#ccc' : '#f4f4f4';
+        rCtx.moveTo(x1, y1); rCtx.lineTo(x2, y2); rCtx.stroke();
+    }
+
+    function getSnappedPos(evt) {
+        const rect = repCanvas.getBoundingClientRect();
+        const scaleX = repCanvas.width / rect.width;
+        const scaleY = repCanvas.height / rect.height;
+        const mx = (evt.clientX - rect.left) * scaleX;
+        const my = (evt.clientY - rect.top) * scaleY;
+        let mathX = (mx - rConfig.cx) / rConfig.pixelsPerUnit;
+        let mathY = -(my - rConfig.cy) / rConfig.pixelsPerUnit;
+        mathX = Math.round(mathX / rConfig.step) * rConfig.step;
+        mathY = Math.round(mathY / rConfig.step) * rConfig.step;
+        return { 
+            pixelX: rConfig.cx + mathX * rConfig.pixelsPerUnit, 
+            pixelY: rConfig.cy - mathY * rConfig.pixelsPerUnit, 
+            mathX: mathX, 
+            mathY: mathY, 
+            rawX: mx, 
+            rawY: my 
+        };
+    }
+
+    function drawArrow(ctx, fromx, fromy, tox, toy, color) {
+        const headlen = 10; const dx = tox - fromx; const dy = toy - fromy; const angle = Math.atan2(dy, dx);
+        ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 2;
+        ctx.moveTo(fromx, fromy); ctx.lineTo(tox, toy);
+        ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
+        ctx.moveTo(tox, toy); ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
+        ctx.stroke();
+    }
+
+    function getHoverPoint(mx, my) { return rObjects.points.find(p => Math.hypot(p.x - mx, p.y - my) < 15); }
+    function getHoverVector(mx, my) {
+        return rObjects.vectors.find(v => {
+            const p1 = rObjects.points.find(p => p.id === v.from);
+            const p2 = rObjects.points.find(p => p.id === v.to);
+            if(!p1 || !p2) return false;
+            return Math.hypot((p1.x+p2.x)/2 - mx, (p1.y+p2.y)/2 - my) < 10;
+        });
+    }
+
+    if(repCanvas) {
+        repCanvas.addEventListener('mousedown', (e) => {
+            const pos = getSnappedPos(e);
+            const targetPoint = getHoverPoint(pos.rawX, pos.rawY);
+            const targetVector = getHoverVector(pos.rawX, pos.rawY);
+
+            if(rConfig.mode === 'delete') {
+                if(targetPoint) {
+                    rObjects.points = rObjects.points.filter(p => p !== targetPoint);
+                    rObjects.vectors = rObjects.vectors.filter(v => v.from !== targetPoint.id && v.to !== targetPoint.id);
+                    if(rState.vectorStart === targetPoint) rState.vectorStart = null;
+                } else if(targetVector) {
+                    rObjects.vectors = rObjects.vectors.filter(v => v !== targetVector);
+                }
+                drawRepere(); return;
+            }
+            if(rConfig.mode === 'point') {
+                if(!targetPoint) {
+                    let name = String.fromCharCode(65 + rObjects.points.length);
+                    rObjects.points.push({ id: Date.now(), x: pos.pixelX, y: pos.pixelY, name: name });
+                    drawRepere();
+                }
+                return;
+            }
+            if(rConfig.mode === 'vector') {
+                if(targetPoint) {
+                    if(!rState.vectorStart) { rState.vectorStart = targetPoint; } 
+                    else if(targetPoint !== rState.vectorStart) {
+                        const exists = rObjects.vectors.find(v => v.from === rState.vectorStart.id && v.to === targetPoint.id);
+                        if(!exists) rObjects.vectors.push({ from: rState.vectorStart.id, to: targetPoint.id });
+                        rState.vectorStart = null;
+                    }
+                    updateInstructions(); drawRepere();
+                } else if(rState.vectorStart) { rState.vectorStart = null; updateInstructions(); drawRepere(); }
+                return;
+            }
+            if(rConfig.mode === 'move' && targetPoint) { rState.dragging = targetPoint; }
+        });
+
+        repCanvas.addEventListener('mousemove', (e) => {
+            const pos = getSnappedPos(e);
+            rState.currentMouse = {x: pos.rawX, y: pos.rawY};
+            
+            // --- MODIFICATION ICI : Mise à jour sécurisée des deux affichages ---
+            const coordsText = `x: ${pos.mathX.toFixed(2)}, y: ${pos.mathY.toFixed(2)}`;
+            
+            // 1. Mise à jour dans le panneau de contrôle
+            const panelCoords = document.getElementById('mouse-coords');
+            if(panelCoords) panelCoords.innerText = coordsText;
+
+            // 2. Mise à jour de la bulle flottante (si le HTML a été corrigé)
+            const tooltip = document.getElementById('mouse-tooltip');
+            if(tooltip) tooltip.innerText = coordsText;
+            // ------------------------------------------------------------------
+
+            rState.hover = getHoverPoint(pos.rawX, pos.rawY);
+            repCanvas.style.cursor = rState.hover ? 'pointer' : 'default';
+            if(rState.dragging && rConfig.mode === 'move') { rState.dragging.x = pos.pixelX; rState.dragging.y = pos.pixelY; }
+            drawRepere();
+        });
+
+        repCanvas.addEventListener('mouseup', () => { if(rConfig.mode === 'move') rState.dragging = null; });
+        repCanvas.addEventListener('mouseleave', () => { if(rConfig.mode === 'move') rState.dragging = null; });
+    }
+
+    function clearRepere() {
+        rObjects = { points: [], vectors: [] }; rState.vectorStart = null; updateInstructions(); drawRepere();
+    }
+
 
 /* INITIALISATION */
 document.addEventListener('DOMContentLoaded', () => {
