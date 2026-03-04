@@ -645,57 +645,100 @@
     }
 
     /* --- SECTION 10 : TABLEAU PÉRIODIQUE --- */
-    .periodic-grid {
-        display: grid; 
-        grid-template-columns: repeat(18, 1fr); 
-        gap: 3px;
-        overflow-x: auto; 
-        padding-bottom: 1rem;
-    }
+.periodic-grid {
+    display: grid; 
+    grid-template-columns: repeat(18, 1fr); 
+    gap: 3px;
+    overflow-x: auto; 
+    padding-bottom: 1rem;
+}
 
-    .element-card {
-        aspect-ratio: 1/1.1;
-        border: 1px solid rgba(0,0,0,0.1);
-        border-radius: 4px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        padding: 3px;
-        cursor: pointer;
-        transition: transform 0.2s, box-shadow 0.2s;
-        overflow: hidden;
-        color: #2D2D3A;
-    }
+.element-card {
+    aspect-ratio: 1/1.1; /* Forme carrée légèrement haute */
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Écarte les 3 infos (Z, Symbole, Masse) */
+    padding: 4px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+    color: #2D2D3A;
+    background-color: #fff; /* Fond par défaut */
+}
 
-    .element-card:hover {
-        transform: scale(1.3);
-        z-index: 100;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        border-color: #333;
-    }
+.element-card:hover {
+    transform: scale(1.4); /* Zoom important comme avant */
+    z-index: 100;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border-color: #333;
+}
 
-    .element-number { font-size: 0.65rem; font-weight: bold; opacity: 0.7; }
-    .element-symbol { font-size: 1.1rem; font-weight: 800; font-family: 'Segoe UI', sans-serif;}
-    .element-molar { font-size: 0.5rem; color: #555; white-space: nowrap; }
+/* Alignement interne des éléments */
+.elem-header {
+    display: flex;
+    justify-content: flex-start; /* Numéro Z en haut à gauche */
+}
 
-    .fam-alkali { background-color: #ffadad; }       
-    .fam-alkaline { background-color: #ffd6a5; }     
-    .fam-transition { background-color: #fdffb6; }   
-    .fam-post-trans { background-color: #caffbf; }   
-    .fam-metalloid { background-color: #9bf6ff; }    
-    .fam-nonmetal { background-color: #a0c4ff; }     
-    .fam-halogen { background-color: #bdb2ff; }      
-    .fam-noble { background-color: #ffc6ff; }        
-    .fam-lanthanide { background-color: #ffebd3; border: 2px solid #ffd6a5; } 
-    .fam-actinide { background-color: #eecbff; border: 2px solid #bdb2ff; }   
+.element-number { 
+    font-size: 0.65rem; 
+    font-weight: bold;
+    opacity: 0.7; 
+}
 
-    .element-details {
-        background: white; color: var(--text-dark); padding: 1rem;
-        border-radius: 8px; margin-bottom: 1rem; text-align: center;
-        border: 2px solid var(--brand-school);
-        min-height: 80px; display: flex; flex-direction: column; justify-content: center;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    }
+.elem-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1; /* Centre le symbole au milieu de la case */
+}
+
+.element-symbol { 
+    font-size: 1.2rem; /* Gros symbole bien visible */
+    font-weight: 800; 
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.elem-footer {
+    display: flex;
+    justify-content: center; /* Masse centrée en bas */
+}
+
+.element-molar { 
+    font-size: 0.55rem; 
+    color: #555; 
+    white-space: nowrap;
+}
+
+/* Couleurs des familles (Identique à ton original) */
+.fam-alkali { background-color: #ffadad !important; }       
+.fam-alkaline { background-color: #ffd6a5 !important; }     
+.fam-transition { background-color: #fdffb6 !important; }   
+.fam-post-trans { background-color: #caffbf !important; }   
+.fam-metalloid { background-color: #9bf6ff !important; }    
+.fam-nonmetal { background-color: #a0c4ff !important; }     
+.fam-halogen { background-color: #bdb2ff !important; }      
+.fam-noble { background-color: #ffc6ff !important; }        
+.fam-lanthanide { background-color: #ffebd3 !important; border: 2px solid #ffd6a5; } 
+.fam-actinide { background-color: #eecbff !important; border: 2px solid #bdb2ff; }   
+
+.empty-cell { pointer-events: none; border: none; background: transparent; }
+
+.element-details {
+    background: white; 
+    color: var(--text-dark); 
+    padding: 1rem;
+    border-radius: 8px; 
+    margin-bottom: 1rem; 
+    text-align: center;
+    border: 2px solid var(--brand-school);
+    min-height: 80px; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
 
     /* --- SECTION 11 : VECTEURS & TRIGONOMÉTRIE --- */
     .toolbar {
