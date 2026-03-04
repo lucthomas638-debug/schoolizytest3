@@ -140,30 +140,49 @@ async function loadChapters() {
 // Étape 4 : Afficher les tuiles des chapitres
 function renderChaptersGrid(chaptersList) {
     const grid = document.getElementById('chapters-grid');
+    if (!grid) return;
+    
     grid.innerHTML = '';
     
-    // On change le titre selon le mode pour que l'élève sache où il est
-    const modeTitles = { 'lesson': ' (Cours)', 'quiz': ' (Quiz)', 'exercise': ' (Exercices)', 'flashcard': ' (Flashcards)', 'fiche': ' (Fiches)' };
-    document.getElementById('chapters-title').innerText = state.currentSubject + modeTitles[state.currentMode];
+    // On change le titre de la page pour savoir dans quel mode on est
+    const modeLabel = {
+        'lesson': ' (Cours)',
+        'quiz': ' (Quiz)',
+        'exercise': ' (Exercices)',
+        'flashcard': ' (Flashcards)'
+    }[state.currentMode] || '';
+
+    document.getElementById('chapters-title').innerText = state.currentSubject + modeLabel;
 
     chaptersList.forEach(l => {
+        // Extraction du titre du chapitre depuis le HTML stocké
         const temp = document.createElement('div'); 
         temp.innerHTML = l.content;
         const title = temp.querySelector('h1')?.innerText || "Chapitre " + l.chapter_number;
         
         const card = document.createElement('div');
         card.className = 'card';
-        card.innerHTML = `<p style="color:#888; font-size:0.8rem;">CHAPITRE ${l.chapter_number}</p><h3>${title}</h3>`;
+        card.innerHTML = `
+            <p style="color:#888; font-size:0.8rem; margin-bottom:5px;">CHAPITRE ${l.chapter_number}</p>
+            <h3>${title}</h3>
+        `;
         
-        // Redirection dynamique selon le mode choisi à l'étape 2
+        // --- LA CONNEXION AUX BOUTONS ---
         card.onclick = () => {
-            if(state.currentMode === 'quiz') openQuiz(l.chapter_number);
-            else if(state.currentMode === 'exercise') openExercises(l.chapter_number);
-            else if(state.currentMode === 'flashcard') openFlashcards(l.chapter_number);
-            else displayLesson(l.chapter_number);
+            if (state.currentMode === 'quiz') {
+                openQuiz(l.chapter_number); // Appelle la fonction Quiz Supabase
+            } else if (state.currentMode === 'exercise') {
+                openExercises(l.chapter_number); // Appelle la fonction Exercices Supabase
+            } else if (state.currentMode === 'flashcard') {
+                openFlashcards(l.chapter_number); // Appelle la fonction Flashcards Supabase
+            } else {
+                displayLesson(l.chapter_number); // Par défaut : affiche le cours
+            }
         };
+        
         grid.appendChild(card);
     });
+
     navigateTo('view-chapters');
 }
 
