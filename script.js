@@ -137,50 +137,259 @@ async function displayLesson(num) {
 /* =============================================================================
    CALCUL MASSE MOLAIRE
    ============================================================================= */
-let currentMolString = ""; 
+        /* =================================================================
+        OUTIL : CALCULATEUR DE MASSE MOLAIRE (COMPLET)
+        Gère : Coefficients (2H2O), Parenthèses (Ca(OH)2), Détails
+        ================================================================= */
 
-function addMolChar(char) {
-    const display = document.getElementById('mol-display');
-    currentMolString += char;
-    display.innerText = currentMolString;
-}
+        // 1. BASE DE DONNÉES DES MASSES ATOMIQUES (g/mol)
+        const atomMasses = {
+            H: 1.008, He: 4.003, Li: 6.941, Be: 9.012, B: 10.81, C: 12.01, N: 14.01, O: 16.00, F: 19.00, Ne: 20.18,
+            Na: 22.99, Mg: 24.31, Al: 26.98, Si: 28.09, P: 30.97, S: 32.06, Cl: 35.45, K: 39.10, Ca: 40.08,
+            Ti: 47.87, Fe: 55.85, Cu: 63.55, Zn: 65.38, Br: 79.90, Ag: 107.87, I: 126.90, Au: 196.97, Pb: 207.2
+        };
 
-function deleteMolChar() {
-    currentMolString = "";
-    document.getElementById('mol-display').innerText = "";
-    document.getElementById('mol-result-box').style.display = 'none';
-}
+        // Variable pour stocker la formule brute (ex: "Ca(OH)2")
+        let currentMolString = ""; 
 
-function calculateComplexMass() {
-    const atomMasses = { H:1.008, C:12.01, O:16.00, N:14.01, Na:22.99, Cl:35.45, S:32.06, Fe:55.85, Cu:63.55, Ca:40.08 };
-    let formula = currentMolString;
-    const regex = /([A-Z][a-z]?)(\d*)|(\()|(\))(\d*)/g;
-    let stack = [{}];
-    let match;
+        // 2. FONCTION POUR AJOUTER UN CARACTÈRE (Liée aux boutons)
+                
+        function addMolChar(char) {
+            const display = document.getElementById('mol-display');
+            const placeholder = document.getElementById('mol-placeholder');
 
-    while ((match = regex.exec(formula)) !== null) {
-        if (match[3]) stack.push({});
-        else if (match[4]) {
-            let mult = parseInt(match[5] || 1);
-            let top = stack.pop();
-            let parent = stack[stack.length - 1];
-            for (let a in top) parent[a] = (parent[a] || 0) + top[a] * mult;
-        } else if (match[1]) {
-            let parent = stack[stack.length - 1];
-            parent[match[1]] = (parent[match[1]] || 0) + parseInt(match[2] || 1);
+            // Gestion visuelle des indices
+            if (!isNaN(char)) {
+                // Si c'est un chiffre...
+                if (currentMolString.length === 0) {
+                    // Premier caractère = Coefficient (Grand)
+                    display.innerHTML += `<span>${char}</span>`;
+                } else {
+                    // Caractère suivant = Indice (Petit en bas)
+                    // Note : On utilise <sub> qui est stylisé par le CSS
+                    display.innerHTML += `<sub>${char}</sub>`;
+                }
+            } else {
+                // Lettre ou parenthèse
+                display.innerHTML += char;
+            }
+            
+            currentMolString += char;
+            if(placeholder) placeholder.style.display = 'none';
         }
-    }
 
-    let total = 0;
-    let res = stack[0];
-    for (let a in res) {
-        if (atomMasses[a]) total += res[a] * atomMasses[a];
-    }
+        // 3. FONCTION EFFACER (Liée au bouton rouge)
+        function deleteMolChar() {
+            currentMolString = "";
+            document.getElementById('mol-display').innerHTML = "";
+            document.getElementById('mol-placeholder').style.display = 'block';
+            document.getElementById('mol-result-box').style.display = 'none';
+        }
 
-    const box = document.getElementById('mol-result-box');
-    box.innerHTML = `M = <strong>${total.toFixed(3)}</strong> g/mol`;
-    box.style.display = 'block';
-}
+        // 4. LE CERVEAU : CALCULATEUR AVEC PARENTHÈSES
+        function calculateComplexMass() {
+            if(!currentMolString) return;
+
+            let formula = currentMolString;
+            let multiplier = 1;
+
+            // A. GESTION DU COEFFICIENT STŒCHIOMÉTRIQUE (Le chiffre devant, ex: 2H2O)
+            // On regarde si la formule commence par un chiffre
+            const startMatch = formula.match(/^(\d+)(.*)/);
+            if (startMatch) {
+                multiplier = parseInt(startMatch[1]); // On récupère le chiffre (ex: 2)
+                formula = startMatch[2]; // On garde le reste (ex: H2O)
+            }
+
+            // B. ANALYSE DES PARENTHÈSES (Algorithme de la Pile)
+            // Regex qui découpe la formule en : Atome+Chiffre OU ( OU )
+            const regex = /([A-Z][a-z]?)(\d*)|(\()|(\))(\d*)/g;
+            
+            let stack = [ {} ]; // Une pile de "boîtes". On commence avec une boîte vide.
+            let match;
+
+            // On lit la formule morceau par morceau
+            while ((match = regex.exec(formula)) !== null) {
+                
+                // Cas 1 : Parenthèse Ouvrante "("
+                if (match[3]) {
+                    stack.push({}); // On ouvre une nouvelle boîte vide par-dessus la précédente
+                } 
+                
+                // Cas 2 : Parenthèse Fermante ")"
+                else if (match[4]) {
+                    let closingCount = match[5] === '' ? 1 : parseInt(match[5]); // Chiffre après la parenthèse
+                    let currentGroup = stack.pop(); // On récupère la boîte du dessus (celle qui se ferme)
+                    let parentGroup = stack[stack.length - 1]; // La boîte d'en dessous (qui reçoit le contenu)
+
+                    // On vide le contenu de la boîte fermée dans la boîte parente en multipliant
+                    for (let atom in currentGroup) {
+                        if (!parentGroup[atom]) parentGroup[atom] = 0;
+                        parentGroup[atom] += currentGroup[atom] * closingCount;
+                    }
+                } 
+                
+                // Cas 3 : C'est un Atome (Ex: C6)
+                else if (match[1]) {
+                    let atom = match[1];
+                    let count = match[2] === '' ? 1 : parseInt(match[2]);
+                    let currentGroup = stack[stack.length - 1]; // On met ça dans la boîte active
+
+                    if (atomMasses[atom]) {
+                        if (!currentGroup[atom]) currentGroup[atom] = 0;
+                        currentGroup[atom] += count;
+                    } else {
+                        alert("Erreur : Atome inconnu (" + atom + ")");
+                        return;
+                    }
+                }
+            }
+
+            // À la fin, tous les atomes sont redescendus dans la première boîte (stack[0])
+            let finalCounts = stack[0];
+            
+            // C. GÉNÉRATION DE L'AFFICHAGE HTML
+            let totalMass = 0;
+            // En-tête du résultat
+            let detailsHTML = `<h4 style="margin:0 0 15px 0; color:#333;">Détail du calcul :</h4>`;
+
+            // On boucle sur chaque atome trouvé pour afficher la ligne de calcul
+            for (let atom in finalCounts) {
+                let count = finalCounts[atom];
+                let mass = atomMasses[atom];
+                let subTotal = count * mass;
+                
+                totalMass += subTotal;
+
+                // Ligne de détail (Ex: C : 6 x 12.01 = 72.06)
+                detailsHTML += `
+                <div class="step-line">
+                    <span style="font-weight:bold; width:30px; display:inline-block; color:var(--brand-school);">${atom}</span> : 
+                    ${count} <small>atomes</small> &times; ${mass} = <b>${subTotal.toFixed(2)}</b>
+                </div>`;
+            }
+
+            // Calcul final avec le coefficient multiplicateur
+            let grandTotal = totalMass * multiplier;
+
+            // Si on avait un coefficient (ex: 2 molécules), on l'affiche
+            if(multiplier > 1) {
+                detailsHTML += `<div style="border-top:1px dashed #ccc; margin-top:10px; padding-top:10px; color:#555;">
+                    Masse d'une molécule : ${totalMass.toFixed(2)}<br>
+                    Multiplicateur (x${multiplier}) : <b>${grandTotal.toFixed(2)}</b>
+                </div>`;
+            }
+
+            // Total final en gros
+            detailsHTML += `<div class="step-total">M = ${grandTotal.toFixed(2)} g/mol</div>`;
+
+            // Affichage dans la boîte de résultat
+            const resBox = document.getElementById('mol-result-box');
+            if(resBox) {
+                resBox.innerHTML = detailsHTML;
+                resBox.style.display = 'block';
+            }
+        }
+ 
+        /* =========================================
+            CALCULATRICE GRAPHIQUE (TRACEUR)
+           ========================================= */
+        let graphCanvas = document.getElementById('graphCanvas');
+        let gCtx = graphCanvas ? graphCanvas.getContext('2d') : null;
+        let graphScale = 40; // Pixels par unité
+
+        function initGraph() {
+            // Initialisation au premier chargement
+            drawGraph();
+        }
+
+        function updateZoom(val) {
+            graphScale = parseInt(val);
+            document.getElementById('zoom-val').innerText = val;
+            drawGraph();
+        }
+
+        function drawGraph() {
+            if(!gCtx) return;
+            const w = graphCanvas.width;
+            const h = graphCanvas.height;
+            const cx = w / 2; // Centre X
+            const cy = h / 2; // Centre Y
+
+            // 1. Nettoyer
+            gCtx.clearRect(0, 0, w, h);
+
+            // 2. Dessiner la grille et les axes
+            gCtx.lineWidth = 1;
+            
+            // Grille légère
+            gCtx.beginPath();
+            gCtx.strokeStyle = '#eee';
+            for(let x = cx % graphScale; x < w; x += graphScale) { gCtx.moveTo(x, 0); gCtx.lineTo(x, h); }
+            for(let y = cy % graphScale; y < h; y += graphScale) { gCtx.moveTo(0, y); gCtx.lineTo(w, y); }
+            gCtx.stroke();
+
+            // Axes principaux
+            gCtx.beginPath();
+            gCtx.strokeStyle = '#333';
+            gCtx.lineWidth = 2;
+            gCtx.moveTo(0, cy); gCtx.lineTo(w, cy); // Axe X
+            gCtx.moveTo(cx, 0); gCtx.lineTo(cx, h); // Axe Y
+            gCtx.stroke();
+
+            // 3. Récupérer et préparer la fonction
+            let expr = document.getElementById('func-input').value.toLowerCase();
+            
+            // "Traduction" mathématique pour que JS comprenne (ex: x^2 -> x**2, sin -> Math.sin)
+            // On remplace d'abord les puissances ^ par **
+            expr = expr.replace(/\^/g, '**');
+            // On ajoute 'Math.' devant les fonctions usuelles si elles ne l'ont pas déjà
+            ['sin', 'cos', 'tan', 'sqrt', 'log', 'exp', 'abs'].forEach(fn => {
+                // Regex pour remplacer "sin(" par "Math.sin(" sans casser "Math.sin(" si déjà présent
+                let regex = new RegExp(`\\b${fn}\\(`, 'g');
+                expr = expr.replace(regex, `Math.${fn}(`);
+            });
+
+            // 4. Tracer la courbe pixel par pixel
+            gCtx.beginPath();
+            gCtx.strokeStyle = '#6C63FF'; // Couleur Schoolizy
+            gCtx.lineWidth = 2;
+
+            let firstPoint = true;
+
+            // On parcourt chaque pixel de l'écran en largeur
+            for (let px = 0; px <= w; px++) {
+                // On convertit le pixel écran en coordonnée mathématique X
+                // (pixel - centre) / echelle
+                let x = (px - cx) / graphScale;
+                
+                try {
+                    // Évaluation sécurisée de la fonction
+                    // On crée une petite fonction temporaire JS qui retourne le résultat
+                    let yMath = new Function('x', `try { return ${expr}; } catch(e) { return NaN; }`)(x);
+                    
+                    if (isNaN(yMath) || !isFinite(yMath)) {
+                        firstPoint = true; // Si erreur (ex: racine de négatif), on lève le crayon
+                        continue;
+                    }
+
+                    // On convertit le Y mathématique en pixel écran
+                    // Attention : en canvas, Y descend, donc on inverse (-yMath)
+                    let py = cy - (yMath * graphScale);
+
+                    if (firstPoint) {
+                        gCtx.moveTo(px, py);
+                        firstPoint = false;
+                    } else {
+                        gCtx.lineTo(px, py);
+                    }
+                } catch (e) {
+                    // Erreur de syntaxe (ex: utilisateur en train de taper)
+                    // On ignore silencieusement
+                }
+            }
+            gCtx.stroke();
+        }
 
 /* =============================================================================
    CERCLE TRIGO
