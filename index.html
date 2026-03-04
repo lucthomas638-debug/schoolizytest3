@@ -673,6 +673,66 @@
         /* On supprime les anciens hacks de scroll */
         .converter-tabs::before,
         .converter-tabs::after { display: none; }
+        .converter-tabs::-webkit-scrollbar { display: none; 
+        /* 1. BOUTONS DU REPÈRE (VECTEURS) */
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #eee;
+            background: #f9f9fb;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+            color: #555;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+        }
+        .mode-btn:hover {
+            background: #eee;
+            transform: translateY(-2px);
+        }
+        .mode-btn.active {
+            background: var(--brand-school);
+            color: white;
+            border-color: var(--brand-school);
+            box-shadow: 0 4px 10px rgba(108, 99, 255, 0.3);
+        }
+        /* Le bouton gomme en rouge quand il est actif */
+        #btn-mode-delete.active {
+            background: var(--accent-red);
+            border-color: var(--accent-red);
+        }
+
+        /* 2. CONVERTISSEUR */
+        .converter-wrapper {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .converter-tabs {
+            /* On utilise une GRILLE (Grid) au lieu du Flexbox */
+            display: grid;
+            /* Cela crée 3 colonnes de largeur égale */
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 10px; /* Espace entre les boutons */
+            margin-bottom: 1.5rem;
+            padding: 0;
+            /* Plus de scroll, plus de débordement */
+            overflow: visible;
+        }
+
+        /* On supprime les anciens hacks de scroll */
+        .converter-tabs::before,
+        .converter-tabs::after { display: none; }
         .converter-tabs::-webkit-scrollbar { display: none; }
 
 /* ONGLETS DU CONVERTISSEUR */
