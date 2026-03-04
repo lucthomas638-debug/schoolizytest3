@@ -191,6 +191,81 @@ async function displayLesson(num) {
     }
 }
 
+// --- FONCTION POUR MÉLANGER LES RÉPONSES ---
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+// --- FONCTION POUR CHARGER LE QUIZ DEPUIS SUPABASE ---
+async function openQuiz(chapterNum) {
+    // 1. On récupère les questions du chapitre choisi
+    const { data, error } = await sb
+        .from('quizzes')
+        .select('*')
+        .eq('class_id', state.currentClassCode)
+        .eq('subject_id', state.currentSubject.toLowerCase())
+        .eq('chapter_number', chapterNum);
+
+    if (error || !data || data.length === 0) {
+        return alert("Pas de quiz disponible pour ce chapitre (Vérifie ta table Supabase !)");
+    }
+
+    const container = document.getElementById('quiz-container');
+    container.innerHTML = ''; // On vide le conteneur avant d'afficher
+    
+    // 2. On mélange les questions (pour ne pas avoir toujours les mêmes 10 premières)
+    const shuffledQuestions = shuffleArray([...data]).slice(0, 15); // On en prend 15 max
+
+    shuffledQuestions.forEach((q, idx) => {
+        const card = document.createElement('div');
+        card.className = 'quiz-question-card';
+        
+        // On prépare les options : on transforme le JSON en objets avec un marqueur "isCorrect"
+        let options = q.options.map((opt, i) => ({
+            text: opt,
+            isCorrect: i === q.correct_index
+        }));
+
+        // On mélange l'ordre des réponses
+        options = shuffleArray(options);
+
+        card.innerHTML = `<div class="quiz-question-text">Question ${idx + 1} : ${q.question}</div>`;
+        
+        const optionsWrapper = document.createElement('div');
+        optionsWrapper.className = 'quiz-options-wrapper';
+
+        options.forEach(opt => {
+            const btn = document.createElement('div');
+            btn.className = 'quiz-option';
+            btn.innerHTML = opt.text; // Utilise innerHTML pour le LaTeX ($...$)
+
+            btn.onclick = () => {
+                if (card.classList.contains('answered')) return;
+                card.classList.add('answered');
+
+                if (opt.isCorrect) {
+                    btn.classList.add('correct');
+                    btn.innerHTML += " ✅";
+                } else {
+                    btn.classList.add('wrong');
+                    btn.innerHTML += " ❌";
+                }
+            };
+            card.appendChild(btn);
+        });
+        container.appendChild(card);
+    });
+    
+    // 3. On force MathJax à transformer les $...$ en jolies formules
+    if(window.MathJax) MathJax.typesetPromise();
+    
+    navigateTo('view-quiz');
+}
+
 /* =============================================================================
    CALCUL MASSE MOLAIRE
    ============================================================================= */
