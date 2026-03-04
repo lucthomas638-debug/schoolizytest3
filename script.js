@@ -103,11 +103,68 @@ function performSearch() {
    3. GESTION SUPABASE
    ============================================================================= */
 
+/* =============================================================================
+   3. GESTION SUPABASE & MODES (COURS, QUIZ, EXOS)
+   ============================================================================= */
+
+// Étape 1 : Quand on clique sur une matière (ex: Maths)
 async function checkContentAndNavigate(subject) {
     state.currentSubject = subject;
-    const { data, error } = await sb.from('lessons').select('chapter_number, content').eq('class_id', state.currentClassCode).eq('subject_id', subject.toLowerCase()).order('chapter_number', { ascending: true });
-    if (error || !data || data.length === 0) return alert("Contenu non disponible.");
-    openChaptersPage(data);
+    // On affiche d'abord le choix du mode (Cours, Quiz, etc.)
+    navigateTo('view-mode');
+}
+
+// Étape 2 : Quand on choisit un mode (ex: Quiz)
+function chooseMode(mode) {
+    state.currentMode = mode;
+    // On va chercher les chapitres disponibles pour ce sujet et cette classe
+    loadChapters();
+}
+
+// Étape 3 : Charger la liste des chapitres depuis Supabase
+async function loadChapters() {
+    const { data, error } = await sb
+        .from('lessons')
+        .select('chapter_number, content')
+        .eq('class_id', state.currentClassCode)
+        .eq('subject_id', state.currentSubject.toLowerCase())
+        .order('chapter_number', { ascending: true });
+
+    if (error || !data || data.length === 0) {
+        return alert("Contenu bientôt disponible pour cette matière !");
+    }
+    
+    renderChaptersGrid(data);
+}
+
+// Étape 4 : Afficher les tuiles des chapitres
+function renderChaptersGrid(chaptersList) {
+    const grid = document.getElementById('chapters-grid');
+    grid.innerHTML = '';
+    
+    // On change le titre selon le mode pour que l'élève sache où il est
+    const modeTitles = { 'lesson': ' (Cours)', 'quiz': ' (Quiz)', 'exercise': ' (Exercices)', 'flashcard': ' (Flashcards)', 'fiche': ' (Fiches)' };
+    document.getElementById('chapters-title').innerText = state.currentSubject + modeTitles[state.currentMode];
+
+    chaptersList.forEach(l => {
+        const temp = document.createElement('div'); 
+        temp.innerHTML = l.content;
+        const title = temp.querySelector('h1')?.innerText || "Chapitre " + l.chapter_number;
+        
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `<p style="color:#888; font-size:0.8rem;">CHAPITRE ${l.chapter_number}</p><h3>${title}</h3>`;
+        
+        // Redirection dynamique selon le mode choisi à l'étape 2
+        card.onclick = () => {
+            if(state.currentMode === 'quiz') openQuiz(l.chapter_number);
+            else if(state.currentMode === 'exercise') openExercises(l.chapter_number);
+            else if(state.currentMode === 'flashcard') openFlashcards(l.chapter_number);
+            else displayLesson(l.chapter_number);
+        };
+        grid.appendChild(card);
+    });
+    navigateTo('view-chapters');
 }
 
 function openChaptersPage(list) {
