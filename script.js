@@ -167,14 +167,16 @@ function renderChaptersGrid(chaptersList) {
             <h3>${title}</h3>
         `;
         
-        // --- LA CONNEXION AUX BOUTONS ---
-        card.onclick = () => {
+      // --- LA CONNEXION AUX BOUTONS ---
+      card.onclick = () => {
             if (state.currentMode === 'quiz') {
                 openQuiz(l.chapter_number); // Appelle la fonction Quiz Supabase
             } else if (state.currentMode === 'exercise') {
                 openExercises(l.chapter_number); // Appelle la fonction Exercices Supabase
             } else if (state.currentMode === 'flashcard') {
                 openFlashcards(l.chapter_number); // Appelle la fonction Flashcards Supabase
+            } else if (state.currentMode === 'fiche') {
+                openFicheRecap(l.chapter_number); // Appelle la fonction Fiches Récap Supabase
             } else {
                 displayLesson(l.chapter_number); // Par défaut : affiche le cours
             }
@@ -326,6 +328,96 @@ function showQuizResult(score, total, container, chapterNum) {
     setTimeout(() => {
         resultDiv.scrollIntoView({ behavior: 'smooth' });
     }, 100);
+}
+
+// Exercice
+
+async function openExercises(chapterNum) {
+    const { data, error } = await sb
+        .from('exercises')
+        .select('*')
+        .eq('class_id', state.currentClassCode)
+        .eq('subject_id', state.currentSubject.toLowerCase())
+        .eq('chapter_number', chapterNum);
+
+    if (error || !data || data.length === 0) return alert("Pas d'exercices pour ce chapitre.");
+
+    const container = document.getElementById('exercise-container'); // Assure-toi d'avoir cet ID dans ton HTML
+    container.innerHTML = `<h2 class="view-title">Exercices - Chapitre ${chapterNum}</h2>`;
+
+    data.forEach((ex, idx) => {
+        const card = document.createElement('div');
+        card.className = 'exercise-card';
+        card.innerHTML = `
+            <div class="ex-header">
+                <span class="ex-difficulty">Difficulté: ${"⭐".repeat(ex.difficulty || 1)}</span>
+                <span class="ex-time">⏱️ ${ex.estimated_time || '15 min'}</span>
+            </div>
+            <div class="ex-enunciated">${ex.enunciated}</div>
+            <button class="btn-show-corr" onclick="this.nextElementSibling.classList.toggle('visible')">
+                👁️ Voir la correction
+            </button>
+            <div class="ex-correction" style="display:none;">
+                <hr>
+                <strong>Correction :</strong><br>${ex.correction}
+            </div>
+        `;
+        container.appendChild(card);
+    });
+
+    if (window.MathJax) MathJax.typesetPromise();
+    navigateTo('view-exercises');
+}
+
+// Flashcards 
+
+async function openFlashcards(chapterNum) {
+    const { data, error } = await sb
+        .from('flashcards')
+        .select('*')
+        .eq('class_id', state.currentClassCode)
+        .eq('subject_id', state.currentSubject.toLowerCase())
+        .eq('chapter_number', chapterNum);
+
+    if (error || !data || data.length === 0) return alert("Pas de flashcards ici.");
+
+    const container = document.getElementById('flashcards-grid');
+    container.innerHTML = '';
+
+    data.forEach(cardData => {
+        const card = document.createElement('div');
+        card.className = 'flashcard';
+        card.innerHTML = `
+            <div class="flashcard-inner">
+                <div class="flashcard-front">${cardData.front}</div>
+                <div class="flashcard-back">${cardData.back}</div>
+            </div>
+        `;
+        card.onclick = () => card.classList.toggle('flipped');
+        container.appendChild(card);
+    });
+
+    if (window.MathJax) MathJax.typesetPromise();
+    navigateTo('view-flashcards');
+}
+
+// Fiche Récapitulative 
+
+async function openFicheRecap(chapterNum) {
+    const { data, error } = await sb
+        .from('lessons')
+        .select('content')
+        .eq('class_id', state.currentClassCode)
+        .eq('subject_id', state.currentSubject.toLowerCase())
+        .eq('chapter_number', chapterNum)
+        .single();
+
+    if (data) {
+        // On peut imaginer un style différent ou juste le cours complet
+        document.getElementById('fiche-content').innerHTML = data.content;
+        if (window.MathJax) MathJax.typesetPromise();
+        navigateTo('view-fiche');
+    }
 }
 
 /* =============================================================================
