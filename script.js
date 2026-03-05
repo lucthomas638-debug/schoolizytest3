@@ -247,17 +247,15 @@ async function openQuiz(chapterNum) {
         const card = document.createElement('div');
         card.className = 'quiz-question-card';
         
-        // --- MODIFICATION 1 : Nettoyage de la question ---
-        const cleanQuestion = q.question.replace(/\\/g, '\\\\');
-        card.innerHTML = `<div class="quiz-question-text">Question ${idx + 1} : ${cleanQuestion}</div>`;
+        // On utilise directement q.question (déjà propre dans Supabase)
+        card.innerHTML = `<div class="quiz-question-text">Question ${idx + 1} : ${q.question}</div>`;
         
         q.options.forEach((opt, optIdx) => {
             const btn = document.createElement('div');
             btn.className = 'quiz-option';
             
-            // --- MODIFICATION 2 : Nettoyage de l'option ---
-            const cleanOpt = opt.replace(/\\/g, '\\\\');
-            btn.innerHTML = cleanOpt; 
+            // On utilise directement opt
+            btn.innerHTML = opt; 
             
             btn.onclick = function() {
                 if (card.classList.contains('answered')) return;
