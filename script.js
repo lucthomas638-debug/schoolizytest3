@@ -335,6 +335,23 @@ function showQuizResult(score, total, container, chapterNum) {
 // Exercice
 
 async function openExercises(chapterNum) {
+   console.log("Recherche exercices pour:", {
+        classe: state.currentClassCode,
+        matiere: state.currentSubject.toLowerCase(),
+        chapitre: chapterNum
+    });
+
+    const { data, error } = await sb
+        .from('exercises')
+        .select('*')
+        .eq('class_id', state.currentClassCode)
+        .eq('subject_id', state.currentSubject.toLowerCase())
+        .eq('chapter_number', chapterNum);
+
+    console.log("Données reçues de Supabase :", data);
+    
+    if (error) console.error("Erreur Supabase :", error);
+   
     // 1. Récupération des exercices dans Supabase
     const { data, error } = await sb
         .from('exercises')
