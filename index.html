@@ -1622,8 +1622,21 @@
     }
 }
 
-.view { display: none; }
-.view.active { display: block !important; }
+/* On ne cache que les vues qui ont un ID commençant par 'view-' */
+[id^="view-"] {
+    display: none;
+}
+
+/* On affiche la vue active, mais en respectant son type d'affichage d'origine */
+[id^="view-"].active {
+    display: block !important;
+}
+
+/* SI ta page d'accueil (Home) utilise Flexbox ou Grid, 
+   on s'assure qu'elle garde son style quand elle est active */
+#view-home.active {
+    display: flex !important; /* Ou 'grid' selon ton design initial */
+}
     
 </style>
     
