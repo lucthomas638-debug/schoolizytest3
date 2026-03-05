@@ -333,6 +333,7 @@ function showQuizResult(score, total, container, chapterNum) {
 // Exercice
 
 async function openExercises(chapterNum) {
+    // 1. Récupération des exercices dans Supabase
     const { data, error } = await sb
         .from('exercises')
         .select('*')
@@ -340,35 +341,52 @@ async function openExercises(chapterNum) {
         .eq('subject_id', state.currentSubject.toLowerCase())
         .eq('chapter_number', chapterNum);
 
-    if (error || !data || data.length === 0) return alert("Pas d'exercices pour ce chapitre.");
+    if (error || !data || data.length === 0) {
+        return alert("Pas d'exercices disponibles pour ce chapitre.");
+    }
 
-    const container = document.getElementById('exercise-container'); // Assure-toi d'avoir cet ID dans ton HTML
-    container.innerHTML = `<h2 class="view-title">Exercices - Chapitre ${chapterNum}</h2>`;
+    const container = document.getElementById('exercise-container');
+    container.innerHTML = `<h2 style="margin-bottom:20px;">Exercices - Chapitre ${chapterNum}</h2>`;
 
+    // 2. Création des cartes d'exercices
     data.forEach((ex, idx) => {
         const card = document.createElement('div');
-        card.className = 'exercise-card';
+        card.className = 'exercise-card'; // Assure-toi d'avoir ce style dans ton CSS
+        card.style = "background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);";
+        
         card.innerHTML = `
-            <div class="ex-header">
-                <span class="ex-difficulty">Difficulté: ${"⭐".repeat(ex.difficulty || 1)}</span>
-                <span class="ex-time">⏱️ ${ex.estimated_time || '15 min'}</span>
+            <div style="display:flex; justify-content:between; margin-bottom:15px; color:#666; font-size:0.9rem;">
+                <span>💪 Difficulté : ${ex.difficulty || 2}/5</span>
+                <span style="margin-left:20px;">⏱️ ${ex.estimated_time || '10 min'}</span>
             </div>
-            <div class="ex-enunciated">${ex.enunciated}</div>
-            <button class="btn-show-corr" onclick="this.nextElementSibling.classList.toggle('visible')">
+            <div class="ex-enunciated" style="font-size:1.1rem; margin-bottom:20px;">${ex.enunciated}</div>
+            <button class="btn-show-corr" style="background:var(--brand-school); color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold;">
                 👁️ Voir la correction
             </button>
-            <div class="ex-correction" style="display:none;">
-                <hr>
-                <strong>Correction :</strong><br>${ex.correction}
+            <div class="ex-correction" style="display:none; margin-top:20px; padding-top:20px; border-top:1px solid #eee;">
+                <h4 style="color:green; margin-bottom:10px;">Correction :</h4>
+                ${ex.correction}
             </div>
         `;
+
+        // Logique du bouton correction
+        const btn = card.querySelector('.btn-show-corr');
+        const corrDiv = card.querySelector('.ex-correction');
+        btn.onclick = () => {
+            const isHidden = corrDiv.style.display === 'none';
+            corrDiv.style.display = isHidden ? 'block' : 'none';
+            btn.innerText = isHidden ? '🙈 Cacher la correction' : '👁️ Voir la correction';
+        };
+
         container.appendChild(card);
     });
 
+    // 3. Rendu des formules mathématiques
     if (window.MathJax) MathJax.typesetPromise();
+    
+    // 4. Navigation vers la vue exercices
     navigateTo('view-exercises');
 }
-
 // Flashcards 
 
 async function openFlashcards(chapterNum) {
