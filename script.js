@@ -335,32 +335,39 @@ function showQuizResult(score, total, container, chapterNum) {
 // Exercice
 
 async function openExercises(chapterNum) {
-    const container = document.getElementById('exercise-list-container');
-    container.innerHTML = '<p style="text-align:center;">Chargement des exercices...</p>';
+    const container = document.getElementById('final-exercise-list');
+    
+    // Sécurité anti-null
+    if (!container) {
+        console.error("❌ L'élément 'final-exercise-list' est introuvable dans le HTML");
+        return;
+    }
 
-    // 1. Récupération des données dans Supabase
+    container.innerHTML = '<p style="text-align:center; padding:20px;">Chargement des exercices...</p>';
+
+    // 1. Récupération Supabase
     const { data, error } = await sb
         .from('exercises')
         .select('*')
-        .eq('class_id', state.currentClassCode)
-        .eq('subject_id', state.currentSubject.toLowerCase())
+        .eq('class_id', state.currentClassCode.trim())
+        .eq('subject_id', state.currentSubject.toLowerCase().trim())
         .eq('chapter_number', chapterNum);
 
     if (error || !data || data.length === 0) {
-        container.innerHTML = '<p style="text-align:center; padding:20px;">Pas d\'exercices disponibles pour ce chapitre.</p>';
+        container.innerHTML = `<p style="text-align:center; padding:20px;">Pas d'exercices disponibles pour le chapitre ${chapterNum}.</p>`;
         return;
     }
 
     container.innerHTML = ''; // On vide le message de chargement
 
-    // 2. On affiche chaque exercice récupéré
+    // 2. Affichage avec ton design favori
     data.forEach((ex, idx) => {
         const card = document.createElement('div');
         card.className = 'exercise-card';
         
-        const corrId = `corr-ex-${chapterNum}-${idx}`;
+        const corrId = `corr-final-${chapterNum}-${idx}`;
         
-        // Calcul des étoiles (basé sur ta colonne difficulty)
+        // Calcul des étoiles
         let stars = "";
         for(let i=0; i<5; i++) {
             stars += (i < ex.difficulty) ? "★" : "☆";
@@ -391,12 +398,12 @@ async function openExercises(chapterNum) {
         container.appendChild(card);
     });
 
-    // 3. Navigation et MathJax
+    // 3. Navigation et Rendu Mathématique
     if (window.MathJax) MathJax.typesetPromise();
-    navigateTo('view-exercise');
+    navigateTo('view-final-exercises');
 }
 
-// Garde ta fonction toggleCorrection telle quelle, elle est parfaite
+// Fonction pour afficher/cacher la correction (avec ton style d'ID)
 function toggleCorrection(id) {
     const div = document.getElementById(id);
     const btn = div.previousElementSibling; 
