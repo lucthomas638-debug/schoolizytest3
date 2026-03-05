@@ -335,14 +335,10 @@ function showQuizResult(score, total, container, chapterNum) {
 // Exercice
 
 async function openExercises(chapterNum) {
-    // 1. Diagnostic : on regarde ce qu'on cherche
-    console.log("🔍 Recherche exercices pour:", {
-        classe: state.currentClassCode,
-        matiere: state.currentSubject.toLowerCase(),
-        chapitre: chapterNum
-    });
+    const container = document.getElementById('exercise-list-container');
+    container.innerHTML = '<p style="text-align:center;">Chargement des exercices...</p>';
 
-    // 2. Récupération UNIQUE des exercices dans Supabase
+    // 1. Récupération des données dans Supabase
     const { data, error } = await sb
         .from('exercises')
         .select('*')
@@ -350,57 +346,68 @@ async function openExercises(chapterNum) {
         .eq('subject_id', state.currentSubject.toLowerCase())
         .eq('chapter_number', chapterNum);
 
-    // 3. Gestion des erreurs et des données vides
-    if (error) {
-        console.error("❌ Erreur Supabase :", error);
-        return alert("Erreur lors du chargement.");
+    if (error || !data || data.length === 0) {
+        container.innerHTML = '<p style="text-align:center; padding:20px;">Pas d\'exercices disponibles pour ce chapitre.</p>';
+        return;
     }
 
-    console.log("📦 Données reçues :", data);
+    container.innerHTML = ''; // On vide le message de chargement
 
-    if (!data || data.length === 0) {
-        return alert("Pas d'exercices disponibles pour ce chapitre.");
-    }
-
-    // 4. Affichage dans le HTML
-    const container = document.getElementById('exercise-container');
-    container.innerHTML = `<h2 style="margin-bottom:20px;">Exercices - Chapitre ${chapterNum}</h2>`;
-
-    data.forEach((ex) => {
+    // 2. On affiche chaque exercice récupéré
+    data.forEach((ex, idx) => {
         const card = document.createElement('div');
-        card.className = 'exercise-card'; 
-        card.style = "background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: left;";
+        card.className = 'exercise-card';
+        
+        const corrId = `corr-ex-${chapterNum}-${idx}`;
+        
+        // Calcul des étoiles (basé sur ta colonne difficulty)
+        let stars = "";
+        for(let i=0; i<5; i++) {
+            stars += (i < ex.difficulty) ? "★" : "☆";
+        }
         
         card.innerHTML = `
-            <div style="display:flex; justify-content: space-between; margin-bottom:15px; color:#666; font-size:0.9rem;">
-                <span>💪 Difficulté : ${ex.difficulty || 2}/5</span>
-                <span>⏱️ ${ex.estimated_time || '10 min'}</span>
+            <div class="exercise-header">
+                <span class="exercise-badge">Exercice ${idx + 1}</span>
+                <div class="exercise-meta">
+                    <span class="difficulty-stars">${stars}</span>
+                    <span class="estimated-time">⏱️ ${ex.estimated_time}</span>
+                </div>
             </div>
-            <div class="ex-enunciated" style="font-size:1.1rem; margin-bottom:20px;">${ex.enunciated}</div>
-            <button class="btn-show-corr" style="background:#007bff; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold;">
-                👁️ Voir la correction
+
+            <div class="exercise-body" style="color: black !important; margin-bottom: 1rem;">
+                ${ex.enunciated}
+            </div>
+            
+            <button class="btn-reveal" onclick="toggleCorrection('${corrId}')">
+                <span>👁️</span> Voir la correction
             </button>
-            <div class="ex-correction" style="display:none; margin-top:20px; padding-top:20px; border-top:1px solid #eee;">
-                <h4 style="color:green; margin-bottom:10px;">Correction :</h4>
-                ${ex.correction}
+            
+            <div id="${corrId}" class="correction-box" style="display:none">
+                <span class="correction-title">✅ Correction détaillée</span>
+                <div style="color: #333;">${ex.correction}</div>
             </div>
         `;
-
-        // Logique du bouton correction
-        const btn = card.querySelector('.btn-show-corr');
-        const corrDiv = card.querySelector('.ex-correction');
-        btn.onclick = () => {
-            const isHidden = corrDiv.style.display === 'none';
-            corrDiv.style.display = isHidden ? 'block' : 'none';
-            btn.innerText = isHidden ? '🙈 Cacher la correction' : '👁️ Voir la correction';
-        };
-
         container.appendChild(card);
     });
 
-    // 5. Rendu MathJax et Navigation
+    // 3. Navigation et MathJax
     if (window.MathJax) MathJax.typesetPromise();
-    navigateTo('view-exercises');
+    navigateTo('view-exercise');
+}
+
+// Garde ta fonction toggleCorrection telle quelle, elle est parfaite
+function toggleCorrection(id) {
+    const div = document.getElementById(id);
+    const btn = div.previousElementSibling; 
+    
+    if (div.style.display === 'none') {
+        div.style.display = 'block';
+        btn.innerHTML = '<span>🙈</span> Cacher la correction';
+    } else {
+        div.style.display = 'none';
+        btn.innerHTML = '<span>👁️</span> Voir la correction';
+    }
 }
 // Flashcards 
 
