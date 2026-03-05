@@ -335,12 +335,14 @@ function showQuizResult(score, total, container, chapterNum) {
 // Exercice
 
 async function openExercises(chapterNum) {
-   console.log("Recherche exercices pour:", {
+    // 1. Diagnostic : on regarde ce qu'on cherche
+    console.log("🔍 Recherche exercices pour:", {
         classe: state.currentClassCode,
         matiere: state.currentSubject.toLowerCase(),
         chapitre: chapterNum
     });
 
+    // 2. Récupération UNIQUE des exercices dans Supabase
     const { data, error } = await sb
         .from('exercises')
         .select('*')
@@ -348,38 +350,34 @@ async function openExercises(chapterNum) {
         .eq('subject_id', state.currentSubject.toLowerCase())
         .eq('chapter_number', chapterNum);
 
-    console.log("Données reçues de Supabase :", data);
-    
-    if (error) console.error("Erreur Supabase :", error);
-   
-    // 1. Récupération des exercices dans Supabase
-    const { data, error } = await sb
-        .from('exercises')
-        .select('*')
-        .eq('class_id', state.currentClassCode)
-        .eq('subject_id', state.currentSubject.toLowerCase())
-        .eq('chapter_number', chapterNum);
+    // 3. Gestion des erreurs et des données vides
+    if (error) {
+        console.error("❌ Erreur Supabase :", error);
+        return alert("Erreur lors du chargement.");
+    }
 
-    if (error || !data || data.length === 0) {
+    console.log("📦 Données reçues :", data);
+
+    if (!data || data.length === 0) {
         return alert("Pas d'exercices disponibles pour ce chapitre.");
     }
 
+    // 4. Affichage dans le HTML
     const container = document.getElementById('exercise-container');
     container.innerHTML = `<h2 style="margin-bottom:20px;">Exercices - Chapitre ${chapterNum}</h2>`;
 
-    // 2. Création des cartes d'exercices
-    data.forEach((ex, idx) => {
+    data.forEach((ex) => {
         const card = document.createElement('div');
-        card.className = 'exercise-card'; // Assure-toi d'avoir ce style dans ton CSS
-        card.style = "background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);";
+        card.className = 'exercise-card'; 
+        card.style = "background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: left;";
         
         card.innerHTML = `
-            <div style="display:flex; justify-content:between; margin-bottom:15px; color:#666; font-size:0.9rem;">
+            <div style="display:flex; justify-content: space-between; margin-bottom:15px; color:#666; font-size:0.9rem;">
                 <span>💪 Difficulté : ${ex.difficulty || 2}/5</span>
-                <span style="margin-left:20px;">⏱️ ${ex.estimated_time || '10 min'}</span>
+                <span>⏱️ ${ex.estimated_time || '10 min'}</span>
             </div>
             <div class="ex-enunciated" style="font-size:1.1rem; margin-bottom:20px;">${ex.enunciated}</div>
-            <button class="btn-show-corr" style="background:var(--brand-school); color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold;">
+            <button class="btn-show-corr" style="background:#007bff; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold;">
                 👁️ Voir la correction
             </button>
             <div class="ex-correction" style="display:none; margin-top:20px; padding-top:20px; border-top:1px solid #eee;">
@@ -400,10 +398,8 @@ async function openExercises(chapterNum) {
         container.appendChild(card);
     });
 
-    // 3. Rendu des formules mathématiques
+    // 5. Rendu MathJax et Navigation
     if (window.MathJax) MathJax.typesetPromise();
-    
-    // 4. Navigation vers la vue exercices
     navigateTo('view-exercises');
 }
 // Flashcards 
