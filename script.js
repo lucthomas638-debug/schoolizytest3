@@ -169,6 +169,8 @@ function renderChaptersGrid(chaptersList) {
         
       // --- LA CONNEXION AUX BOUTONS ---
       card.onclick = () => {
+         console.log("Chapitre cliqué :", l.chapter_number);
+         console.log("Mode actuel :", state.currentMode);
             if (state.currentMode === 'quiz') {
                 openQuiz(l.chapter_number); // Appelle la fonction Quiz Supabase
             } else if (state.currentMode === 'exercise') {
