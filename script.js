@@ -233,13 +233,12 @@ async function openQuiz(chapterNum) {
         return alert("Pas de quiz disponible pour ce chapitre.");
     }
 
-    // 2. Mélanger et prendre 5 questions (comme dans ton ancienne fonction)
+    // 2. Mélanger et prendre 5 questions
     let qList = [...data].sort(() => 0.5 - Math.random()).slice(0, 5);
     
     const container = document.getElementById('quiz-container');
-    container.innerHTML = ''; // On vide pour commencer propre
+    container.innerHTML = ''; 
 
-    // Variables pour le score (tes variables originales)
     let score = 0;
     let answeredCount = 0;
     const totalQuestions = qList.length;
@@ -247,13 +246,18 @@ async function openQuiz(chapterNum) {
     qList.forEach((q, idx) => {
         const card = document.createElement('div');
         card.className = 'quiz-question-card';
-        card.innerHTML = `<div class="quiz-question-text">Question ${idx + 1} : ${q.question}</div>`;
         
-        // On crée les boutons d'options
+        // --- MODIFICATION 1 : Nettoyage de la question ---
+        const cleanQuestion = q.question.replace(/\\/g, '\\\\');
+        card.innerHTML = `<div class="quiz-question-text">Question ${idx + 1} : ${cleanQuestion}</div>`;
+        
         q.options.forEach((opt, optIdx) => {
             const btn = document.createElement('div');
             btn.className = 'quiz-option';
-            btn.innerHTML = opt; // Utilise innerHTML pour le LaTeX
+            
+            // --- MODIFICATION 2 : Nettoyage de l'option ---
+            const cleanOpt = opt.replace(/\\/g, '\\\\');
+            btn.innerHTML = cleanOpt; 
             
             btn.onclick = function() {
                 if (card.classList.contains('answered')) return;
@@ -261,7 +265,6 @@ async function openQuiz(chapterNum) {
                 card.classList.add('answered');
                 answeredCount++;
 
-                // Vérification avec l'index correct de la base de données
                 if (optIdx === q.correct_index) {
                     btn.classList.add('correct');
                     btn.innerHTML += " ✅";
@@ -269,12 +272,10 @@ async function openQuiz(chapterNum) {
                 } else {
                     btn.classList.add('wrong');
                     btn.innerHTML += " ❌";
-                    // On montre la bonne réponse en vert
                     const allButtons = card.querySelectorAll('.quiz-option');
                     allButtons[q.correct_index].classList.add('correct');
                 }
 
-                // Si fini, on affiche ton tableau de score personnalisé
                 if (answeredCount === totalQuestions) {
                     showQuizResult(score, totalQuestions, container, chapterNum);
                 }
