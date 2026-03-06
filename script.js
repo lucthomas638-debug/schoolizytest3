@@ -337,36 +337,37 @@ function showQuizResult(score, total, container, chapterNum) {
 async function openFlashcards(chapterNum) {
     const container = document.getElementById('flashcards-grid-container');
     
-    // On vide et on prépare le conteneur (ton style original)
-    container.innerHTML = '<p style="text-align:center;">🎲 Chargement des cartes...</p>';
+    // Reset et style du conteneur
+    container.innerHTML = '<p style="text-align:center; padding:20px;">🎲 Tirage des cartes...</p>';
     container.style.display = 'flex';
     container.style.flexDirection = 'column';
     container.style.alignItems = 'center';
 
-    // --- CONNEXION SUPABASE ---
+    // 1. Récupération des données Supabase (colonnes front et back)
     const { data, error } = await sb
         .from('flashcards')
-        .select('*')
+        .select('front, back')
         .eq('class_id', state.currentClassCode.trim())
         .eq('subject_id', state.currentSubject.toLowerCase().trim())
         .eq('chapter_number', chapterNum);
 
     if (error || !data || data.length === 0) {
-        alert("Pas de flashcards disponibles pour ce chapitre.");
+        container.innerHTML = `<p style="text-align:center; padding:20px;">Pas de flashcards disponibles pour ce chapitre.</p>`;
+        navigateTo('view-flashcards');
         return;
     }
 
-    // --- TA LOGIQUE DE HASARD (Fisher-Yates) ---
+    // 2. MÉLANGE (Fisher-Yates)
     let shuffled = [...data];
     for (let i = shuffled.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
 
-    // On ne prend que les 4 premières cartes
+    // On en prend 4
     const cardsToShow = shuffled.slice(0, 4);
 
-    // --- TA LOGIQUE D'AFFICHAGE ---
+    // 3. AFFICHAGE DE LA GRILLE
     container.innerHTML = '';
     const grid = document.createElement('div');
     grid.className = 'flashcards-grid';
@@ -377,7 +378,6 @@ async function openFlashcards(chapterNum) {
         cardEl.className = 'flashcard';
         cardEl.onclick = function() { this.classList.toggle('flipped'); };
         
-        // On utilise cardData.front et cardData.back (colonnes Supabase)
         cardEl.innerHTML = `
             <div class="flashcard-front">
                 <span class="flashcard-hint">Question</span>
@@ -392,18 +392,16 @@ async function openFlashcards(chapterNum) {
     });
     container.appendChild(grid);
 
-    // --- TON BOUTON PIOCHER ---
+    // 4. TON BOUTON PIOCHER
     const btnNext = document.createElement('button');
     btnNext.className = 'btn-nav-quick';
     btnNext.style.margin = "30px 0";
     btnNext.style.borderColor = "#ffca28";
     btnNext.innerHTML = "🎲 Piocher 4 autres cartes";
-    btnNext.onclick = () => {
-        openFlashcards(chapterNum);
-    };
+    btnNext.onclick = () => openFlashcards(chapterNum);
     container.appendChild(btnNext);
 
-    // --- TA BARRE DE NAVIGATION ---
+    // 5. TA BARRE DE NAVIGATION
     const footer = document.createElement('div');
     footer.className = 'quick-nav-footer';
     footer.style.width = '100%';
@@ -415,7 +413,7 @@ async function openFlashcards(chapterNum) {
     `;
     container.appendChild(footer);
 
-    if(window.MathJax) MathJax.typesetPromise();
+    if (window.MathJax) MathJax.typesetPromise();
     navigateTo('view-flashcards');
 }
 
