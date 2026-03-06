@@ -1518,26 +1518,11 @@
 }
 
 /* --- STYLES FLASHCARDS OPTIMISÉS --- */
-.flashcard {
-    height: 220px;
-    cursor: pointer;
-    position: relative;
-    perspective: 1000px;
-    transform-style: preserve-3d;
-    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.flashcard.flipped {
-    transform: rotateY(180deg);
-}
-
 .flashcard-front, .flashcard-back {
     position: absolute;
-    top: 0;
-    left: 0;
     width: 100%;
     height: 100%;
-    /* On force la visibilité arrière à être cachée */
+    /* 1. On force la disparition de l'envers */
     backface-visibility: hidden !important;
     -webkit-backface-visibility: hidden !important;
     
@@ -1548,28 +1533,25 @@
     padding: 30px;
     border-radius: 25px;
     text-align: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    font-size: 1.2rem;
+    font-weight: 700;
 }
 
+/* 2. La face avant doit être "devant" au repos */
 .flashcard-front {
-    background: white;
+    background: linear-gradient(135deg, #ffffff 0%, #f9f9ff 100%);
     border: 3px solid var(--brand-school);
-    z-index: 2; /* Devant par défaut */
-    transform: rotateY(0deg);
+    z-index: 2;
+    transform: rotateY(0deg); /* Position de base */
 }
 
+/* 3. La face arrière doit être "derrière" et déjà retournée */
 .flashcard-back {
-    background: var(--brand-school);
+    background: linear-gradient(135deg, var(--brand-school) 0%, #6c4ab6 100%);
     color: white;
     border: 3px solid var(--brand-school);
-    /* Crucial : la face arrière est déjà tournée et attend derrière */
-    transform: rotateY(180deg);
+    transform: rotateY(180deg); /* Déjà prête pour le flip */
     z-index: 1;
-}
-
-/* On s'assure que le contenu ne bug pas */
-.flashcard-content {
-    pointer-events: none;
 }
     
 /* On ne cache que les vues qui ont un ID commençant par 'view-' */
