@@ -1518,24 +1518,12 @@
 }
 
 /* --- STYLES FLASHCARDS INFAILLIBLES --- */
-/* --- STYLES FLASHCARDS DÉFINITIFS --- */
-.flashcards-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 25px;
-    perspective: 1200px;
-    margin: 2rem auto;
-    max-width: 900px;
-    transform-style: preserve-3d; 
-}
-
 .flashcard {
     height: 220px;
     cursor: pointer;
     position: relative;
-    transform-style: preserve-3d; 
+    transform-style: preserve-3d !important; /* FORCE la 3D */
     transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
-    overflow: visible !important;
 }
 
 .flashcard.flipped {
@@ -1548,37 +1536,37 @@
     left: 0;
     width: 100%;
     height: 100%;
+    
+    /* FIX 1 : On force la disparition de l'envers sur TOUS les moteurs */
+    backface-visibility: hidden !important;
     -webkit-backface-visibility: hidden !important;
-    backface-visibility: hidden !important; 
-    transform-style: preserve-3d;
+    -moz-backface-visibility: hidden !important;
+    
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 30px;
     border-radius: 25px;
     text-align: center;
-    font-size: 1.2rem;
-    font-weight: 700;
     box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    overflow: hidden; 
 }
 
-/* FACE AVANT (Question) */
 .flashcard-front {
-    background: linear-gradient(135deg, #ffffff 0%, #f9f9ff 100%);
+    background: white;
     border: 3px solid var(--brand-school);
-    color: var(--text-dark);
     z-index: 2;
-    transform: rotateY(0deg); /* Face à l'utilisateur */
+    transform: rotateY(0deg);
+    /* FIX 2 : On pousse un peu vers l'avant */
+    transform: translateZ(1px); 
 }
 
-/* FACE ARRIÈRE (Réponse) */
 .flashcard-back {
     background: linear-gradient(135deg, var(--brand-school) 0%, #6c4ab6 100%);
     color: white;
     border: 3px solid var(--brand-school);
-    transform: rotateY(180deg); /* Pré-tournée pour être à l'endroit après le flip */
+    
+    /* FIX 3 : On la retourne ET on la pousse un peu vers l'arrière */
+    transform: rotateY(180deg) translateZ(1px) !important;
     z-index: 1;
 }
     
