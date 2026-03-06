@@ -227,7 +227,7 @@ function shuffleArray(array) {
 async function openQuiz(chapterNum) {
     // 1. Récupération des données depuis Supabase
     const { data, error } = await sb
-        .from('quizzes')
+        .from('es')
         .select('*')
         .eq('class_id', state.currentClassCode)
         .eq('subject_id', state.currentSubject.toLowerCase())
@@ -330,6 +330,62 @@ function showQuizResult(score, total, container, chapterNum) {
     setTimeout(() => {
         resultDiv.scrollIntoView({ behavior: 'smooth' });
     }, 100);
+}
+
+// Flashcards 
+
+async function openFlashcards(chapterNum) {
+    const container = document.getElementById('flashcards-grid-container');
+    
+    if (!container) {
+        console.error("❌ L'ID 'flashcards-grid-container' est introuvable.");
+        return;
+    }
+
+    // Affichage du chargement
+    container.innerHTML = '<p style="text-align:center; padding:20px; color:var(--brand-school);">Chargement des cartes...</p>';
+
+    // Récupération Supabase
+    const { data, error } = await sb
+        .from('flashcards')
+        .select('*')
+        .eq('class_id', state.currentClassCode.trim())
+        .eq('subject_id', state.currentSubject.toLowerCase().trim())
+        .eq('chapter_number', chapterNum);
+
+    if (error || !data || data.length === 0) {
+        container.innerHTML = `<p style="text-align:center; padding:20px;">📭 Pas de flashcards disponibles pour le chapitre ${chapterNum}.</p>`;
+        navigateTo('view-flashcards');
+        return;
+    }
+
+    container.innerHTML = ''; // On vide
+
+    // Création des cartes
+    data.forEach(fc => {
+        const card = document.createElement('div');
+        card.className = 'flashcard';
+        card.innerHTML = `
+            <div class="flashcard-inner">
+                <div class="flashcard-front">
+                    <div class="flashcard-content">${fc.front}</div>
+                </div>
+                <div class="flashcard-back">
+                    <div class="flashcard-content">${fc.back}</div>
+                </div>
+            </div>`;
+        
+        // Effet de retournement au clic
+        card.onclick = () => card.classList.toggle('flipped');
+        container.appendChild(card);
+    });
+
+    // Rendu des formules MathJax
+    if (window.MathJax) {
+        MathJax.typesetPromise([container]).catch((err) => console.log(err));
+    }
+
+    navigateTo('view-flashcards');
 }
 
 // Exercice
