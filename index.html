@@ -1518,56 +1518,108 @@
 }
 
 /* --- STYLES FLASHCARDS OPTIMISÉS --- */
+.flashcards-grid {
+    display: grid;
+    /* On force 2 colonnes sur tablette/ordi pour garder la clarté */
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    perspective: 1200px;
+    margin: 2rem auto;
+    max-width: 900px;
+}
+
 .flashcard {
     height: 220px;
     cursor: pointer;
     position: relative;
-    /* Indispensable pour que le recto et le verso vivent dans le même espace 3D */
-    transform-style: preserve-3d; 
-    transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform-style: preserve-3d;
+    transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); /* Effet de rebond élastique */
+}
+
+/* Effet de lévitation au survol avant le clic */
+.flashcard:hover:not(.flipped) {
+    transform: translateY(-10px) rotateX(5deg);
 }
 
 .flashcard.flipped {
-    /* On tourne la carte sur son axe Y */
     transform: rotateY(180deg);
 }
 
 .flashcard-front, .flashcard-back {
     position: absolute;
-    top: 0;
-    left: 0;
     width: 100%;
     height: 100%;
-    /* On cache l'envers pour éviter l'effet miroir */
-    backface-visibility: hidden !important;
-    -webkit-backface-visibility: hidden !important;
-    
+    backface-visibility: hidden;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 30px;
-    border-radius: 25px;
+    border-radius: 25px; /* Coins plus arrondis pour le style moderne */
     text-align: center;
+    font-size: 1.2rem;
+    font-weight: 700;
     box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 
-/* LA QUESTION (Face A) */
+/* FACE AVANT (Question) */
 .flashcard-front {
     background: linear-gradient(135deg, #ffffff 0%, #f9f9ff 100%);
     border: 3px solid var(--brand-school);
-    z-index: 2;
-    transform: rotateY(0deg); /* Face à nous */
+    color: var(--text-dark);
 }
 
-/* LA RÉPONSE (Face B) */
+/* FACE ARRIÈRE (Réponse) */
 .flashcard-back {
     background: linear-gradient(135deg, var(--brand-school) 0%, #6c4ab6 100%);
     color: white;
+    transform: rotateY(180deg);
     border: 3px solid var(--brand-school);
-    /* On la pré-retourne pour qu'elle soit dans le bon sens quand la carte pivote */
-    transform: rotateY(180deg); 
-    z-index: 1;
+}
+
+/* Étiquette (Question / Réponse) */
+.flashcard-hint {
+    position: absolute;
+    top: 15px; /* On le met en haut plutôt qu'en bas */
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 10px;
+}
+
+.flashcard-front .flashcard-hint {
+    background: #f0edff;
+    color: var(--brand-school);
+}
+
+.flashcard-back .flashcard-hint {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+/* Petite icône discrète en bas à droite pour indiquer qu'on peut cliquer */
+.flashcard-front::after {
+    content: "🔄";
+    position: absolute;
+    bottom: 15px;
+    right: 20px;
+    font-size: 1.2rem;
+    opacity: 0.3;
+}
+
+/* Responsive : 1 seule colonne sur petit mobile */
+@media (max-width: 600px) {
+    .flashcards-grid {
+        grid-template-columns: 1fr;
+        padding: 10px;
+    }
+    .flashcard {
+        height: 180px;
+    }
 }
     
 /* On ne cache que les vues qui ont un ID commençant par 'view-' */
