@@ -365,15 +365,14 @@ async function openFlashcards(chapterNum) {
     data.forEach(fc => {
         const card = document.createElement('div');
         card.className = 'flashcard';
-        card.innerHTML = `
-            <div class="flashcard-inner">
-                <div class="flashcard-front">
-                    <div class="flashcard-content">${fc.front}</div>
-                </div>
-                <div class="flashcard-back">
-                    <div class="flashcard-content">${fc.back}</div>
-                </div>
-            </div>`;
+      // Dans ta boucle data.forEach(fc => { ... })
+      card.innerHTML = `
+          <div class="flashcard-inner">
+              <div class="flashcard-front">
+                  <div class="flashcard-content">${fc.front}</div> </div>
+              <div class="flashcard-back">
+                  <div class="flashcard-content">${fc.back}</div>  </div>
+          </div>`;
         
         // Effet de retournement au clic
         card.onclick = () => card.classList.toggle('flipped');
