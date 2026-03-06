@@ -336,37 +336,37 @@ function showQuizResult(score, total, container, chapterNum) {
 
 async function openFlashcards(chapterNum) {
     const container = document.getElementById('flashcards-grid-container');
-    
-    // On vide et on prépare le conteneur (ton style original)
-    container.innerHTML = '';
+    if (!container) return;
+
+    // 1. Préparation du container (on garde ton style)
+    container.innerHTML = '<p style="text-align:center; padding:20px;">🎲 Tirage en cours...</p>';
     container.style.display = 'flex';
     container.style.flexDirection = 'column';
     container.style.alignItems = 'center';
 
-    // --- 1. RÉCUPÉRATION SUPABASE ---
+    // 2. Récupération Supabase (colonnes front et back)
     const { data, error } = await sb
         .from('flashcards')
-        .select('*')
+        .select('front, back')
         .eq('class_id', state.currentClassCode.trim())
         .eq('subject_id', state.currentSubject.toLowerCase().trim())
         .eq('chapter_number', chapterNum);
 
     if (error || !data || data.length === 0) {
-        alert("Pas de flashcards disponibles pour ce chapitre.");
+        container.innerHTML = `<p style="text-align:center; padding:20px;">Pas de flashcards disponibles.</p>`;
         return;
     }
 
-    // --- 2. TA LOGIQUE DE HASARD (Fisher-Yates) ---
+    // 3. Mélange (Fisher-Yates)
     let shuffled = [...data];
     for (let i = shuffled.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-
-    // On ne prend que les 4 premières
     const cardsToShow = shuffled.slice(0, 4);
 
-    // --- 3. AFFICHAGE DE LA GRILLE ---
+    // 4. Construction de la grille
+    container.innerHTML = '';
     const grid = document.createElement('div');
     grid.className = 'flashcards-grid';
     grid.style.width = '100%';
@@ -374,39 +374,39 @@ async function openFlashcards(chapterNum) {
     cardsToShow.forEach((cardData) => {
         const cardEl = document.createElement('div');
         cardEl.className = 'flashcard';
-        cardEl.onclick = function() { this.classList.toggle('flipped'); };
         
-        // CORRECTION : On appelle cardData.front et cardData.back (colonnes Supabase)
+        // Logique de flip : On utilise une fonction nommée pour éviter les conflits
+        cardEl.addEventListener('click', function() {
+            this.classList.toggle('flipped');
+        });
+
+        // STRUCTURE CRITIQUE : Pas de div "content" inutile, on met le texte direct dans front/back
         cardEl.innerHTML = `
             <div class="flashcard-front">
                 <span class="flashcard-hint">Question</span>
-                <div>${cardData.front}</div>
+                <div style="pointer-events: none;">${cardData.front}</div>
             </div>
             <div class="flashcard-back">
                 <span class="flashcard-hint">Réponse</span>
-                <div>${cardData.back}</div>
+                <div style="pointer-events: none;">${cardData.back}</div>
             </div>
         `;
         grid.appendChild(cardEl);
     });
     container.appendChild(grid);
 
-    // --- 4. BOUTON PIOCHER 4 AUTRES ---
+    // 5. Bouton Piocher (On passe chapterNum pour la récursion)
     const btnNext = document.createElement('button');
     btnNext.className = 'btn-nav-quick';
     btnNext.style.margin = "30px 0";
-    btnNext.style.borderColor = "#ffca28";
     btnNext.innerHTML = "🎲 Piocher 4 autres cartes";
-    btnNext.onclick = () => {
-        openFlashcards(chapterNum); // Relance la fonction
-    };
+    btnNext.onclick = () => openFlashcards(chapterNum);
     container.appendChild(btnNext);
 
-    // --- 5. BARRE DE NAVIGATION EN BAS ---
+    // 6. Footer Navigation
     const footer = document.createElement('div');
     footer.className = 'quick-nav-footer';
     footer.style.width = '100%';
-    footer.style.marginTop = '2rem';
     footer.innerHTML = `
         <button class="btn-nav-quick" onclick="openLesson(${chapterNum})">📖 Cours</button>
         <button class="btn-nav-quick" onclick="openQuiz(${chapterNum})">✍️ Quiz</button>
@@ -414,7 +414,8 @@ async function openFlashcards(chapterNum) {
     `;
     container.appendChild(footer);
 
-    if(window.MathJax) MathJax.typesetPromise();
+    // MathJax et Navigation
+    if(window.MathJax) MathJax.typesetPromise([container]);
     navigateTo('view-flashcards');
 }
 
