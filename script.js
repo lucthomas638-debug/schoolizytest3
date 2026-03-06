@@ -338,26 +338,26 @@ async function openFlashcards(chapterNum) {
     const container = document.getElementById('flashcards-grid-container');
     if (!container) return;
 
-    // 1. Préparation du container (on garde ton style)
+    // Reset du container (Ton style)
     container.innerHTML = '<p style="text-align:center; padding:20px;">🎲 Tirage en cours...</p>';
     container.style.display = 'flex';
     container.style.flexDirection = 'column';
     container.style.alignItems = 'center';
 
-    // 2. Récupération Supabase (colonnes front et back)
+    // 1. Récupération Supabase
     const { data, error } = await sb
         .from('flashcards')
-        .select('front, back')
+        .select('*')
         .eq('class_id', state.currentClassCode.trim())
         .eq('subject_id', state.currentSubject.toLowerCase().trim())
         .eq('chapter_number', chapterNum);
 
     if (error || !data || data.length === 0) {
-        container.innerHTML = `<p style="text-align:center; padding:20px;">Pas de flashcards disponibles.</p>`;
+        alert("Pas de flashcards disponibles.");
         return;
     }
 
-    // 3. Mélange (Fisher-Yates)
+    // 2. Mélange (Ton Fisher-Yates)
     let shuffled = [...data];
     for (let i = shuffled.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -365,37 +365,42 @@ async function openFlashcards(chapterNum) {
     }
     const cardsToShow = shuffled.slice(0, 4);
 
-    // 4. Construction de la grille
-    container.innerHTML = '';
+    // 3. Création de la grille
+    container.innerHTML = ''; 
     const grid = document.createElement('div');
     grid.className = 'flashcards-grid';
     grid.style.width = '100%';
-    
+
+    // --- C'EST ICI QUE TU METS LE BLOC ---
     cardsToShow.forEach((cardData) => {
+        console.log("Données de la carte :", cardData); // Pour vérifier dans la console F12
+
         const cardEl = document.createElement('div');
         cardEl.className = 'flashcard';
         
-        // Logique de flip : On utilise une fonction nommée pour éviter les conflits
-        cardEl.addEventListener('click', function() {
-            this.classList.toggle('flipped');
-        });
+        // Retournement au clic
+        cardEl.onclick = function() { 
+            this.classList.toggle('flipped'); 
+        };
 
-        // STRUCTURE CRITIQUE : Pas de div "content" inutile, on met le texte direct dans front/back
+        // Injection du HTML (On utilise front et back de Supabase)
         cardEl.innerHTML = `
             <div class="flashcard-front">
                 <span class="flashcard-hint">Question</span>
-                <div style="pointer-events: none;">${cardData.front}</div>
+                <div>${cardData.front || 'Vide'}</div>
             </div>
             <div class="flashcard-back">
                 <span class="flashcard-hint">Réponse</span>
-                <div style="pointer-events: none;">${cardData.back}</div>
+                <div>${cardData.back || 'Vide'}</div>
             </div>
         `;
         grid.appendChild(cardEl);
     });
+    // --------------------------------------
+
     container.appendChild(grid);
 
-    // 5. Bouton Piocher (On passe chapterNum pour la récursion)
+    // 4. Bouton Piocher
     const btnNext = document.createElement('button');
     btnNext.className = 'btn-nav-quick';
     btnNext.style.margin = "30px 0";
@@ -403,7 +408,7 @@ async function openFlashcards(chapterNum) {
     btnNext.onclick = () => openFlashcards(chapterNum);
     container.appendChild(btnNext);
 
-    // 6. Footer Navigation
+    // 5. Navigation Footer
     const footer = document.createElement('div');
     footer.className = 'quick-nav-footer';
     footer.style.width = '100%';
@@ -414,7 +419,6 @@ async function openFlashcards(chapterNum) {
     `;
     container.appendChild(footer);
 
-    // MathJax et Navigation
     if(window.MathJax) MathJax.typesetPromise([container]);
     navigateTo('view-flashcards');
 }
