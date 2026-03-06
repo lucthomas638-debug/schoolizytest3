@@ -384,16 +384,16 @@ async function openFlashcards(chapterNum) {
         };
 
         // Injection du HTML (On utilise front et back de Supabase)
-        cardEl.innerHTML = `
-            <div class="flashcard-front">
-                <span class="flashcard-hint">Question</span>
-                <div>${cardData.front || 'Vide'}</div>
-            </div>
-            <div class="flashcard-back">
-                <span class="flashcard-hint">Réponse</span>
-                <div>${cardData.back || 'Vide'}</div>
-            </div>
-        `;
+         cardEl.innerHTML = `
+             <div class="flashcard-front">
+                 <span class="flashcard-hint">Question</span>
+                 <div class="flash-txt">${cardData.front}</div>
+             </div>
+             <div class="flashcard-back">
+                 <span class="flashcard-hint">Réponse</span>
+                 <div class="flash-txt">${cardData.back}</div>
+             </div>
+         `;
         grid.appendChild(cardEl);
     });
     // --------------------------------------
