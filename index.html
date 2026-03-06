@@ -1549,32 +1549,36 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    backface-visibility: hidden;
+    /* FORCE la disparition de l'envers */
+    -webkit-backface-visibility: hidden !important;
+    backface-visibility: hidden !important;
+    
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 30px;
-    border-radius: 25px; /* Coins plus arrondis pour le style moderne */
+    border-radius: 25px;
     text-align: center;
-    font-size: 1.2rem;
-    font-weight: 700;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    /* On s'assure que tout est bien empilé au même endroit */
+    top: 0;
+    left: 0;
 }
 
-/* FACE AVANT (Question) */
 .flashcard-front {
     background: linear-gradient(135deg, #ffffff 0%, #f9f9ff 100%);
     border: 3px solid var(--brand-school);
-    color: var(--text-dark);
+    z-index: 2; /* Devant par défaut */
+    transform: rotateY(0deg); 
 }
 
-/* FACE ARRIÈRE (Réponse) */
 .flashcard-back {
     background: linear-gradient(135deg, var(--brand-school) 0%, #6c4ab6 100%);
     color: white;
-    transform: rotateY(180deg);
     border: 3px solid var(--brand-school);
+    /* Indispensable : la face ARRIÈRE est déjà tournée de 180° au repos */
+    transform: rotateY(180deg) !important;
+    z-index: 1;
 }
 
 /* Étiquette (Question / Réponse) */
