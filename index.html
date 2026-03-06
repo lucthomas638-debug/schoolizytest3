@@ -1518,27 +1518,13 @@
 }
 
 /* --- STYLES FLASHCARDS OPTIMISÉS --- */
-.flashcards-grid {
-    display: grid;
-    /* On force 2 colonnes sur tablette/ordi pour garder la clarté */
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 25px;
-    perspective: 1200px;
-    margin: 2rem auto;
-    max-width: 900px;
-}
-
 .flashcard {
     height: 220px;
     cursor: pointer;
     position: relative;
+    perspective: 1000px;
     transform-style: preserve-3d;
-    transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); /* Effet de rebond élastique */
-}
-
-/* Effet de lévitation au survol avant le clic */
-.flashcard:hover:not(.flipped) {
-    transform: translateY(-10px) rotateX(5deg);
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .flashcard.flipped {
@@ -1547,70 +1533,44 @@
 
 .flashcard-front, .flashcard-back {
     position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    backface-visibility: hidden;
+    /* On force la visibilité arrière à être cachée */
+    backface-visibility: hidden !important;
+    -webkit-backface-visibility: hidden !important;
+    
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 30px;
-    border-radius: 25px; /* Coins plus arrondis pour le style moderne */
+    border-radius: 25px;
     text-align: center;
-    font-size: 1.2rem;
-    font-weight: 700;
     box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 
-/* FACE AVANT (Question) */
 .flashcard-front {
-    background: linear-gradient(135deg, #ffffff 0%, #f9f9ff 100%);
+    background: white;
     border: 3px solid var(--brand-school);
-    color: var(--text-dark);
+    z-index: 2; /* Devant par défaut */
+    transform: rotateY(0deg);
 }
 
-/* FACE ARRIÈRE (Réponse) */
 .flashcard-back {
-    background: linear-gradient(135deg, var(--brand-school) 0%, #6c4ab6 100%);
+    background: var(--brand-school);
     color: white;
-    transform: rotateY(180deg);
     border: 3px solid var(--brand-school);
+    /* Crucial : la face arrière est déjà tournée et attend derrière */
+    transform: rotateY(180deg);
+    z-index: 1;
 }
 
-/* Étiquette (Question / Réponse) */
-.flashcard-hint {
-    position: absolute;
-    top: 15px; /* On le met en haut plutôt qu'en bas */
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 0.75rem;
-    font-weight: 800;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    padding: 4px 12px;
-    border-radius: 10px;
+/* On s'assure que le contenu ne bug pas */
+.flashcard-content {
+    pointer-events: none;
 }
-
-.flashcard-front .flashcard-hint {
-    background: #f0edff;
-    color: var(--brand-school);
-}
-
-.flashcard-back .flashcard-hint {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-}
-
-/* Petite icône discrète en bas à droite pour indiquer qu'on peut cliquer */
-.flashcard-front::after {
-    content: "🔄";
-    position: absolute;
-    bottom: 15px;
-    right: 20px;
-    font-size: 1.2rem;
-    opacity: 0.3;
-}
-
 /* Responsive : 1 seule colonne sur petit mobile */
 @media (max-width: 600px) {
     .flashcards-grid {
