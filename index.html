@@ -1584,12 +1584,9 @@
 
 /* FACE ARRIÈRE (Réponse) */
 .flashcard-back {
-    background: linear-gradient(135deg, var(--brand-school) 0%, #6c4ab6 100%);
-    color: white;
-    border: 3px solid var(--brand-school);
-    /* Crucial : la face arrière est DÉJÀ retournée à 180° au repos */
-    transform: rotateY(180deg) !important;
-    z-index: 1;
+    /* transform: rotateY(180deg); */ /* <--- Commente cette ligne temporairement */
+    background: red !important; /* Mets un fond rouge flash pour la voir */
+    z-index: 10; /* Force l'affichage au premier plan */
 }
 
 /* --- Fin des styles infaillibles --- */
