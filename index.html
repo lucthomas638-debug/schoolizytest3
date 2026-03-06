@@ -1621,6 +1621,21 @@
         height: 180px;
     }
 }
+
+/* Ajoute ces précisions à ton bloc existant */
+.flashcard-front, .flashcard-back {
+    position: absolute !important; /* Force la superposition */
+    top: 0;
+    left: 0;
+    -webkit-backface-visibility: hidden !important; /* Pour Safari/iOS */
+    backface-visibility: hidden !important;
+    transform-style: preserve-3d;
+}
+
+/* On s'assure que le container de la grille ne coupe pas la 3D */
+.flashcards-grid {
+    transform-style: preserve-3d;
+}
     
 /* On ne cache que les vues qui ont un ID commençant par 'view-' */
 [id^="view-"] {
