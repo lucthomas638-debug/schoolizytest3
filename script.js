@@ -336,16 +336,14 @@ function showQuizResult(score, total, container, chapterNum) {
 
 async function openFlashcards(chapterNum) {
     const container = document.getElementById('flashcards-grid-container');
+    container.innerHTML = '<p style="text-align:center;">Chargement...</p>';
     
-    if (!container) {
-        console.error("❌ L'ID 'flashcards-grid-container' est introuvable.");
-        return;
-    }
+    // Style du conteneur (comme ton ancienne fonction)
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.alignItems = 'center';
 
-    // Affichage du chargement
-    container.innerHTML = '<p style="text-align:center; padding:20px; color:var(--brand-school);">Chargement des cartes...</p>';
-
-    // Récupération Supabase
+    // 1. Récupération des données Supabase
     const { data, error } = await sb
         .from('flashcards')
         .select('*')
@@ -354,36 +352,67 @@ async function openFlashcards(chapterNum) {
         .eq('chapter_number', chapterNum);
 
     if (error || !data || data.length === 0) {
-        container.innerHTML = `<p style="text-align:center; padding:20px;">📭 Pas de flashcards disponibles pour le chapitre ${chapterNum}.</p>`;
-        navigateTo('view-flashcards');
+        alert("Pas de flashcards disponibles pour ce chapitre.");
         return;
     }
 
-    container.innerHTML = ''; // On vide
-
-    // Création des cartes
-    data.forEach(fc => {
-        const card = document.createElement('div');
-        card.className = 'flashcard';
-      // Dans ta boucle data.forEach(fc => { ... })
-      card.innerHTML = `
-          <div class="flashcard-inner">
-              <div class="flashcard-front">
-                  <div class="flashcard-content">${fc.front}</div> </div>
-              <div class="flashcard-back">
-                  <div class="flashcard-content">${fc.back}</div>  </div>
-          </div>`;
-        
-        // Effet de retournement au clic
-        card.onclick = () => card.classList.toggle('flipped');
-        container.appendChild(card);
-    });
-
-    // Rendu des formules MathJax
-    if (window.MathJax) {
-        MathJax.typesetPromise([container]).catch((err) => console.log(err));
+    // 2. MÉLANGE (Fisher-Yates) et on en prend 4
+    let shuffled = [...data];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
+    const cardsToShow = shuffled.slice(0, 4);
 
+    // 3. AFFICHAGE DE LA GRILLE
+    container.innerHTML = ''; // On vide le "chargement"
+    const grid = document.createElement('div');
+    grid.className = 'flashcards-grid';
+    grid.style.width = '100%';
+    
+    cardsToShow.forEach((cardData) => {
+        const cardEl = document.createElement('div');
+        cardEl.className = 'flashcard';
+        // IMPORTANT : On toggle 'flipped' au clic
+        cardEl.onclick = function() { this.classList.toggle('flipped'); };
+        
+        // On utilise fc.front et fc.back (noms des colonnes Supabase)
+        cardEl.innerHTML = `
+            <div class="flashcard-front">
+                <span class="flashcard-hint">Question</span>
+                <div>${cardData.front}</div>
+            </div>
+            <div class="flashcard-back">
+                <span class="flashcard-hint">Réponse</span>
+                <div>${cardData.back}</div>
+            </div>
+        `;
+        grid.appendChild(cardEl);
+    });
+    container.appendChild(grid);
+
+    // 4. BOUTON PIOCHER 4 AUTRES
+    const btnNext = document.createElement('button');
+    btnNext.className = 'btn-nav-quick';
+    btnNext.style.margin = "30px 0";
+    btnNext.style.borderColor = "#ffca28";
+    btnNext.innerHTML = "🎲 Piocher 4 autres cartes";
+    btnNext.onclick = () => openFlashcards(chapterNum);
+    container.appendChild(btnNext);
+
+    // 5. BARRE DE NAVIGATION (Fidèle à ton style)
+    const footer = document.createElement('div');
+    footer.className = 'quick-nav-footer';
+    footer.style.width = '100%';
+    footer.style.marginTop = '2rem';
+    footer.innerHTML = `
+        <button class="btn-nav-quick" onclick="openLesson(${chapterNum})">📖 Cours</button>
+        <button class="btn-nav-quick" onclick="openQuiz(${chapterNum})">✍️ Quiz</button>
+        <button class="btn-nav-quick primary" onclick="openExercises(${chapterNum})">🧠 Exercices</button>
+    `;
+    container.appendChild(footer);
+
+    if(window.MathJax) MathJax.typesetPromise();
     navigateTo('view-flashcards');
 }
 
