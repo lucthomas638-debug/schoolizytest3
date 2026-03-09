@@ -1517,75 +1517,109 @@
     color: white;
 }
 
-/* --- STYLES FLASHCARDS INFAILLIBLES --- */
+/* --- STYLES FLASHCARDS OPTIMISÉS --- */
+.flashcards-grid {
+    display: grid;
+    /* On force 2 colonnes sur tablette/ordi pour garder la clarté */
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    perspective: 1200px;
+    margin: 2rem auto;
+    max-width: 900px;
+}
+
 .flashcard {
     height: 220px;
     cursor: pointer;
     position: relative;
-    transform-style: preserve-3d !important;
-    transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform-style: preserve-3d;
+    transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); /* Effet de rebond élastique */
 }
 
-/* 1. LA ROTATION DE LA CARTE */
+/* Effet de lévitation au survol avant le clic */
+.flashcard:hover:not(.flipped) {
+    transform: translateY(-10px) rotateX(5deg);
+}
+
 .flashcard.flipped {
-    transform: rotateY(180deg) !important;
+    transform: rotateY(180deg);
 }
 
 .flashcard-front, .flashcard-back {
-    position: absolute !important;
-    top: 0;
-    left: 0;
+    position: absolute;
     width: 100%;
     height: 100%;
-    /* On cache le dos de chaque face */
-    backface-visibility: hidden !important;
-    -webkit-backface-visibility: hidden !important;
-    border-radius: 25px;
+    backface-visibility: hidden;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 25px;
+    padding: 30px;
+    border-radius: 25px; /* Coins plus arrondis pour le style moderne */
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: 700;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 
-/* 2. FACE AVANT (Question) */
+/* FACE AVANT (Question) */
 .flashcard-front {
-    background: white;
+    background: linear-gradient(135deg, #ffffff 0%, #f9f9ff 100%);
     border: 3px solid var(--brand-school);
-    z-index: 2;
-    transform: rotateY(0deg); /* Position de départ */
+    color: var(--text-dark);
 }
 
-/* 3. FACE ARRIÈRE (Réponse) */
+/* FACE ARRIÈRE (Réponse) */
 .flashcard-back {
     background: linear-gradient(135deg, var(--brand-school) 0%, #6c4ab6 100%);
     color: white;
+    transform: rotateY(180deg);
     border: 3px solid var(--brand-school);
-    /* CRUCIAL : On la pré-tourne à 180° */
-    transform: rotateY(180deg) !important;
-    z-index: 1;
 }
 
-/* 4. LE FIX POUR LE VERSO INVISIBLE */
-/* Quand on flip, on inverse les priorités de profondeur */
-.flashcard.flipped .flashcard-front {
-    z-index: 1;
+/* Étiquette (Question / Réponse) */
+.flashcard-hint {
+    position: absolute;
+    top: 15px; /* On le met en haut plutôt qu'en bas */
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 10px;
 }
 
-.flashcard.flipped .flashcard-back {
-    z-index: 2; /* La réponse passe devant la question */
+.flashcard-front .flashcard-hint {
+    background: #f0edff;
+    color: var(--brand-school);
 }
 
-/* C'est pour que la page de devant ne soit plus décalé
-
-/* On affiche la vue active, mais en respectant son type d'affichage d'origine */
-[id^="view-"].active {
-    display: block !important;
+.flashcard-back .flashcard-hint {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
 }
 
-/* SI ta page d'accueil (Home) utilise Flexbox ou Grid, 
-   on s'assure qu'elle garde son style quand elle est active */
-#view-home.active {
-    display: flex !important; /* Ou 'grid' selon ton design initial */
+/* Petite icône discrète en bas à droite pour indiquer qu'on peut cliquer */
+.flashcard-front::after {
+    content: "🔄";
+    position: absolute;
+    bottom: 15px;
+    right: 20px;
+    font-size: 1.2rem;
+    opacity: 0.3;
+}
+
+/* Responsive : 1 seule colonne sur petit mobile */
+@media (max-width: 600px) {
+    .flashcards-grid {
+        grid-template-columns: 1fr;
+        padding: 10px;
+    }
+    .flashcard {
+        height: 180px;
+    }
 }
     
 </style>
