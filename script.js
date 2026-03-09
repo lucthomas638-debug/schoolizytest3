@@ -507,57 +507,6 @@ function toggleCorrection(id) {
         btn.innerHTML = '<span>👁️</span> Voir la correction';
     }
 }
-// Flashcards 
-
-async function openFlashcards(chapterNum) {
-    const container = document.getElementById('flashcards-grid-container');
-    
-    if (!container) {
-        console.error("❌ L'ID 'flashcards-grid-container' est introuvable.");
-        return;
-    }
-
-    container.innerHTML = '<p style="text-align:center; padding:20px;">Chargement des flashcards...</p>';
-
-    // 1. Récupération Supabase
-    const { data, error } = await sb
-        .from('flashcards')
-        .select('*')
-        .eq('class_id', state.currentClassCode.trim())
-        .eq('subject_id', state.currentSubject.toLowerCase().trim())
-        .eq('chapter_number', chapterNum);
-
-    if (error || !data || data.length === 0) {
-        container.innerHTML = `<p style="text-align:center; padding:20px;">Pas de flashcards disponibles pour le chapitre ${chapterNum}.</p>`;
-        navigateTo('view-flashcards'); // On y va quand même pour montrer le message
-        return;
-    }
-
-    container.innerHTML = ''; // On vide
-
-    // 2. Création des cartes avec effet Flip
-    data.forEach(fc => {
-        const card = document.createElement('div');
-        card.className = 'flashcard';
-        card.innerHTML = `
-            <div class="flashcard-inner">
-                <div class="flashcard-front">
-                    <div class="flashcard-content">${fc.front}</div>
-                </div>
-                <div class="flashcard-back">
-                    <div class="flashcard-content">${fc.back}</div>
-                </div>
-            </div>`;
-        
-        // Logique de retournement au clic
-        card.onclick = () => card.classList.toggle('flipped');
-        container.appendChild(card);
-    });
-
-    // 3. Rendu des formules et Navigation
-    if (window.MathJax) MathJax.typesetPromise();
-    navigateTo('view-flashcards');
-}
 
 // Fiche Récapitulative 
 
