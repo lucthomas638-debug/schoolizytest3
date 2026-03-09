@@ -413,7 +413,7 @@ async function openFlashcards(chapterNum) {
     footer.className = 'quick-nav-footer';
     footer.style.width = '100%';
     footer.innerHTML = `
-        <button class="btn-nav-quick" onclick="openLesson(${chapterNum})">📖 Cours</button>
+        <button class="btn-nav-quick" onclick="displayLesson(${chapterNum})">📖 Cours</button>
         <button class="btn-nav-quick" onclick="openQuiz(${chapterNum})">✍️ Quiz</button>
         <button class="btn-nav-quick primary" onclick="openExercises(${chapterNum})">🧠 Exercices</button>
     `;
