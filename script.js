@@ -519,7 +519,7 @@ async function openFicheRecap(chapterNum) {
     // 1. Récupération des données Supabase
     const { data, error } = await sb
         .from('lessons') // On utilise la table lessons pour l'instant
-        .select('*')
+        .select('recap')
         .eq('class_id', state.currentClassCode.trim())
         .eq('subject_id', state.currentSubject.toLowerCase().trim())
         .eq('chapter_number', chapterNum)
