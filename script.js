@@ -514,41 +514,50 @@ async function openFicheRecap(chapterNum) {
     const header = document.getElementById('fiche-header');
     const contentBox = document.getElementById('fiche-content');
     
-    contentBox.innerHTML = '<p style="text-align:center;">Chargement de la fiche...</p>';
+    if (!header || !contentBox) return;
 
-    // 1. Récupération des données Supabase
+    // Animation de chargement
+    contentBox.innerHTML = '<p style="text-align:center; padding:20px;">✨ Préparation de ta fiche...</p>';
+
+    // 1. On demande spécifiquement la colonne 'recap'
     const { data, error } = await sb
-        .from('lessons') // On utilise la table lessons pour l'instant
-        .select('recap')
+        .from('lessons')
+        .select('recap') // <-- Changement ici
         .eq('class_id', state.currentClassCode.trim())
         .eq('subject_id', state.currentSubject.toLowerCase().trim())
         .eq('chapter_number', chapterNum)
         .single();
 
-    if (error || !data) {
-        alert("Fiche indisponible pour le moment.");
+    if (error || !data || !data.recap) {
+        console.error("Erreur Supabase:", error);
+        contentBox.innerHTML = "<p style='text-align:center;'>Fiche en cours de rédaction pour ce chapitre ! ✍️</p>";
+        navigateTo('view-fiche');
         return;
     }
 
-    // 2. On extrait le titre propre (H1) pour le mettre dans le header
+    // 2. Traitement du contenu HTML stocké dans 'recap'
     const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = data.content;
-    const cleanTitle = tempDiv.querySelector('h1')?.innerText || "Synthèse";
-
-    // 3. Remplissage du Header
-    header.innerHTML = `
-        <p style="color:var(--brand-school); font-weight:bold; text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">📝 Fiche Récapitulative</p>
-        <h1 style="color:var(--text-dark); font-size:2rem;">${cleanTitle}</h1>
-    `;
-
-    // 4. Remplissage du corps de la fiche
-    // On enlève le H1 du contenu pour ne pas l'avoir deux fois
+    tempDiv.innerHTML = data.recap; // Utilisation de data.recap
+    
+    // Extraction du titre H1 pour le mettre dans le header jaune
+    const titleFound = tempDiv.querySelector('h1')?.innerText || "Synthèse";
     if(tempDiv.querySelector('h1')) tempDiv.querySelector('h1').remove();
+
+    // 3. Injection dans les éléments de la page
+    header.innerHTML = `
+        <p style="color:var(--brand-school); font-weight:800; text-transform:uppercase; font-size:0.8rem; letter-spacing:2px; margin-bottom:10px;">✨ FICHE RÉCAP ✨</p>
+        <h1 style="margin:0; font-size:2.2rem; color:var(--text-dark);">${titleFound}</h1>
+    `;
+    
     contentBox.innerHTML = tempDiv.innerHTML;
 
-    // 5. Navigation et MathJax
-    if(window.MathJax) MathJax.typesetPromise([contentBox]);
+    // 4. Navigation et affichage des formules MathJax
     navigateTo('view-fiche');
+    
+    if (window.MathJax) {
+        // On demande à MathJax de transformer les $...$ en vraies formules dans contentBox
+        MathJax.typesetPromise([contentBox]).catch((err) => console.log(err));
+    }
 }
 
 /* =============================================================================
