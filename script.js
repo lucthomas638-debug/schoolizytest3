@@ -511,20 +511,44 @@ function toggleCorrection(id) {
 // Fiche Récapitulative 
 
 async function openFicheRecap(chapterNum) {
+    const header = document.getElementById('fiche-header');
+    const contentBox = document.getElementById('fiche-content');
+    
+    contentBox.innerHTML = '<p style="text-align:center;">Chargement de la fiche...</p>';
+
+    // 1. Récupération des données Supabase
     const { data, error } = await sb
-        .from('lessons')
-        .select('content')
-        .eq('class_id', state.currentClassCode)
-        .eq('subject_id', state.currentSubject.toLowerCase())
+        .from('lessons') // On utilise la table lessons pour l'instant
+        .select('*')
+        .eq('class_id', state.currentClassCode.trim())
+        .eq('subject_id', state.currentSubject.toLowerCase().trim())
         .eq('chapter_number', chapterNum)
         .single();
 
-    if (data) {
-        // On peut imaginer un style différent ou juste le cours complet
-        document.getElementById('fiche-content').innerHTML = data.content;
-        if (window.MathJax) MathJax.typesetPromise();
-        navigateTo('view-fiche');
+    if (error || !data) {
+        alert("Fiche indisponible pour le moment.");
+        return;
     }
+
+    // 2. On extrait le titre propre (H1) pour le mettre dans le header
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = data.content;
+    const cleanTitle = tempDiv.querySelector('h1')?.innerText || "Synthèse";
+
+    // 3. Remplissage du Header
+    header.innerHTML = `
+        <p style="color:var(--brand-school); font-weight:bold; text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">📝 Fiche Récapitulative</p>
+        <h1 style="color:var(--text-dark); font-size:2rem;">${cleanTitle}</h1>
+    `;
+
+    // 4. Remplissage du corps de la fiche
+    // On enlève le H1 du contenu pour ne pas l'avoir deux fois
+    if(tempDiv.querySelector('h1')) tempDiv.querySelector('h1').remove();
+    contentBox.innerHTML = tempDiv.innerHTML;
+
+    // 5. Navigation et MathJax
+    if(window.MathJax) MathJax.typesetPromise([contentBox]);
+    navigateTo('view-fiche');
 }
 
 /* =============================================================================
