@@ -1717,11 +1717,31 @@ function renderAnnales(data) {
     });
 }
 
+/* --- NAVIGATION DE RETOUR CORRIGÉE --- */
+
+// Cette fonction remplace "goBackToSubjects" pour être plus intelligente
+function backFromChapters() {
+    // Si l'élève est en mode Quiz/Exo/Flashcard, on le renvoie au choix du mode
+    // Sinon (mode lesson), on le renvoie à la liste des matières
+    if (state.currentMode !== 'lesson') {
+        navigateTo('view-mode');
+    } else {
+        openSubjectsPage(state.currentClassCode);
+    }
+}
+
+function goBackToClasses() { 
+    openLevelPage(state.currentLevelGroup); 
+}
+
+// Optionnel : si tu veux garder ce nom pour tes boutons existants
+function goBackToSubjects() { 
+    openSubjectsPage(state.currentClassCode); 
+}
+
 /* INITIALISATION */
 document.addEventListener('DOMContentLoaded', () => {
-    updatePDisplay();
+    // Vérifie si updatePDisplay existe, sinon commente-la
+    if (typeof updatePDisplay === 'function') updatePDisplay(); 
     document.getElementById('site-search').addEventListener('input', performSearch);
 });
-
-function goBackToClasses() { openLevelPage(state.currentLevelGroup); }
-function goBackToSubjects() { openSubjectsPage(state.currentClassCode); }
