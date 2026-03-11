@@ -1520,56 +1520,49 @@
 /* --- STYLES FLASHCARDS OPTIMISÉS --- */
 .flashcards-grid {
     display: grid;
-    /* On force 2 colonnes sur tablette/ordi pour garder la clarté */
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 25px;
     perspective: 1200px;
-    margin: 2rem auto;
+    margin: 1rem auto; /* Réduit un peu la marge */
     max-width: 900px;
+    
+    /* AJOUT ICI : Pour éviter de devoir scroller la page entière */
+    max-height: 55vh; 
+    overflow-y: auto;
+    padding: 15px;
 }
 
 .flashcard {
-    height: 220px;
+    height: 200px; /* Légèrement réduit pour gagner de la place */
     cursor: pointer;
     position: relative;
     transform-style: preserve-3d;
-    transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); /* Effet de rebond élastique */
+    transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Effet de lévitation au survol avant le clic */
-.flashcard:hover:not(.flipped) {
-    transform: translateY(-10px) rotateX(5deg);
-}
-
-.flashcard.flipped {
-    transform: rotateY(180deg);
-}
+.flashcard:hover:not(.flipped) { transform: translateY(-10px) rotateX(5deg); }
+.flashcard.flipped { transform: rotateY(180deg); }
 
 .flashcard-front, .flashcard-back {
     position: absolute;
-    width: 100%;
-    height: 100%;
+    width: 100%; height: 100%;
     backface-visibility: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 30px;
-    border-radius: 25px; /* Coins plus arrondis pour le style moderne */
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 20px;
+    border-radius: 25px;
     text-align: center;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 700;
     box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 
-/* FACE AVANT (Question) */
 .flashcard-front {
     background: linear-gradient(135deg, #ffffff 0%, #f9f9ff 100%);
     border: 3px solid var(--brand-school);
     color: var(--text-dark);
 }
 
-/* FACE ARRIÈRE (Réponse) */
 .flashcard-back {
     background: linear-gradient(135deg, var(--brand-school) 0%, #6c4ab6 100%);
     color: white;
@@ -1577,49 +1570,55 @@
     border: 3px solid var(--brand-school);
 }
 
-/* Étiquette (Question / Réponse) */
 .flashcard-hint {
-    position: absolute;
-    top: 15px; /* On le met en haut plutôt qu'en bas */
-    left: 50%;
+    position: absolute; top: 15px; left: 50%;
     transform: translateX(-50%);
-    font-size: 0.75rem;
-    font-weight: 800;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    padding: 4px 12px;
-    border-radius: 10px;
+    font-size: 0.7rem; font-weight: 800;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 4px 12px; border-radius: 10px;
 }
 
-.flashcard-front .flashcard-hint {
-    background: #f0edff;
-    color: var(--brand-school);
-}
+.flashcard-front .flashcard-hint { background: #f0edff; color: var(--brand-school); }
+.flashcard-back .flashcard-hint { background: rgba(255, 255, 255, 0.2); color: white; }
 
-.flashcard-back .flashcard-hint {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-}
-
-/* Petite icône discrète en bas à droite pour indiquer qu'on peut cliquer */
 .flashcard-front::after {
-    content: "🔄";
-    position: absolute;
-    bottom: 15px;
-    right: 20px;
-    font-size: 1.2rem;
-    opacity: 0.3;
+    content: "🔄"; position: absolute; bottom: 15px; right: 20px;
+    font-size: 1.2rem; opacity: 0.3;
 }
 
-/* Responsive : 1 seule colonne sur petit mobile */
+/* --- NOUVEAUX BOUTONS DE NAVIGATION BAS DE PAGE --- */
+.nav-mode-container {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+    padding: 10px;
+}
+
+.btn-nav-mode {
+    padding: 10px 18px;
+    border-radius: 50px;
+    border: 2px solid var(--brand-school);
+    background-color: #fffcf5; /* Crème */
+    color: var(--brand-school); /* Violet */
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.85rem;
+    display: flex; align-items: center; gap: 8px;
+}
+
+.btn-nav-mode:hover {
+    background-color: var(--brand-school);
+    color: white;
+    transform: translateY(-3px);
+}
+
 @media (max-width: 600px) {
-    .flashcards-grid {
-        grid-template-columns: 1fr;
-        padding: 10px;
-    }
-    .flashcard {
-        height: 180px;
-    }
+    .flashcards-grid { grid-template-columns: 1fr; max-height: 50vh; }
+    .flashcard { height: 160px; }
+    .btn-nav-mode { font-size: 0.75rem; padding: 8px 12px; }
 }
     
 </style>
@@ -2166,8 +2165,24 @@
         <div id="view-flashcards" class="view container">
             <div class="btn-back" onclick="navigateTo('view-chapters')">← Retour aux chapitres</div>
             <h2 id="flashcards-page-title" class="view-title">Flashcards</h2>
+            
             <div id="flashcards-grid-container" class="flashcards-grid">
                 </div>
+        
+            <div class="nav-mode-container">
+                <button class="btn-nav-mode" onclick="state.currentMode='lesson'; navigateTo('view-chapters')">
+                    <span>📖</span> Leçons
+                </button>
+                <button class="btn-nav-mode" onclick="state.currentMode='exercise'; navigateTo('view-chapters')">
+                    <span>🧠</span> Exercices
+                </button>
+                <button class="btn-nav-mode" onclick="state.currentMode='quiz'; navigateTo('view-chapters')">
+                    <span>✍️</span> Quiz
+                </button>
+                <button class="btn-nav-mode" onclick="state.currentMode='fiche'; navigateTo('view-chapters')">
+                    <span>📝</span> Fiche Récap
+                </button>
+            </div>
         </div>
 
         <!-- FICHE RECAP -->
