@@ -338,11 +338,8 @@ async function openFlashcards(chapterNum) {
     const container = document.getElementById('flashcards-grid-container');
     if (!container) return;
 
-    // Reset du container principal
+    // Reset visuel
     container.innerHTML = '<p style="text-align:center; padding:20px;">🎲 Tirage en cours...</p>';
-    container.style.display = 'flex';
-    container.style.flexDirection = 'column';
-    container.style.alignItems = 'center';
 
     // 1. Récupération Supabase
     const { data, error } = await sb
@@ -357,59 +354,62 @@ async function openFlashcards(chapterNum) {
         return;
     }
 
-    // 2. Mélange et sélection de 3 cartes alignées
+    // 2. Mélange et sélection de 3 cartes
     let shuffled = [...data].sort(() => 0.5 - Math.random());
     const cardsToShow = shuffled.slice(0, 3);
 
-    // 3. Création de la grille (On vide et on injecte)
+    // 3. Construction de la grille row
     container.innerHTML = ''; 
-    const grid = document.createElement('div');
-    grid.className = 'flashcards-grid';
-    grid.style.width = '100%';
-    grid.style.display = 'grid';
-    grid.style.gridTemplateColumns = 'repeat(3, 1fr)'; // 3 cartes alignées
-    grid.style.gap = '20px';
+    const gridRow = document.createElement('div');
+    gridRow.className = 'flashcards-grid-row';
 
     cardsToShow.forEach((cardData) => {
         const cardEl = document.createElement('div');
         cardEl.className = 'flashcard';
-        cardEl.onclick = function() { this.classList.toggle('flipped'); };
+        
+        // --- LOGIQUE DE RETOURNEMENT ---
+        cardEl.onclick = function() {
+            this.classList.toggle('flipped');
+        };
+
         cardEl.innerHTML = `
-             <div class="flashcard-front">
-                 <span class="flashcard-hint">Question</span>
-                 <div class="flash-txt">${cardData.front}</div>
-             </div>
-             <div class="flashcard-back">
-                 <span class="flashcard-hint">Réponse</span>
-                 <div class="flash-txt">${cardData.back}</div>
-             </div>
-         `;
-        grid.appendChild(cardEl);
+            <div class="flashcard-inner">
+                <div class="flashcard-front">
+                    <span class="flashcard-hint">Question</span>
+                    <div class="flash-txt">${cardData.front}</div>
+                </div>
+                <div class="flashcard-back">
+                    <span class="flashcard-hint">Réponse</span>
+                    <div class="flash-txt">${cardData.back}</div>
+                </div>
+            </div>
+        `;
+        gridRow.appendChild(cardEl);
     });
-    container.appendChild(grid);
+    container.appendChild(gridRow);
 
-    // 4. LE BLOC D'ACTIONS (Les 5 boutons ensemble)
-    // On crée un conteneur unique pour tout regrouper proprement
-    const actionBlock = document.createElement('div');
-    actionBlock.className = 'quick-nav-footer';
-    actionBlock.style.marginTop = '30px';
-    actionBlock.style.width = '100%';
-    actionBlock.style.display = 'flex';
-    actionBlock.style.justifyContent = 'center';
-    actionBlock.style.gap = '10px';
-    actionBlock.style.flexWrap = 'wrap';
+    // 4. Construction de la barre d'actions unique
+    // On nettoie l'ancienne si elle existe dans la vue parente
+    const flashView = document.getElementById('view-flashcards');
+    const oldToolbar = flashView.querySelector('.actions-toolbar');
+    if (oldToolbar) oldToolbar.remove();
 
-    actionBlock.innerHTML = `
-        <button class="btn-nav-quick" onclick="openFlashcards(${chapterNum})">🎲 Autre tirage</button>
+    const toolbar = document.createElement('div');
+    toolbar.className = 'actions-toolbar';
+    toolbar.innerHTML = `
+        <button class="btn-nav-quick btn-piocher" onclick="openFlashcards(${chapterNum})">🎲 Autre tirage</button>
+        <div class="separator-v"></div>
         <button class="btn-nav-quick" onclick="displayLesson(${chapterNum})">📖 Cours</button>
         <button class="btn-nav-quick" onclick="openQuiz(${chapterNum})">✍️ Quiz</button>
-        <button class="btn-nav-quick" onclick="openExercises(${chapterNum})">🧠 Exercices</button>
-        <button class="btn-nav-quick" onclick="openFicheRecap(${chapterNum})">📝 Fiche Récap</button>
+        <button class="btn-nav-quick" onclick="openExercises(${chapterNum})">🧠 Exos</button>
+        <button class="btn-nav-quick" onclick="openFicheRecap(${chapterNum})">📝 Fiche</button>
     `;
+    
+    flashView.appendChild(toolbar);
 
-    container.appendChild(actionBlock);
-
+    // Rendu des maths si nécessaire
     if(window.MathJax) MathJax.typesetPromise([container]);
+    
     navigateTo('view-flashcards');
 }
 
