@@ -2077,57 +2077,59 @@
         <div id="view-tool-mol" class="view container">
             <div class="btn-back" onclick="navigateTo('view-outils')">← Retour Outils</div>
             <h2 class="view-title">Calculateur Masse Molaire</h2>
-
-            <div class="tool-content" style="max-width: 500px; margin: 0 auto;">
+        
+            <div class="tool-content" style="max-width: 950px; margin: 0 auto;">
                 
                 <div class="mol-screen-container">
                     <div id="mol-display" class="mol-screen"></div>
                     <div id="mol-placeholder" class="mol-placeholder">Tape ta molécule...</div>
                 </div>
-
-                <div class="mol-keyboard">
+        
+                <div class="mol-main-layout"> 
                     
-                    <div class="key-row">
-                        <button class="btn-calc num" onclick="addMolChar('2')">2</button>
-                        <button class="btn-calc num" onclick="addMolChar('3')">3</button>
-                        <button class="btn-calc num" onclick="addMolChar('4')">4</button>
-                        <button class="btn-calc num" onclick="addMolChar('6')">6</button>
-                        <button class="btn-calc action red" onclick="deleteMolChar()">⌫</button>
+                    <div class="mol-keyboard">
+                        <div class="key-row">
+                            <button class="btn-calc num" onclick="addMolChar('2')">2</button>
+                            <button class="btn-calc num" onclick="addMolChar('3')">3</button>
+                            <button class="btn-calc num" onclick="addMolChar('4')">4</button>
+                            <button class="btn-calc num" onclick="addMolChar('6')">6</button>
+                            <button class="btn-calc action red" onclick="deleteMolChar()">⌫</button>
+                        </div>
+        
+                        <div class="key-row">
+                            <button class="btn-calc num" onclick="addMolChar('(')">(</button>
+                            <button class="btn-calc num" onclick="addMolChar(')')">)</button>
+                            <button class="btn-calc atom main" onclick="addMolChar('C')">C</button>
+                            <button class="btn-calc atom main" onclick="addMolChar('H')">H</button>
+                            <button class="btn-calc atom main" onclick="addMolChar('O')">O</button>
+                        </div>
+        
+                        <div class="key-row">
+                            <button class="btn-calc atom" onclick="addMolChar('N')">N</button>
+                            <button class="btn-calc atom" onclick="addMolChar('S')">S</button>
+                            <button class="btn-calc atom" onclick="addMolChar('P')">P</button>
+                            <button class="btn-calc atom" onclick="addMolChar('Cl')">Cl</button>
+                            <button class="btn-calc atom" onclick="addMolChar('Na')">Na</button>
+                        </div>
+        
+                        <div class="key-row">
+                            <button class="btn-calc atom" onclick="addMolChar('Ca')">Ca</button>
+                            <button class="btn-calc atom" onclick="addMolChar('Cu')">Cu</button>
+                            <button class="btn-calc atom" onclick="addMolChar('Fe')">Fe</button>
+                            <button class="btn-calc atom" onclick="addMolChar('Mg')">Mg</button>
+                            <button class="btn-calc atom" onclick="addMolChar('Al')">Al</button>
+                        </div>
+        
+                        <div class="key-row">
+                            <button class="btn-calc action green" style="width: 100%;" onclick="calculateComplexMass()">CALCULER</button>
+                        </div>
                     </div>
-
-                    <div class="key-row">
-                        <button class="btn-calc num" onclick="addMolChar('(')">(</button>
-                        <button class="btn-calc num" onclick="addMolChar(')')">)</button>
-                        <button class="btn-calc atom main" onclick="addMolChar('C')">C</button>
-                        <button class="btn-calc atom main" onclick="addMolChar('H')">H</button>
-                        <button class="btn-calc atom main" onclick="addMolChar('O')">O</button>
-                    </div>
-
-                    <div class="key-row">
-                        <button class="btn-calc atom" onclick="addMolChar('N')">N</button>
-                        <button class="btn-calc atom" onclick="addMolChar('S')">S</button>
-                        <button class="btn-calc atom" onclick="addMolChar('P')">P</button>
-                        <button class="btn-calc atom" onclick="addMolChar('Cl')">Cl</button>
-                        <button class="btn-calc atom" onclick="addMolChar('Na')">Na</button>
-                    </div>
-
-                    <div class="key-row">
-                        <button class="btn-calc atom" onclick="addMolChar('Ca')">Ca</button>
-                        <button class="btn-calc atom" onclick="addMolChar('Cu')">Cu</button>
-                        <button class="btn-calc atom" onclick="addMolChar('Fe')">Fe</button>
-                        <button class="btn-calc atom" onclick="addMolChar('Mg')">Mg</button>
-                        <button class="btn-calc atom" onclick="addMolChar('Al')">Al</button>
-                    </div>
-
-                    <div class="key-row">
-                        <button class="btn-calc action green full-width" onclick="calculateComplexMass()">CALCULER</button>
-                    </div>
-                </div>
-
-                <div id="mol-result-box" class="result-box" style="display:none;"></div>
-            </div>
+        
+                    <div id="mol-result-box" class="result-box" style="display:none;">
+                        </div>
+        
+                </div> </div>
         </div>
-
         <!-- Sujet bac -->
 
         <div id="view-tool-biblio" class="view container">
