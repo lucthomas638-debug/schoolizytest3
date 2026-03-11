@@ -1257,7 +1257,15 @@
 
             /* Texte fantôme */
             .mol-placeholder {
-                position: absolute; top: 25px; left: 18px; color: #bbb; pointer-events: none; font-family: Arial, sans-serif;
+                position: absolute;
+                top: 50%;
+                left: 15px;
+                transform: translateY(-50%); /* Centre parfaitement verticalement */
+                color: #bbb;
+                pointer-events: none; /* Empêche de cliquer sur le texte au lieu de l'écran */
+                font-family: Arial, sans-serif;
+                font-size: 1.2rem;
+                opacity: 0.6;
             }
 
 
