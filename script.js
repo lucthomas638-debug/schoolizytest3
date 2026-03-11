@@ -338,13 +338,11 @@ async function openFlashcards(chapterNum) {
     const container = document.getElementById('flashcards-grid-container');
     if (!container) return;
 
-    // Reset du container (Ton style)
     container.innerHTML = '<p style="text-align:center; padding:20px;">🎲 Tirage en cours...</p>';
     container.style.display = 'flex';
     container.style.flexDirection = 'column';
     container.style.alignItems = 'center';
 
-    // 1. Récupération Supabase
     const { data, error } = await sb
         .from('flashcards')
         .select('*')
@@ -357,7 +355,6 @@ async function openFlashcards(chapterNum) {
         return;
     }
 
-    // 2. Mélange (Ton Fisher-Yates)
     let shuffled = [...data];
     for (let i = shuffled.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -365,25 +362,16 @@ async function openFlashcards(chapterNum) {
     }
     const cardsToShow = shuffled.slice(0, 4);
 
-    // 3. Création de la grille
     container.innerHTML = ''; 
     const grid = document.createElement('div');
     grid.className = 'flashcards-grid';
     grid.style.width = '100%';
 
-    // --- C'EST ICI QUE TU METS LE BLOC ---
     cardsToShow.forEach((cardData) => {
-        console.log("Données de la carte :", cardData); // Pour vérifier dans la console F12
-
         const cardEl = document.createElement('div');
         cardEl.className = 'flashcard';
-        
-        // Retournement au clic
-        cardEl.onclick = function() { 
-            this.classList.toggle('flipped'); 
-        };
+        cardEl.onclick = function() { this.classList.toggle('flipped'); };
 
-        // Injection du HTML (On utilise front et back de Supabase)
          cardEl.innerHTML = `
              <div class="flashcard-front">
                  <span class="flashcard-hint">Question</span>
@@ -396,27 +384,26 @@ async function openFlashcards(chapterNum) {
          `;
         grid.appendChild(cardEl);
     });
-    // --------------------------------------
 
     container.appendChild(grid);
 
-    // 4. Bouton Piocher
     const btnNext = document.createElement('button');
     btnNext.className = 'btn-nav-quick';
     btnNext.style.margin = "30px 0";
     btnNext.innerHTML = "🎲 Piocher 4 autres cartes";
-    btnNext.onclick = () => lashcards(chapterNum);
+    // Correction ici : lashcards -> openFlashcards
+    btnNext.onclick = () => openFlashcards(chapterNum); 
     container.appendChild(btnNext);
 
-    // 5. Navigation Footer
     const footer = document.createElement('div');
     footer.className = 'quick-nav-footer';
     footer.style.width = '100%';
+    // MISE À JOUR DU FOOTER ICI
     footer.innerHTML = `
         <button class="btn-nav-quick" onclick="displayLesson(${chapterNum})">📖 Cours</button>
         <button class="btn-nav-quick" onclick="openQuiz(${chapterNum})">✍️ Quiz</button>
         <button class="btn-nav-quick" onclick="openExercises(${chapterNum})">🧠 Exercices</button>
-        <button class="btn-nav-quick" onclick="openFicheRecap(${chapterNum})">📝 Fiche Recap</button>
+        <button class="btn-nav-quick" onclick="openFicheRecap(${chapterNum})">📝 Fiche Récap</button>
     `;
     container.appendChild(footer);
 
