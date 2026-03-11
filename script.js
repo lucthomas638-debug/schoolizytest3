@@ -511,7 +511,7 @@ function toggleCorrection(id) {
 
 // Fiche Récapitulative 
 
-async function icheRecap(chapterNum) {
+async function openFicheRecap(chapterNum) {
     const header = document.getElementById('fiche-header');
     const contentBox = document.getElementById('fiche-content');
     
