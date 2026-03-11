@@ -338,10 +338,8 @@ async function openFlashcards(chapterNum) {
     const container = document.getElementById('flashcards-grid-container');
     if (!container) return;
 
-    // Reset visuel
     container.innerHTML = '<p style="text-align:center; padding:20px;">🎲 Tirage en cours...</p>';
 
-    // 1. Récupération Supabase
     const { data, error } = await sb
         .from('flashcards')
         .select('*')
@@ -354,11 +352,9 @@ async function openFlashcards(chapterNum) {
         return;
     }
 
-    // 2. Mélange et sélection de 3 cartes
     let shuffled = [...data].sort(() => 0.5 - Math.random());
     const cardsToShow = shuffled.slice(0, 3);
 
-    // 3. Construction de la grille row
     container.innerHTML = ''; 
     const gridRow = document.createElement('div');
     gridRow.className = 'flashcards-grid-row';
@@ -367,11 +363,12 @@ async function openFlashcards(chapterNum) {
         const cardEl = document.createElement('div');
         cardEl.className = 'flashcard';
         
-        // --- LOGIQUE DE RETOURNEMENT ---
+        // --- LE RETOUR DU CLIC ICI ---
         cardEl.onclick = function() {
             this.classList.toggle('flipped');
         };
 
+        // Structure HTML indispensable pour l'effet miroir
         cardEl.innerHTML = `
             <div class="flashcard-inner">
                 <div class="flashcard-front">
@@ -388,8 +385,7 @@ async function openFlashcards(chapterNum) {
     });
     container.appendChild(gridRow);
 
-    // 4. Construction de la barre d'actions unique
-    // On nettoie l'ancienne si elle existe dans la vue parente
+    // Barre d'outils
     const flashView = document.getElementById('view-flashcards');
     const oldToolbar = flashView.querySelector('.actions-toolbar');
     if (oldToolbar) oldToolbar.remove();
@@ -407,9 +403,7 @@ async function openFlashcards(chapterNum) {
     
     flashView.appendChild(toolbar);
 
-    // Rendu des maths si nécessaire
     if(window.MathJax) MathJax.typesetPromise([container]);
-    
     navigateTo('view-flashcards');
 }
 
