@@ -338,8 +338,6 @@ async function openFlashcards(chapterNum) {
     const container = document.getElementById('flashcards-grid-container');
     if (!container) return;
 
-    container.innerHTML = '<p style="text-align:center; padding:10px;">🎲 Tirage...</p>';
-    
     // 1. Récupération Supabase
     const { data, error } = await sb
         .from('flashcards')
@@ -350,14 +348,14 @@ async function openFlashcards(chapterNum) {
 
     if (error || !data || data.length === 0) return alert("Pas de flashcards.");
 
-    // 2. Mélange et sélection de seulement 3 cartes
+    // 2. Mélange et sélection de 3 cartes
     let shuffled = [...data].sort(() => 0.5 - Math.random());
-    const cardsToShow = shuffled.slice(0, 3); // LIMITE À 3 CARTES
+    const cardsToShow = shuffled.slice(0, 3);
 
-    // 3. Rendu de la grille
+    // 3. Rendu des 3 cartes en ligne
     container.innerHTML = ''; 
     const grid = document.createElement('div');
-    grid.className = 'flashcards-grid';
+    grid.className = 'flashcards-grid-row'; // Nouvelle classe pour l'alignement
     
     cardsToShow.forEach((cardData) => {
         const cardEl = document.createElement('div');
@@ -377,27 +375,23 @@ async function openFlashcards(chapterNum) {
     });
     container.appendChild(grid);
 
-    // 4. Bouton Piocher (Version Compacte juste au dessus)
-    const btnNext = document.createElement('button');
-    btnNext.className = 'btn-nav-quick piocher-compact'; // Classe spécifique
-    btnNext.innerHTML = "🎲 Piocher 3 autres cartes";
-    btnNext.onclick = () => openFlashcards(chapterNum);
-    container.appendChild(btnNext);
-
-    // 5. Navigation Footer (Les 4 boutons)
+    // 4. Création de l'ESPACE UNIQUE pour les 5 boutons
     const flashcardsView = document.getElementById('view-flashcards');
-    const oldFooter = flashcardsView.querySelector('.quick-nav-footer');
+    const oldFooter = flashcardsView.querySelector('.actions-toolbar');
     if (oldFooter) oldFooter.remove();
 
-    const footer = document.createElement('div');
-    footer.className = 'quick-nav-footer';
-    footer.innerHTML = `
+    const toolbar = document.createElement('div');
+    toolbar.className = 'actions-toolbar';
+    toolbar.innerHTML = `
+        <button class="btn-nav-quick btn-piocher" onclick="openFlashcards(${chapterNum})">🎲 Piocher</button>
+        <div class="separator-v"></div>
         <button class="btn-nav-quick" onclick="displayLesson(${chapterNum})">📖 Cours</button>
         <button class="btn-nav-quick" onclick="openQuiz(${chapterNum})">✍️ Quiz</button>
-        <button class="btn-nav-quick" onclick="openExercises(${chapterNum})">🧠 Exercices</button>
-        <button class="btn-nav-quick" onclick="openFicheRecap(${chapterNum})">📝 Fiche Récap</button>
+        <button class="btn-nav-quick" onclick="openExercises(${chapterNum})">🧠 Exos</button>
+        <button class="btn-nav-quick" onclick="openFicheRecap(${chapterNum})">📝 Fiche</button>
     `;
-    flashcardsView.appendChild(footer);
+    
+    flashcardsView.appendChild(toolbar);
 
     if(window.MathJax) MathJax.typesetPromise([container]);
     navigateTo('view-flashcards');
