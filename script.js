@@ -338,8 +338,7 @@ async function openFlashcards(chapterNum) {
     const container = document.getElementById('flashcards-grid-container');
     if (!container) return;
 
-    container.innerHTML = '<p style="text-align:center; padding:20px;">🎲 Tirage en cours...</p>';
-
+    // On ne vide pas le container avec un message texte pour éviter l'effet de "saut"
     const { data, error } = await sb
         .from('flashcards')
         .select('*')
@@ -347,28 +346,19 @@ async function openFlashcards(chapterNum) {
         .eq('subject_id', state.currentSubject.toLowerCase().trim())
         .eq('chapter_number', chapterNum);
 
-    if (error || !data || data.length === 0) {
-        alert("Pas de flashcards disponibles.");
-        return;
-    }
+    if (error || !data || data.length === 0) return alert("Pas de flashcards.");
 
     let shuffled = [...data].sort(() => 0.5 - Math.random());
     const cardsToShow = shuffled.slice(0, 3);
 
-    container.innerHTML = ''; 
+    container.innerHTML = ''; // On ne vide qu'ici, juste avant d'injecter
     const gridRow = document.createElement('div');
     gridRow.className = 'flashcards-grid-row';
 
     cardsToShow.forEach((cardData) => {
         const cardEl = document.createElement('div');
         cardEl.className = 'flashcard';
-        
-        // --- LE RETOUR DU CLIC ICI ---
-        cardEl.onclick = function() {
-            this.classList.toggle('flipped');
-        };
-
-        // Structure HTML indispensable pour l'effet miroir
+        cardEl.onclick = function() { this.classList.toggle('flipped'); };
         cardEl.innerHTML = `
             <div class="flashcard-inner">
                 <div class="flashcard-front">
@@ -385,7 +375,6 @@ async function openFlashcards(chapterNum) {
     });
     container.appendChild(gridRow);
 
-    // Barre d'outils
     const flashView = document.getElementById('view-flashcards');
     const oldToolbar = flashView.querySelector('.actions-toolbar');
     if (oldToolbar) oldToolbar.remove();
@@ -400,7 +389,6 @@ async function openFlashcards(chapterNum) {
         <button class="btn-nav-quick" onclick="openExercises(${chapterNum})">🧠 Exos</button>
         <button class="btn-nav-quick" onclick="openFicheRecap(${chapterNum})">📝 Fiche</button>
     `;
-    
     flashView.appendChild(toolbar);
 
     if(window.MathJax) MathJax.typesetPromise([container]);
