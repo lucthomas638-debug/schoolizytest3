@@ -391,21 +391,28 @@ async function openFlashcards(chapterNum) {
     btnNext.className = 'btn-nav-quick';
     btnNext.style.margin = "30px 0";
     btnNext.innerHTML = "🎲 Piocher 4 autres cartes";
-    // Correction ici : lashcards -> openFlashcards
     btnNext.onclick = () => openFlashcards(chapterNum); 
     container.appendChild(btnNext);
+
+    // --- CHANGEMENT ICI : On ajoute le footer à la VUE, pas au container ---
+    const flashcardsView = document.getElementById('view-flashcards');
+    
+    // On nettoie l'ancien footer s'il existe pour éviter les doublons
+    const oldFooter = flashcardsView.querySelector('.quick-nav-footer');
+    if (oldFooter) oldFooter.remove();
 
     const footer = document.createElement('div');
     footer.className = 'quick-nav-footer';
     footer.style.width = '100%';
-    // MISE À JOUR DU FOOTER ICI
     footer.innerHTML = `
         <button class="btn-nav-quick" onclick="displayLesson(${chapterNum})">📖 Cours</button>
         <button class="btn-nav-quick" onclick="openQuiz(${chapterNum})">✍️ Quiz</button>
         <button class="btn-nav-quick" onclick="openExercises(${chapterNum})">🧠 Exercices</button>
         <button class="btn-nav-quick" onclick="openFicheRecap(${chapterNum})">📝 Fiche Récap</button>
     `;
-    container.appendChild(footer);
+    
+    // On l'ajoute à la vue principale pour qu'il soit bien séparé en bas
+    flashcardsView.appendChild(footer);
 
     if(window.MathJax) MathJax.typesetPromise([container]);
     navigateTo('view-flashcards');
