@@ -405,7 +405,7 @@ async function openFlashcards(chapterNum) {
     btnNext.className = 'btn-nav-quick';
     btnNext.style.margin = "30px 0";
     btnNext.innerHTML = "🎲 Piocher 4 autres cartes";
-    btnNext.onclick = () => openFlashcards(chapterNum);
+    btnNext.onclick = () => lashcards(chapterNum);
     container.appendChild(btnNext);
 
     // 5. Navigation Footer
@@ -415,7 +415,8 @@ async function openFlashcards(chapterNum) {
     footer.innerHTML = `
         <button class="btn-nav-quick" onclick="displayLesson(${chapterNum})">📖 Cours</button>
         <button class="btn-nav-quick" onclick="openQuiz(${chapterNum})">✍️ Quiz</button>
-        <button class="btn-nav-quick primary" onclick="openExercises(${chapterNum})">🧠 Exercices</button>
+        <button class="btn-nav-quick" onclick="openExercises(${chapterNum})">🧠 Exercices</button>
+        <button class="btn-nav-quick" onclick="openFicheRecap(${chapterNum})">📝 Fiche Recap</button>
     `;
     container.appendChild(footer);
 
@@ -510,7 +511,7 @@ function toggleCorrection(id) {
 
 // Fiche Récapitulative 
 
-async function openFicheRecap(chapterNum) {
+async function icheRecap(chapterNum) {
     const header = document.getElementById('fiche-header');
     const contentBox = document.getElementById('fiche-content');
     
