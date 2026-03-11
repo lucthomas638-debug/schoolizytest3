@@ -1517,24 +1517,19 @@
     color: white;
 }
 
-/* --- VUE FLASHCARDS 3 COLONNES --- */
-#view-flashcards {
+/* --- LAYOUT 3 CARTES EN LIGNE --- */
+.flashcards-grid-row {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.flashcards-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 cartes allignées */
-    gap: 15px;
+    justify-content: center;
+    gap: 20px;
     width: 100%;
-    max-width: 950px;
-    margin-bottom: 10px; /* Espace réduit sous les cartes */
+    margin: 2rem 0;
 }
 
 .flashcard {
-    height: 180px; /* Hauteur réduite pour tout voir d'un coup */
+    flex: 1;
+    max-width: 300px;
+    height: 200px;
     cursor: pointer;
     perspective: 1000px;
 }
@@ -1546,52 +1541,63 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 15px;
+    padding: 20px;
     text-align: center;
-    font-weight: bold;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-/* --- BOUTON PIOCHER COMPACT --- */
-.piocher-compact {
-    margin: 5px 0 15px 0 !important; /* Très peu d'espace */
-    font-size: 0.85rem !important;
-    padding: 8px 20px !important;
-    background: #fdfaff !important; /* Très léger violet pour le distinguer */
-}
-
-/* --- FOOTER DES 4 BOUTONS (Blanc Bord Violet) --- */
-.quick-nav-footer {
+/* --- LA BARRE D'ACTIONS UNIQUE --- */
+.actions-toolbar {
     display: flex;
-    gap: 10px;
+    align-items: center;
     justify-content: center;
-    padding: 15px;
-    width: 100%;
-    border-top: 1px solid #eee;
+    gap: 10px;
+    background: white;
+    padding: 12px 20px;
+    border-radius: 100px; /* Forme pilule */
+    border: 2px solid #eee;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    margin-top: 10px;
 }
 
+.separator-v {
+    width: 2px;
+    height: 25px;
+    background: #eee;
+    margin: 0 10px;
+}
+
+/* --- BOUTONS BLANCS BORD VIOLET --- */
 .btn-nav-quick {
-    background-color: white !important;
+    background: white !important;
     color: var(--brand-school) !important;
     border: 2px solid var(--brand-school) !important;
     border-radius: 50px;
+    padding: 8px 16px;
     font-weight: 800;
+    font-size: 0.85rem;
     cursor: pointer;
-    transition: all 0.2s;
-    padding: 10px 15px;
-    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
 .btn-nav-quick:hover {
-    background-color: var(--brand-school) !important;
+    background: var(--brand-school) !important;
     color: white !important;
     transform: translateY(-2px);
 }
 
-/* Responsivité tablettes/mobiles */
-@media (max-width: 800px) {
-    .flashcards-grid { grid-template-columns: 1fr; max-height: 350px; overflow-y: auto; }
-    .btn-nav-quick { font-size: 0.75rem; padding: 8px 10px; }
+/* Bouton Piocher un peu plus voyant */
+.btn-piocher {
+    background: #fdfaff !important;
+    border-style: dashed !important; /* Pour le différencier un peu */
+}
+
+/* Responsive : On empile si l'écran est trop petit */
+@media (max-width: 900px) {
+    .flashcards-grid-row { flex-direction: column; align-items: center; }
+    .actions-toolbar { flex-wrap: wrap; border-radius: 20px; }
 }
     
 </style>
