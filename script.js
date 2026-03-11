@@ -338,6 +338,12 @@ async function openFlashcards(chapterNum) {
     const container = document.getElementById('flashcards-grid-container');
     if (!container) return;
 
+    // Reset du container principal
+    container.innerHTML = '<p style="text-align:center; padding:20px;">🎲 Tirage en cours...</p>';
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.alignItems = 'center';
+
     // 1. Récupération Supabase
     const { data, error } = await sb
         .from('flashcards')
@@ -346,17 +352,24 @@ async function openFlashcards(chapterNum) {
         .eq('subject_id', state.currentSubject.toLowerCase().trim())
         .eq('chapter_number', chapterNum);
 
-    if (error || !data || data.length === 0) return alert("Pas de flashcards.");
+    if (error || !data || data.length === 0) {
+        alert("Pas de flashcards disponibles.");
+        return;
+    }
 
-    // 2. Mélange et sélection de 3 cartes
+    // 2. Mélange et sélection de 3 cartes alignées
     let shuffled = [...data].sort(() => 0.5 - Math.random());
     const cardsToShow = shuffled.slice(0, 3);
 
-    // 3. Rendu des 3 cartes en ligne
+    // 3. Création de la grille (On vide et on injecte)
     container.innerHTML = ''; 
     const grid = document.createElement('div');
-    grid.className = 'flashcards-grid-row'; // Nouvelle classe pour l'alignement
-    
+    grid.className = 'flashcards-grid';
+    grid.style.width = '100%';
+    grid.style.display = 'grid';
+    grid.style.gridTemplateColumns = 'repeat(3, 1fr)'; // 3 cartes alignées
+    grid.style.gap = '20px';
+
     cardsToShow.forEach((cardData) => {
         const cardEl = document.createElement('div');
         cardEl.className = 'flashcard';
@@ -375,23 +388,26 @@ async function openFlashcards(chapterNum) {
     });
     container.appendChild(grid);
 
-    // 4. Création de l'ESPACE UNIQUE pour les 5 boutons
-    const flashcardsView = document.getElementById('view-flashcards');
-    const oldFooter = flashcardsView.querySelector('.actions-toolbar');
-    if (oldFooter) oldFooter.remove();
+    // 4. LE BLOC D'ACTIONS (Les 5 boutons ensemble)
+    // On crée un conteneur unique pour tout regrouper proprement
+    const actionBlock = document.createElement('div');
+    actionBlock.className = 'quick-nav-footer';
+    actionBlock.style.marginTop = '30px';
+    actionBlock.style.width = '100%';
+    actionBlock.style.display = 'flex';
+    actionBlock.style.justifyContent = 'center';
+    actionBlock.style.gap = '10px';
+    actionBlock.style.flexWrap = 'wrap';
 
-    const toolbar = document.createElement('div');
-    toolbar.className = 'actions-toolbar';
-    toolbar.innerHTML = `
-        <button class="btn-nav-quick btn-piocher" onclick="openFlashcards(${chapterNum})">🎲 Piocher</button>
-        <div class="separator-v"></div>
+    actionBlock.innerHTML = `
+        <button class="btn-nav-quick" onclick="openFlashcards(${chapterNum})">🎲 Autre tirage</button>
         <button class="btn-nav-quick" onclick="displayLesson(${chapterNum})">📖 Cours</button>
         <button class="btn-nav-quick" onclick="openQuiz(${chapterNum})">✍️ Quiz</button>
-        <button class="btn-nav-quick" onclick="openExercises(${chapterNum})">🧠 Exos</button>
-        <button class="btn-nav-quick" onclick="openFicheRecap(${chapterNum})">📝 Fiche</button>
+        <button class="btn-nav-quick" onclick="openExercises(${chapterNum})">🧠 Exercices</button>
+        <button class="btn-nav-quick" onclick="openFicheRecap(${chapterNum})">📝 Fiche Récap</button>
     `;
-    
-    flashcardsView.appendChild(toolbar);
+
+    container.appendChild(actionBlock);
 
     if(window.MathJax) MathJax.typesetPromise([container]);
     navigateTo('view-flashcards');
