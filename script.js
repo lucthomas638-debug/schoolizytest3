@@ -338,11 +338,9 @@ async function openFlashcards(chapterNum) {
     const container = document.getElementById('flashcards-grid-container');
     if (!container) return;
 
-    container.innerHTML = '<p style="text-align:center; padding:20px;">🎲 Tirage en cours...</p>';
-    container.style.display = 'flex';
-    container.style.flexDirection = 'column';
-    container.style.alignItems = 'center';
-
+    container.innerHTML = '<p style="text-align:center; padding:10px;">🎲 Tirage...</p>';
+    
+    // 1. Récupération Supabase
     const { data, error } = await sb
         .from('flashcards')
         .select('*')
@@ -350,29 +348,22 @@ async function openFlashcards(chapterNum) {
         .eq('subject_id', state.currentSubject.toLowerCase().trim())
         .eq('chapter_number', chapterNum);
 
-    if (error || !data || data.length === 0) {
-        alert("Pas de flashcards disponibles.");
-        return;
-    }
+    if (error || !data || data.length === 0) return alert("Pas de flashcards.");
 
-    let shuffled = [...data];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    const cardsToShow = shuffled.slice(0, 4);
+    // 2. Mélange et sélection de seulement 3 cartes
+    let shuffled = [...data].sort(() => 0.5 - Math.random());
+    const cardsToShow = shuffled.slice(0, 3); // LIMITE À 3 CARTES
 
+    // 3. Rendu de la grille
     container.innerHTML = ''; 
     const grid = document.createElement('div');
     grid.className = 'flashcards-grid';
-    grid.style.width = '100%';
-
+    
     cardsToShow.forEach((cardData) => {
         const cardEl = document.createElement('div');
         cardEl.className = 'flashcard';
         cardEl.onclick = function() { this.classList.toggle('flipped'); };
-
-         cardEl.innerHTML = `
+        cardEl.innerHTML = `
              <div class="flashcard-front">
                  <span class="flashcard-hint">Question</span>
                  <div class="flash-txt">${cardData.front}</div>
@@ -384,34 +375,28 @@ async function openFlashcards(chapterNum) {
          `;
         grid.appendChild(cardEl);
     });
-
     container.appendChild(grid);
 
+    // 4. Bouton Piocher (Version Compacte juste au dessus)
     const btnNext = document.createElement('button');
-    btnNext.className = 'btn-nav-quick';
-    btnNext.style.margin = "30px 0";
-    btnNext.innerHTML = "🎲 Piocher 4 autres cartes";
-    btnNext.onclick = () => openFlashcards(chapterNum); 
+    btnNext.className = 'btn-nav-quick piocher-compact'; // Classe spécifique
+    btnNext.innerHTML = "🎲 Piocher 3 autres cartes";
+    btnNext.onclick = () => openFlashcards(chapterNum);
     container.appendChild(btnNext);
 
-    // --- CHANGEMENT ICI : On ajoute le footer à la VUE, pas au container ---
+    // 5. Navigation Footer (Les 4 boutons)
     const flashcardsView = document.getElementById('view-flashcards');
-    
-    // On nettoie l'ancien footer s'il existe pour éviter les doublons
     const oldFooter = flashcardsView.querySelector('.quick-nav-footer');
     if (oldFooter) oldFooter.remove();
 
     const footer = document.createElement('div');
     footer.className = 'quick-nav-footer';
-    footer.style.width = '100%';
     footer.innerHTML = `
         <button class="btn-nav-quick" onclick="displayLesson(${chapterNum})">📖 Cours</button>
         <button class="btn-nav-quick" onclick="openQuiz(${chapterNum})">✍️ Quiz</button>
         <button class="btn-nav-quick" onclick="openExercises(${chapterNum})">🧠 Exercices</button>
         <button class="btn-nav-quick" onclick="openFicheRecap(${chapterNum})">📝 Fiche Récap</button>
     `;
-    
-    // On l'ajoute à la vue principale pour qu'il soit bien séparé en bas
     flashcardsView.appendChild(footer);
 
     if(window.MathJax) MathJax.typesetPromise([container]);
