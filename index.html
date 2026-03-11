@@ -1224,167 +1224,168 @@
 
             /* --- CSS CALCULATEUR CHIMIE (DESIGN CLASSIQUE) --- */
 
-            /* 1. L'ÉCRAN */
-            .mol-screen {
-                background: #ffffff; /* Fond blanc pur */
-                border: 1px solid #ccc;
-                border-radius: 8px;
-                height: 70px;
-                display: flex;
-                align-items: center;
-                padding: 0 15px;
-                
-                /* POLICE CLASSIQUE */
-                font-family: Arial, Helvetica, sans-serif; 
-                font-size: 2.2rem;
-                color: #333;
-                font-weight: normal; /* Pas de gras forcé */
-                
-                overflow-x: auto;
-                box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); /* Légère ombre interne */
-                margin-bottom: 20px;
-                position: relative;
-            }
+/* =============================================================================
+   OUTIL MASSE MOLAIRE - DESIGN CALCULATRICE PRO
+   ============================================================================= */
 
-            /* Gestion des Indices (Subscript) */
-            .mol-screen sub {
-                font-size: 0.6em; /* Taille réduite */
-                vertical-align: baseline; 
-                position: relative;
-                top: 0.4em; /* On descend le chiffre proprement */
-                color: #333; /* Même couleur que le texte */
-            }
+/* 0. LE CONTENEUR DE L'ÉCRAN (Point de repère pour le texte fantôme) */
+.mol-screen-container {
+    position: relative; /* INDISPENSABLE pour fixer le texte dedans */
+    max-width: 500px;
+    margin: 0 auto 20px auto;
+}
 
-            /* Texte fantôme */
-            .mol-placeholder {
-                position: absolute;
-                top: 50%;
-                left: 15px;
-                transform: translateY(-50%); /* Centre parfaitement verticalement */
-                color: #bbb;
-                pointer-events: none; /* Empêche de cliquer sur le texte au lieu de l'écran */
-                font-family: Arial, sans-serif;
-                font-size: 1.2rem;
-                opacity: 0.6;
-            }
+/* 1. L'ÉCRAN D'AFFICHAGE */
+.mol-screen {
+    background: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    position: relative;
+    z-index: 2; /* Pour passer devant le fond mais derrière les lettres si besoin */
+    
+    /* POLICE CLASSIQUE */
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 2.2rem;
+    color: #333;
+    font-weight: normal;
+    
+    overflow-x: auto;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
 
+/* Gestion des Indices (Subscript) */
+.mol-screen sub {
+    font-size: 0.6em;
+    vertical-align: baseline;
+    position: relative;
+    top: 0.4em;
+    color: #333;
+}
 
-            /* 2. LE CLAVIER */
-            .mol-keyboard {
-                background: #f0f0f0; /* Fond gris calculatrice */
-                padding: 15px;
-                border-radius: 10px;
-                display: flex; flex-direction: column; gap: 10px;
-                border: 1px solid #ddd;
-            }
+/* Texte fantôme (Placeholder) - CORRIGÉ */
+.mol-placeholder {
+    position: absolute;
+    top: 50%; /* Milieu de la hauteur */
+    left: 18px; /* Aligné avec le début de l'écran */
+    transform: translateY(-50%); /* Centrage vertical parfait */
+    color: #bbb;
+    pointer-events: none; /* Le clic traverse le texte */
+    font-family: Arial, sans-serif;
+    font-size: 1.2rem;
+    opacity: 0.6;
+    z-index: 5; /* S'assure qu'il est visible sur le fond blanc */
+    margin: 0;
+}
 
-            .key-row {
-                display: flex; gap: 8px; width: 100%;
-            }
+/* 2. LE CLAVIER */
+.mol-keyboard {
+    background: #f0f0f0;
+    padding: 15px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: 1px solid #ddd;
+}
 
-            /* 3. LES BOUTONS (STYLE CLASSIQUE) */
-            .btn-calc {
-                flex: 1;
-                height: 50px;
-                border: 1px solid #bbb; /* Bordure fine grise */
-                border-radius: 5px;     /* Coins légèrement arrondis (pas trop) */
-                font-size: 1.1rem;
-                font-family: Arial, sans-serif; /* Police classique */
-                cursor: pointer;
-                transition: all 0.1s ease-in-out; /* Animation rapide */
-                
-                /* Ombre "Bouton physique" */
-                box-shadow: 0 2px 0 #aaa; 
-            }
+.key-row {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
 
-            /* EFFET CLIC (Le bouton s'enfonce) */
-            .btn-calc:active {
-                transform: translateY(2px); /* Descend de 2 pixels */
-                box-shadow: none; /* L'ombre disparaît */
-            }
+/* 3. LES BOUTONS */
+.btn-calc {
+    flex: 1;
+    height: 50px;
+    border: 1px solid #bbb;
+    border-radius: 5px;
+    font-size: 1.1rem;
+    font-family: Arial, sans-serif;
+    cursor: pointer;
+    transition: all 0.1s ease-in-out;
+    box-shadow: 0 2px 0 #aaa;
+}
 
-            /* --- COULEURS DES BOUTONS --- */
+.btn-calc:active {
+    transform: translateY(2px);
+    box-shadow: none;
+}
 
-            /* Chiffres & Parenthèses : Blanc */
-            .btn-calc.num {
-                background: white;
-                color: #333;
-                font-weight: bold;
-            }
-            .btn-calc.num:hover { background: #f9f9f9; border-color: #999; }
+/* COULEURS DES BOUTONS */
+.btn-calc.num {
+    background: white;
+    color: #333;
+    font-weight: bold;
+}
+.btn-calc.num:hover { background: #f9f9f9; border-color: #999; }
 
-            /* Atomes (Gris clair bleuté) */
-            .btn-calc.atom {
-                background: #e8eaed;
-                color: #444;
-                font-weight: bold;
-            }
-            .btn-calc.atom:hover { background: #dce0e6; border-color: #999; }
+.btn-calc.atom {
+    background: #e8eaed;
+    color: #444;
+    font-weight: bold;
+}
+.btn-calc.atom:hover { background: #dce0e6; border-color: #999; }
 
-            /* Atomes Principaux (Plus foncés pour repérer vite) */
-            .btn-calc.atom.main {
-                background: #d1d9e6;
-                color: #222;
-                border-color: #aebccc;
-                font-weight: 800; /* Plus gras */
-                font-size: 1.2rem;
-            }
-            .btn-calc.atom.main:hover { background: #c2cde0; }
+.btn-calc.atom.main {
+    background: #d1d9e6;
+    color: #222;
+    border-color: #aebccc;
+    font-weight: 800;
+}
 
-            /* Bouton Effacer (Rouge pâle) */
-            .btn-calc.action.red {
-                background: #ffcccc;
-                color: #cc0000;
-                border-color: #e6b3b3;
-                box-shadow: 0 2px 0 #d9a3a3;
-            }
-            .btn-calc.action.red:hover { background: #ffb3b3; }
+.btn-calc.action.red {
+    background: #ffcccc;
+    color: #cc0000;
+    border-color: #e6b3b3;
+    box-shadow: 0 2px 0 #d9a3a3;
+}
 
-            /* --- BOUTON CALCULER (Style Spécial) --- */
+/* BOUTON CALCULER */
+.btn-calc.action.green {
+    background: var(--brand-school);
+    color: white;
+    border: 2px solid var(--brand-school);
+    font-weight: bold;
+    letter-spacing: 1px;
+}
 
-            .btn-calc.action.green {
-                background: var(--brand-school); /* Violet par défaut */
-                color: white;
-                border: 2px solid var(--brand-school); /* Bordure violette déjà présente (invisible car même couleur) */
-                font-weight: bold;
-                letter-spacing: 1px;
-                transition: all 0.2s ease; /* Transition fluide */
-            }
+.btn-calc.action.green:hover {
+    background-color: #fff5eb !important;
+    color: var(--brand-school) !important;
+    border-color: var(--brand-school) !important;
+    box-shadow: 0 5px 15px rgba(132, 89, 207, 0.25);
+    transform: translateY(-2px);
+}
 
-            /* AU SURVOL (HOVER) : L'effet demandé */
-            .btn-calc.action.green:hover {
-                background-color: #fff5eb !important; /* Orange très clair (Crème) */
-                color: var(--brand-school) !important; /* Le texte devient Violet */
-                border-color: var(--brand-school) !important; /* La bordure reste Violette */
-                
-                /* Optionnel : petite ombre violette pour faire joli */
-                box-shadow: 0 5px 15px rgba(132, 89, 207, 0.25); 
-                transform: translateY(-2px); /* Il remonte un petit peu */
-            }
+/* 4. RÉSULTAT */
+.result-box {
+    margin-top: 20px;
+    padding: 15px;
+    background: white;
+    border: 1px solid #ddd;
+    border-left: 5px solid var(--brand-school);
+    font-family: Arial, sans-serif;
+}
 
+.step-line {
+    padding: 5px 0;
+    border-bottom: 1px dashed #eee;
+    color: #555;
+}
 
-            /* 4. RÉSULTAT */
-            .result-box {
-                margin-top: 20px;
-                padding: 15px;
-                background: white;
-                border: 1px solid #ddd;
-                border-left: 5px solid var(--brand-school);
-                font-family: Arial, sans-serif;
-            }
-            .step-line {
-                padding: 5px 0;
-                border-bottom: 1px dashed #eee;
-                color: #555;
-            }
-            .step-total {
-                margin-top: 10px;
-                font-size: 1.3rem;
-                font-weight: bold;
-                color: #333;
-                text-align: right;
-            }
-            /* --- STYLES EXERCICES --- */
+.step-total {
+    margin-top: 10px;
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #333;
+    text-align: right;
+}
+    
 /* --- STYLES EXERCICES (VERSION FINALE) --- */
             .exercise-container {
                 max-width: 900px;
