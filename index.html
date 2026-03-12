@@ -1711,80 +1711,84 @@
     .separator-v { display: none; }
 }
 
-/* Le bouton rond en bas à droite */
 #floating-calc-btn {
     position: fixed;
-    bottom: 30px;
-    right: 30px;
+    bottom: 25px;
+    right: 25px;
     width: 60px;
     height: 60px;
     background-color: var(--brand-school);
     color: white;
     border-radius: 50%;
-    display: flex;
+    display: none; /* JS basculera en 'flex' */
     align-items: center;
     justify-content: center;
+    font-size: 1.5rem;
     cursor: pointer;
     box-shadow: 0 4px 15px rgba(132, 89, 207, 0.4);
-    z-index: 2000;
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 4000;
 }
 
-#floating-calc-btn:hover { transform: scale(1.1); }
-
-/* La fenêtre Pop-up épurée */
 .calc-popup {
     position: fixed;
     bottom: 95px;
     right: 25px;
-    width: 380px;  /* Largeur initiale un peu plus grande */
-    height: 580px; /* Hauteur initiale un peu plus grande */
+    width: 380px;
+    height: 550px;
     background: white;
     border-radius: 15px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-    display: none; 
+    display: none; /* JS basculera en 'flex' */
     flex-direction: column;
-    z-index: 3000;
+    z-index: 4000;
     border: 3px solid var(--brand-school);
-    overflow: hidden;
     
-    /* PERMET LE REDIMENSIONNEMENT MANUEL */
+    /* ACTIVATION DU REDIMENSIONNEMENT */
     resize: both; 
+    overflow: hidden; 
     min-width: 300px;
     min-height: 400px;
 }
 
-/* Barre supérieure minimaliste (juste violette avec la croix) */
 .calc-popup-header {
-    background: var(--brand-school);
-    height: 35px; /* Plus fine */
+    background: white; /* Fond blanc pour que seule la bordure violette soit visible */
+    height: 40px;
     display: flex;
-    justify-content: flex-end; /* Pousse la croix à droite */
+    justify-content: flex-end;
     align-items: center;
     padding: 0 10px;
-    cursor: move; /* Indique qu'on pourrait la déplacer */
 }
 
 .calc-popup-header button {
     background: none;
     border: none;
-    color: white;
-    font-size: 1.5rem;
-    font-weight: bold;
+    color: var(--brand-school); /* Croix violette */
+    font-size: 2rem;
     cursor: pointer;
-    line-height: 1;
 }
 
-.calc-popup-body { 
-    flex: 1; 
+.calc-popup-body {
+    flex: 1;
+    position: relative;
     width: 100%;
     height: 100%;
 }
 
-.calc-popup-body iframe { 
-    width: 100%; 
-    height: 100%; 
+.calc-popup-body iframe {
+    width: 100%;
+    height: 100%;
     border: none;
+}
+
+/* Petit indicateur visuel en bas à droite pour dire qu'on peut tirer */
+.resize-handle {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 15px;
+    height: 15px;
+    cursor: nwse-resize;
+    background: linear-gradient(135deg, transparent 50%, var(--brand-school) 50%);
 }
     
 </style>
@@ -2352,17 +2356,17 @@
 
     </main>
 
-    <div id="floating-calc-btn" onclick="toggleFloatingCalc()" title="Ouvrir la calculatrice">
-        <span style="font-size: 1.6rem;">🧮</span>
+    <div id="floating-calc-btn" onclick="toggleFloatingCalc()">
+        <span>🧮</span>
     </div>
-
+    
     <div id="calc-popup" class="calc-popup">
         <div class="calc-popup-header">
-            <span>Calculatrice NumWorks</span>
-            <button onclick="toggleFloatingCalc()" title="Fermer">×</button>
+            <button onclick="toggleFloatingCalc()">&times;</button>
         </div>
         <div class="calc-popup-body">
-            <iframe src="https://www.numworks.com/simulator/embed/" frameborder="0" allowfullscreen></iframe>
+            <iframe src="https://www.numworks.com/simulator/embed/" frameborder="0"></iframe>
+            <div class="resize-handle"></div>
         </div>
     </div>
     
