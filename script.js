@@ -28,9 +28,11 @@ function navigateTo(viewId) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     const target = document.getElementById(viewId);
     
-    // Si on retourne à l'accueil ou aux outils, on réinitialise le sujet
-    if (['view-home', 'view-apropos', 'view-outils'].includes(viewId)) {
-        state.currentSubject = ''; 
+    // LISTE DES VUES QUI DOIVENT CACHER LE BOUTON
+    const viewsToHide = ['view-home', 'view-apropos', 'view-outils', 'view-level-classes', 'view-subjects'];
+    
+    if (viewsToHide.includes(viewId)) {
+        state.currentSubject = ''; // On vide le sujet pour forcer la disparition
     }
 
     if (target) {
@@ -39,22 +41,10 @@ function navigateTo(viewId) {
         if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
     }
     
-    updateFloatingCalcVisibility(); // On vérifie si on doit montrer/cacher le bouton
+    // On lance la vérification du bouton après chaque changement de vue
+    updateFloatingCalcVisibility();
 }
 
-// B. La fonction pour OUVRIR/FERMER (Garde-la précieusement !)
-function toggleFloatingCalc() {
-    const popup = document.getElementById('calc-popup');
-    if (!popup) return;
-    
-    if (popup.style.display === 'none' || popup.style.display === '') {
-        popup.style.display = 'flex';
-    } else {
-        popup.style.display = 'none';
-    }
-}
-
-// C. La fonction qui décide si le bouton 🧮 doit être là
 function updateFloatingCalcVisibility() {
     const btn = document.getElementById('floating-calc-btn');
     const popup = document.getElementById('calc-popup');
@@ -63,12 +53,19 @@ function updateFloatingCalcVisibility() {
     const subjectsWithCalc = ['maths', 'physique-chimie', 'physique'];
     const currentSub = state.currentSubject ? state.currentSubject.toLowerCase().trim() : '';
     
+    // Si on est dans une matière scientifique ET qu'on n'est pas sur l'accueil
     if (currentSub && subjectsWithCalc.includes(currentSub)) {
         btn.style.display = 'flex';
     } else {
         btn.style.display = 'none';
-        if (popup) popup.style.display = 'none'; // On ferme si on change de section
+        if (popup) popup.style.display = 'none'; 
     }
+}
+
+function toggleFloatingCalc() {
+    const popup = document.getElementById('calc-popup');
+    if (!popup) return;
+    popup.style.display = (popup.style.display === 'none' || popup.style.display === '') ? 'flex' : 'none';
 }
 
 function openLevelPage(levelKey) {
