@@ -21,7 +21,7 @@ const subjectsData = {
 let state = { currentLevelGroup: '', currentClassCode: '', currentSubject: '', currentMode: 'lesson' };
 
 /* =============================================================================
-   2. SYSTÈME DE NAVIGATION & RECHERCHE
+   2. SYSTÈME DE NAVIGATION & VISIBILITÉ CALCULATRICE
    ============================================================================= */
 
 function navigateTo(viewId) {
@@ -30,7 +30,34 @@ function navigateTo(viewId) {
     if (target) {
         target.classList.add('active');
         const main = document.querySelector('main');
-        if (main) main.scrollTop = 0;
+        if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
+    // Mise à jour automatique de la calculatrice flottante
+    updateFloatingCalcVisibility();
+}
+
+// Ouvrir/Fermer la calculatrice NumWorks flottante
+function toggleFloatingCalc() {
+    const popup = document.getElementById('calc-popup');
+    if (!popup) return;
+    popup.style.display = (popup.style.display === 'none' || popup.style.display === '') ? 'flex' : 'none';
+}
+
+// Affiche le bouton 🧮 uniquement pour les matières scientifiques
+function updateFloatingCalcVisibility() {
+    const btn = document.getElementById('floating-calc-btn');
+    if (!btn) return;
+    
+    const subjectsWithCalc = ['maths', 'physique-chimie', 'physique'];
+    const currentSub = state.currentSubject ? state.currentSubject.toLowerCase().trim() : '';
+    
+    if (currentSub && subjectsWithCalc.includes(currentSub)) {
+        btn.style.display = 'flex';
+    } else {
+        btn.style.display = 'none';
+        const popup = document.getElementById('calc-popup');
+        if (popup) popup.style.display = 'none';
     }
 }
 
@@ -98,10 +125,6 @@ function performSearch() {
     });
     resContainer.style.display = 'block';
 }
-
-/* =============================================================================
-   3. GESTION SUPABASE
-   ============================================================================= */
 
 /* =============================================================================
    3. GESTION SUPABASE & MODES (COURS, QUIZ, EXOS)
@@ -1744,9 +1767,10 @@ function goBackToSubjects() {
     openSubjectsPage(state.currentClassCode); 
 }
 
-/* INITIALISATION */
+/* =============================================================================
+   6. INITIALISATION
+   ============================================================================= */
 document.addEventListener('DOMContentLoaded', () => {
-    // Vérifie si updatePDisplay existe, sinon commente-la
-    if (typeof updatePDisplay === 'function') updatePDisplay(); 
     document.getElementById('site-search').addEventListener('input', performSearch);
+    updateFloatingCalcVisibility();
 });
