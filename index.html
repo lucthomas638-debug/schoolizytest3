@@ -1692,7 +1692,93 @@
     background-color: #fffcf5 !important;
 }
 
-/* 8. Adaptabilité Mobile */
+/* --- BOUTON FLOTTANT --- */
+#floating-calc-btn {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 60px;
+    height: 60px;
+    background-color: var(--brand-school);
+    color: white;
+    border-radius: 50%;
+    display: none; /* Basculé en flex par JS */
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(132, 89, 207, 0.4);
+    z-index: 4000;
+    transition: transform 0.2s ease;
+}
+
+#floating-calc-btn:hover { transform: scale(1.1); }
+
+/* --- POPUP CALCULATRICE (MIROIR POUR RESIZE HAUT-GAUCHE) --- */
+.calc-popup {
+    position: fixed;
+    bottom: 95px;
+    right: 25px;
+    width: 380px;
+    height: 550px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    display: none; 
+    flex-direction: column;
+    z-index: 4000;
+    border: 3px solid var(--brand-school);
+    
+    /* MAGIE DU MIROIR : On retourne toute la boîte */
+    transform: scaleX(-1) scaleY(-1); 
+    resize: both; 
+    overflow: hidden; 
+    min-width: 300px;
+    min-height: 400px;
+}
+
+/* ON REMET LE CONTENU À L'ENDROIT */
+.calc-popup-header, 
+.calc-popup-body {
+    transform: scaleX(-1) scaleY(-1);
+}
+
+.calc-popup-header {
+    background: white;
+    height: 40px;
+    display: flex;
+    /* justify-content: flex-start place la croix à DROITE visuelle à cause du scaleX inversé */
+    justify-content: flex-start; 
+    align-items: center;
+    padding: 0 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.calc-popup-header button {
+    background: none;
+    border: none;
+    color: var(--brand-school);
+    font-size: 2.2rem;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.calc-popup-body {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+}
+
+.calc-popup-body iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* On n'a plus besoin du .resize-handle manuel car le navigateur 
+   placera la zone de resize native en haut à gauche grâce au miroir */
+
+/* --- ADAPTABILITÉ MOBILE --- */
 @media (max-width: 900px) {
     .flashcards-grid-row { 
         flex-direction: column; 
@@ -1709,86 +1795,19 @@
         justify-content: center;
     }
     .separator-v { display: none; }
-}
-
-#floating-calc-btn {
-    position: fixed;
-    bottom: 25px;
-    right: 25px;
-    width: 60px;
-    height: 60px;
-    background-color: var(--brand-school);
-    color: white;
-    border-radius: 50%;
-    display: none; /* JS basculera en 'flex' */
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(132, 89, 207, 0.4);
-    z-index: 4000;
-}
-
-.calc-popup {
-    position: fixed;
-    bottom: 95px;
-    right: 25px;
-    width: 380px;
-    height: 550px;
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-    display: none; /* JS basculera en 'flex' */
-    flex-direction: column;
-    z-index: 4000;
-    border: 3px solid var(--brand-school);
     
-    /* ACTIVATION DU REDIMENSIONNEMENT */
-    resize: both; 
-    overflow: hidden; 
-    min-width: 300px;
-    min-height: 400px;
-}
-
-.calc-popup-header {
-    background: white; /* Fond blanc pour que seule la bordure violette soit visible */
-    height: 40px;
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    padding: 0 10px;
-}
-
-.calc-popup-header button {
-    background: none;
-    border: none;
-    color: var(--brand-school); /* Croix violette */
-    font-size: 2rem;
-    cursor: pointer;
-}
-
-.calc-popup-body {
-    flex: 1;
-    position: relative;
-    width: 100%;
-    height: 100%;
-}
-
-.calc-popup-body iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-
-/* Petit indicateur visuel en bas à droite pour dire qu'on peut tirer */
-.resize-handle {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 15px;
-    height: 15px;
-    cursor: nwse-resize;
-    background: linear-gradient(135deg, transparent 50%, var(--brand-school) 50%);
+    /* Sur petit mobile, on désactive le miroir pour plus de simplicité */
+    .calc-popup {
+        width: 90%;
+        right: 5%;
+        height: 70vh;
+        transform: none;
+        resize: none; /* On bloque le resize sur mobile pour éviter les bugs */
+    }
+    .calc-popup-header, .calc-popup-body {
+        transform: none;
+    }
+    .calc-popup-header { justify-content: flex-end; }
 }
     
 </style>
