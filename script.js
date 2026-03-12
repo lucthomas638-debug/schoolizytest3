@@ -27,26 +27,37 @@ let state = { currentLevelGroup: '', currentClassCode: '', currentSubject: '', c
 function navigateTo(viewId) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     const target = document.getElementById(viewId);
+    
+    // Si on retourne à l'accueil ou aux outils, on réinitialise le sujet
+    if (['view-home', 'view-apropos', 'view-outils'].includes(viewId)) {
+        state.currentSubject = ''; 
+    }
+
     if (target) {
         target.classList.add('active');
         const main = document.querySelector('main');
         if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
     }
     
-    // Mise à jour automatique de la calculatrice flottante
-    updateFloatingCalcVisibility();
+    updateFloatingCalcVisibility(); // On vérifie si on doit montrer/cacher le bouton
 }
 
-// Ouvrir/Fermer la calculatrice NumWorks flottante
+// B. La fonction pour OUVRIR/FERMER (Garde-la précieusement !)
 function toggleFloatingCalc() {
     const popup = document.getElementById('calc-popup');
     if (!popup) return;
-    popup.style.display = (popup.style.display === 'none' || popup.style.display === '') ? 'flex' : 'none';
+    
+    if (popup.style.display === 'none' || popup.style.display === '') {
+        popup.style.display = 'flex';
+    } else {
+        popup.style.display = 'none';
+    }
 }
 
-// Affiche le bouton 🧮 uniquement pour les matières scientifiques
+// C. La fonction qui décide si le bouton 🧮 doit être là
 function updateFloatingCalcVisibility() {
     const btn = document.getElementById('floating-calc-btn');
+    const popup = document.getElementById('calc-popup');
     if (!btn) return;
     
     const subjectsWithCalc = ['maths', 'physique-chimie', 'physique'];
@@ -56,8 +67,7 @@ function updateFloatingCalcVisibility() {
         btn.style.display = 'flex';
     } else {
         btn.style.display = 'none';
-        const popup = document.getElementById('calc-popup');
-        if (popup) popup.style.display = 'none';
+        if (popup) popup.style.display = 'none'; // On ferme si on change de section
     }
 }
 
