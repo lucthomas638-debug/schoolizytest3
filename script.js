@@ -1716,14 +1716,12 @@ function renderAnnales(data) {
         if(noResult) noResult.style.display = 'none';
     }
 
-    // URL de base de ton bucket public 'annales'
     const baseUrl = `https://kuuxhzyfnqrdoewfoiyf.supabase.co/storage/v1/object/public/annales/`;
 
     data.forEach(item => {
         const card = document.createElement('div');
         card.className = `annale-card ${item.subject.toLowerCase()}`;
         
-        // On parse les chapitres (JSON)
         let chapters = [];
         try {
             chapters = typeof item.chapters === 'string' ? JSON.parse(item.chapters) : item.chapters;
@@ -1731,7 +1729,7 @@ function renderAnnales(data) {
 
         let tagsHtml = (chapters || []).map(chap => `<span class="tag">${chap}</span>`).join('');
 
-        // Liens dynamiques vers le Storage
+        // URLs des fichiers
         const linkSujet = item.file_sujet ? baseUrl + item.file_sujet : "#";
         const linkCorrige = item.file_corrige ? baseUrl + item.file_corrige : "#";
 
@@ -1744,8 +1742,19 @@ function renderAnnales(data) {
             <div class="annale-tags">${tagsHtml}</div>
             
             <div class="annale-actions">
-                <a href="${linkSujet}" target="_blank" class="btn-pdf btn-sujet" ${linkSujet === "#" ? 'style="opacity:0.5;pointer-events:none"' : ''}>📄 Sujet</a>
-                <a href="${linkCorrige}" target="_blank" class="btn-pdf btn-corrige" ${linkCorrige === "#" ? 'style="opacity:0.5;pointer-events:none"' : ''}>📝 Corrigé</a>
+                <button 
+                    onclick="openPdfModal('${linkSujet}', 'Sujet : ${item.title.replace(/'/g, "\\'")}')" 
+                    class="btn-pdf btn-sujet" 
+                    ${linkSujet === "#" ? 'disabled style="opacity:0.5;pointer-events:none"' : ''}>
+                    📄 Sujet
+                </button>
+                
+                <button 
+                    onclick="openPdfModal('${linkCorrige}', 'Corrigé : ${item.title.replace(/'/g, "\\'")}')" 
+                    class="btn-pdf btn-corrige" 
+                    ${linkCorrige === "#" ? 'disabled style="opacity:0.5;pointer-events:none"' : ''}>
+                    📝 Corrigé
+                </button>
             </div>
         `;
         grid.appendChild(card);
@@ -1772,6 +1781,24 @@ function goBackToClasses() {
 // Optionnel : si tu veux garder ce nom pour tes boutons existants
 function goBackToSubjects() { 
     openSubjectsPage(state.currentClassCode); 
+}
+
+function openPdfModal(pdfUrl, title) {
+    const modal = document.getElementById('pdf-modal');
+    const viewer = document.getElementById('pdf-viewer');
+    const titleSpan = document.getElementById('pdf-title');
+    
+    titleSpan.innerText = title;
+    viewer.src = pdfUrl; // On charge l'URL du PDF
+    modal.style.display = 'flex';
+}
+
+function closePdfModal() {
+    const modal = document.getElementById('pdf-modal');
+    const viewer = document.getElementById('pdf-viewer');
+    
+    modal.style.display = 'none';
+    viewer.src = ''; // On vide l'iframe pour stopper le chargement
 }
 
 /* =============================================================================
