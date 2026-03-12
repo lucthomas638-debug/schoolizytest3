@@ -1732,55 +1732,59 @@
 
 #floating-calc-btn:hover { transform: scale(1.1); }
 
-/* La fenêtre Pop-up */
+/* La fenêtre Pop-up épurée */
 .calc-popup {
     position: fixed;
-    bottom: 100px;
-    right: 30px;
-    width: 350px;
-    height: 550px;
+    bottom: 95px;
+    right: 25px;
+    width: 380px;  /* Largeur initiale un peu plus grande */
+    height: 580px; /* Hauteur initiale un peu plus grande */
     background: white;
-    border-radius: 20px;
+    border-radius: 15px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-    display: none; /* Caché par défaut */
+    display: none; 
     flex-direction: column;
-    z-index: 2000;
+    z-index: 3000;
+    border: 3px solid var(--brand-school);
     overflow: hidden;
-    border: 2px solid var(--brand-school);
-    animation: slideIn 0.3s ease-out;
+    
+    /* PERMET LE REDIMENSIONNEMENT MANUEL */
+    resize: both; 
+    min-width: 300px;
+    min-height: 400px;
 }
 
-@keyframes slideIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
+/* Barre supérieure minimaliste (juste violette avec la croix) */
 .calc-popup-header {
     background: var(--brand-school);
-    color: white;
-    padding: 10px 15px;
+    height: 35px; /* Plus fine */
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end; /* Pousse la croix à droite */
     align-items: center;
-    font-weight: bold;
+    padding: 0 10px;
+    cursor: move; /* Indique qu'on pourrait la déplacer */
 }
 
 .calc-popup-header button {
-    background: rgba(255,255,255,0.2);
+    background: none;
     border: none;
     color: white;
-    width: 25px;
-    height: 25px;
-    border-radius: 50%;
+    font-size: 1.5rem;
+    font-weight: bold;
     cursor: pointer;
+    line-height: 1;
 }
 
-.calc-popup-body { flex: 1; }
-.calc-popup-body iframe { width: 100%; height: 100%; transform: scale(0.9); transform-origin: top center; }
+.calc-popup-body { 
+    flex: 1; 
+    width: 100%;
+    height: 100%;
+}
 
-/* Responsive : sur petit mobile, on prend plus de place */
-@media (max-width: 500px) {
-    .calc-popup { width: 90%; right: 5%; bottom: 20px; height: 80vh; }
+.calc-popup-body iframe { 
+    width: 100%; 
+    height: 100%; 
+    border: none;
 }
     
 </style>
