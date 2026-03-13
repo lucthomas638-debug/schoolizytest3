@@ -432,46 +432,49 @@
         .quiz-option.correct { background: #e8f8f0; border-color: var(--accent-green); color: #155724; }
         .quiz-option.wrong { background: #fce8e6; border-color: var(--accent-red); color: #721c24; }
 
-        /* --- STYLE RÉSULTAT QUIZ --- */
+/* --- STYLE RÉSULTATS QUIZ (NOUVEAU DESIGN COMPACT) --- */
         .quiz-result-box {
             background: white;
             border: 2px solid var(--brand-school);
-            border-radius: 15px;
-            padding: 2rem;
+            border-radius: 20px;
+            padding: 1.5rem; /* Compact */
             text-align: center;
-            margin-top: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 10px 30px rgba(108, 99, 255, 0.2);
+            margin: 20px auto;
+            max-width: 500px; /* Moins large */
+            box-shadow: 0 8px 20px rgba(108, 99, 255, 0.1);
             animation: fadeIn 0.5s ease-out;
         }
 
         .quiz-score {
-            font-size: 3rem;
-            font-weight: 800;
+            font-size: 2.5rem; /* Un peu réduit pour le format compact */
+            font-weight: 900;
             color: var(--brand-school);
-            margin: 1rem 0;
+            margin: 0.5rem 0;
         }
 
+        /* --- BOUTON RECOMMENCER POINTILLÉ VIOLET --- */
         .btn-restart {
-            background-color: var(--brand-izy); /* Jaune orangé */
-            color: var(--text-dark);
-            border: none;
-            padding: 1rem 2rem;
-            font-size: 1.1rem;
+            background-color: transparent; /* Pas de fond */
+            color: var(--brand-school);
+            border: 2px dashed var(--brand-school); /* Pointillés violets */
+            padding: 10px 25px;
+            font-size: 1rem;
             font-weight: bold;
             border-radius: 50px;
             cursor: pointer;
-            margin-top: 1rem;
-            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+            transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
             gap: 10px;
         }
 
         .btn-restart:hover {
+            background-color: var(--brand-school);
+            color: white;
+            border-style: solid; /* Devient plein au survol */
             transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            background-color: #ffca28;
+            box-shadow: 0 4px 12px rgba(132, 89, 207, 0.2);
         }
 
 /* --- NAVIGATION DU QUIZ (FLÈCHES) --- */
