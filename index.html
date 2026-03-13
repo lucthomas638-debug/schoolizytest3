@@ -1906,33 +1906,6 @@
     color: var(--brand-school);
     text-align: center;
 }
-/* Style pour le mode Minute Question */
-.switch-container {
-    display: flex; align-items: center; gap: 15px;
-    padding: 15px; background: white; border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer;
-}
-.chapter-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 12px; margin: 20px 0;
-}
-.chapter-item {
-    padding: 15px; background: white; border: 2px solid #eee;
-    border-radius: 12px; cursor: pointer; font-weight: bold; text-align: center;
-}
-.chapter-item.selected {
-    border-color: var(--brand-school); background: #f0edff; color: var(--brand-school);
-}
-.btn-start {
-    display: block; width: 100%; max-width: 300px; margin: 20px auto;
-    padding: 15px; background: var(--brand-school); color: white;
-    border: none; border-radius: 50px; font-weight: bold; cursor: pointer;
-}
-.quiz-stats {
-    display: flex; justify-content: space-around; align-items: center;
-    background: white; padding: 15px; border-radius: 15px;
-    margin-bottom: 20px; border: 2px solid var(--brand-school);
-}
     
 </style>
     
@@ -2438,11 +2411,7 @@
                     <h3>Flashcards</h3>
                     <p>Mémorisation rapide.</p>
                 </div>
-                <div class="card orange" onclick="chooseMode('quiz-generator')">
-                    <span style="font-size:3rem; margin-bottom:1rem;">🧠</span>
-                    <h3>Générateur Quiz</h3>
-                    <p>Minute Question & Thèmes</p>
-                </div>
+            </div>
         </div>
 
         <!-- VUE 5 : LISTE DES CHAPITRES -->
@@ -2498,29 +2467,6 @@
                     </div>
                 <div id="fiche-content" class="fiche-main-content">
                     </div>
-            </div>
-        </div>
-
-        <div id="view-quiz-generator" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-mode')">← Retour</div>
-            <h2 class="view-title">Générateur de Quiz</h2>
-            <div class="quiz-setup">
-                <p style="text-align:center;">Choisis tes chapitres pour le défi :</p>
-                <div id="quiz-chapter-selection" class="chapter-grid"></div>
-                <div class="quiz-options">
-                    <label class="switch-container">
-                        <input type="checkbox" id="timer-mode">
-                        <span>Mode "Minute Question" ⏱️</span>
-                    </label>
-                </div>
-                <button onclick="startGeneratedQuiz()" class="btn-start">Lancer le défi !</button>
-            </div>
-            <div id="quiz-active-area" style="display:none;">
-                <div class="quiz-stats">
-                    <div id="quiz-timer">01:00</div>
-                    <div id="quiz-score">Score: 0</div>
-                </div>
-                <div id="quiz-question-container"></div>
             </div>
         </div>
 
