@@ -9,2524 +9,328 @@
 
     <script>
       window.MathJax = {
-        tex: {
-          inlineMath: [['$', '$'], ['\\(', '\\)']]
-        }
+        tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
       };
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
     <script src="script.js" defer></script>
 
 <style>
-        /* --- VARIABLES --- */
-        :root {
-            --primary-purple: #6C63FF; 
-            --accent-yellow: #FFD700;
-            --accent-orange: #FF8C42;
-            --accent-green: #2ecc71;
-            --accent-red: #e74c3c;
-            --brand-school: #8459cf;
-            --brand-izy: #f5bf78;
-            --bg-light: #F9F9FB;
-            --text-dark: #2D2D3A;
-            --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: var(--font-main);
-            background-color: var(--bg-light);
-            color: var(--text-dark);
-            line-height: 1.6;
-            display: flex;
-            flex-direction: column;
-            height: 100vh; /* Force la hauteur à l'écran */
-            overflow: hidden; /* Empêche le scroll global sur le body */
-        }
-
-        /* --- NAVIGATION HEADER --- */
-        header {
-            background-color: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            flex-shrink: 0; /* Ne rétrécit pas */
-            z-index: 1000;
-        }
-
-        nav {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            /* C'est la ligne OBLIGATOIRE pour que le chrono se centre par rapport à la barre */
-            position: relative; 
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            text-decoration: none;
-            color: var(--brand-school);
-            cursor: pointer;
-        }
-        .logo span { color: var(--brand-izy); }
-
-        .nav-links {
-            list-style: none;
-            display: flex;
-            gap: 2rem;
-        }
-
-        .nav-links li {
-            cursor: pointer;
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-        .nav-links li:hover { color: var(--brand-school); }
-
-        /* --- CONTENEUR PRINCIPAL DES VUES --- */
-        main {
-            flex: 1; 
-            width: 100%;
-            position: relative;
-            overflow-y: auto; /* Permet le scroll UNIQUEMENT dans la zone principale si besoin (pour les longs cours) */
-            padding: 0; 
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        /* VUES */
-        .view {
-            display: none;
-            height: 100%; /* Occupe tout l'espace main */
-            animation: fadeIn 0.4s ease-out;
-        }
-        
-        .view.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* --- ÉLÉMENTS COMMUNS --- */
-        .btn-back {
-            display: inline-flex;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            color: var(--text-dark);
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 1rem;
-            background: white;
-            padding: 0.5rem 1rem;
-            border-radius: 30px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            transition: all 0.2s;
-        }
-        .btn-back:hover {
-            color: var(--brand-school);
-            transform: translateX(-3px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-
-        /* TITRES DES VUES (Style Izy) */
-        h2.view-title {
-            font-size: 2.8rem; /* Un peu plus grand pour l'impact */
-            margin-bottom: 2rem;
-            text-align: center;
-            border-bottom: 2px solid #eee; /* La ligne de séparation grise en bas */
-            padding-bottom: 1rem;
-            
-            /* STYLE DEMANDÉ */
-            font-family: 'Segoe UI', sans-serif;
-            font-weight: 900; /* Très gras (Black) pour bien voir la couleur intérieure */
-            
-            color: var(--brand-izy); /* Intérieur JAUNE (Izy) */
-            -webkit-text-stroke: 2.5px var(--brand-school); /* Contour VIOLET épais */
-            
-            /* Petit effet pour que le texte ne soit pas plat */
-            text-transform: uppercase; 
-            letter-spacing: 1px;
-            text-shadow: 4px 4px 0px rgba(132, 89, 207, 0.1); /* Ombre légère portée */
-        }
-
-        /* --- HOME VIEW (DASHBOARD STYLE) --- */
-        #view-home {
-            /* Flexbox pour centrer verticalement le contenu */
-            display: none; /* géré par .active */
-        }
-        
-        #view-home.active {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            background: linear-gradient(180deg, #fff 0%, var(--bg-light) 100%);
-        }
-
-        .home-content-wrapper {
-            max-width: 1000px;
-            width: 100%;
-            padding: 2rem;
-            /* Pas de scroll ici, tout doit tenir */
-        }
-
-        .hero-title { font-size: 3rem; margin-bottom: 1rem; line-height: 1.2; }
-        
-        /* EFFET JAUNE */
-        .slogan-part {
-            display: inline-block;
-            font-size: 2.2rem;
-            color: var(--text-dark);
-            position: relative;
-            margin-top: 0.5rem;
-        }
-        .slogan-part span { position: relative; z-index: 1; }
-        .slogan-part span::after {
-            content: '';
-            position: absolute;
-            bottom: 5px;
-            left: -5px; right: -5px; height: 15px;
-            background-color: var(--accent-yellow);
-            z-index: -1; opacity: 0.6; transform: rotate(-2deg);
-        }
-
-        .title-school { color: var(--brand-school); }
-        .title-izy { color: var(--brand-izy); }
-
-        .hero-subtitle {
-            font-size: 1.1rem;
-            color: #666;
-            margin-bottom: 2rem;
-        }
-
-        /* BARRE DE RECHERCHE */
-        .search-wrapper { position: relative; width: 100%; max-width: 500px; margin: 0 auto 3rem auto; }
-        .search-container {
-            display: flex; gap: 10px; background: white; padding: 6px;
-            border-radius: 50px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); border: 1px solid #eee;
-            transition: transform 0.2s;
-        }
-        .search-container:hover { transform: scale(1.02); }
-        .search-input { flex: 1; border: none; padding: 0.8rem 1.5rem; border-radius: 50px; outline: none; font-size: 1rem; }
-/* BOUTON LOUPE (Style Schoolizy) */
-        .search-btn {
-            /* 1. L'intérieur Orange Clair (Crème) */
-            background-color: #fffcf5 !important; 
-            
-            /* 2. Les Bords Violet */
-            border: 2px solid var(--brand-school) !important;
-            
-            /* 3. L'icône (texte) en Violet */
-            color: var(--brand-school) !important;
-            
-            /* Mise en forme */
-            padding: 0.8rem 1.5rem;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            display: flex; align-items: center; justify-content: center;
-        }
-
-        #search-results {
-            position: absolute; top: 120%; left: 0; right: 0; background: white;
-            border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            max-height: 250px; overflow-y: auto; z-index: 2000; text-align: left; display: none; padding: 0.5rem;
-        }
-        .result-item { padding: 0.8rem; cursor: pointer; border-radius: 8px; border-bottom: 1px solid #f0f0f0; }
-        .result-item:hover { background-color: var(--bg-light); }
-
-        /* BOUTONS NIVEAUX (Intégrés dans le Hero) */
-        .level-buttons-container {
-            display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap; margin-top: 1rem;
-        }
-        .big-level-btn {
-            padding: 1.5rem; width: 220px; border-radius: 20px;
-            background: white; box-shadow: 0 10px 20px rgba(0,0,0,0.06);
-            cursor: pointer; transition: all 0.2s ease;
-            text-align: center; border: 2px solid transparent;
-        }
-        .big-level-btn:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
-        .big-level-btn h3 { font-size: 1.3rem; margin-bottom: 0.2rem; color: var(--text-dark); }
-        .big-level-btn p { font-size: 0.85rem; color: #888; }
-        .big-level-btn span { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
-        
-/* BOUTONS NIVEAUX (Intégrés dans le Hero) */
-        .level-buttons-container {
-            display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap; margin-top: 1rem;
-        }
-        
-        .big-level-btn {
-            padding: 1.5rem; width: 220px; border-radius: 20px;
-            background: white; box-shadow: 0 10px 20px rgba(0,0,0,0.06);
-            cursor: pointer; transition: all 0.3s ease;
-            text-align: center; 
-            /* On prépare une bordure transparente pour que ça ne décale pas au survol */
-            border: 2px solid transparent; 
-        }
-
-        .big-level-btn h3 { 
-            font-size: 1.3rem; margin-bottom: 0.2rem; color: var(--text-dark); 
-            transition: color 0.3s;
-        }
-        
-        .big-level-btn p { font-size: 0.85rem; color: #888; }
-        .big-level-btn span { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; }
-        
-        /* --- STYLE UNIFIÉ AU SURVOL (HOVER) --- */
-        /* Fond "Primaire" (Orange clair) + Bord "Collège" (Violet) */
-        
-        .btn-primaire:hover,
-        .btn-college:hover,
-        .btn-lycee:hover { 
-            background: #fffcf5;               /* Fond Orange très clair (ex-primaire) */
-            border-color: var(--brand-school); /* Bordure Violette (ex-collège) */
-            transform: translateY(-5px); 
-            box-shadow: 0 15px 30px rgba(132, 89, 207, 0.15); /* Ombre légèrement violette */
-        }
-
-
-
-        /* --- AUTRES VUES (A PROPOS / OUTILS) --- */
-        .info-page-content {
-            background: white; padding: 3rem; border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05); text-align: center; max-width: 800px; margin: 0 auto;
-        }
-
-/* --- GRIDS & CARDS (STYLE UNIFIÉ) --- */
-        .grid-container {
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-            gap: 1.5rem;
-        }
-
-        /* STYLE COMMUN POUR TOUS LES BOUTONS (Matières, Outils, Classes, Niveaux) */
-        /* On applique le même style à tout le monde */
-        .card, 
-        .class-btn, 
-        .subject-card, 
-        .big-level-btn {
-            background: white; 
-            padding: 2rem; 
-            border-radius: 20px;
-            
-            /* Bordure invisible de base (2px) pour éviter le décalage au survol */
-            border: 2px solid transparent; 
-            
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            cursor: pointer;
-            
-            /* Centrage du contenu */
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            text-align: center;
-            min-height: 140px; /* Hauteur harmonisée */
-            color: var(--text-dark); /* Texte gris foncé par défaut */
-            
-            /* On supprime les anciennes bordures de couleur à gauche */
-            border-left: 2px solid transparent;
-        }
-
-        /* --- AU SURVOL (HOVER) --- */
-        /* Fond Orange Clair + Bord Violet + Texte Violet */
-        .card:hover, 
-        .class-btn:hover, 
-        .subject-card:hover, 
-        .big-level-btn:hover {
-            background: #fffcf5; /* Fond Crème/Orange clair */
-            border-color: var(--brand-school); /* Bordure Violette */
-            color: var(--brand-school); /* Texte Violet */
-            
-            transform: translateY(-5px); 
-            box-shadow: 0 15px 30px rgba(132, 89, 207, 0.15); /* Ombre violette douce */
-        }
-
-        /* --- GESTION DU CONTENU INTERNE --- */
-        
-        /* Les titres (h3) */
-        .card h3, .class-btn h3, .subject-card h3, .big-level-btn h3 {
-            margin: 10px 0 5px 0;
-            font-size: 1.3rem;
-            color: inherit; /* Le titre prend la couleur du bouton (Gris -> Violet) */
-            transition: color 0.3s;
-        }
-
-        /* Les sous-titres (p) - Restent discrets */
-        .card p, .class-btn p, .subject-card p, .big-level-btn p {
-            font-size: 0.9rem;
-            color: #888; 
-            margin: 0;
-        }
-
-        /* Les Icônes / Emojis (span) */
-        .card span, .class-btn span, .subject-card span, .big-level-btn span {
-            font-size: 2.5rem;
-            display: block;
-            margin-bottom: 5px;
-            transition: transform 0.3s;
-        }
-        
-        /* Zoom de l'icône au survol */
-        .card:hover span, .class-btn:hover span, .subject-card:hover span, .big-level-btn:hover span {
-            transform: scale(1.15);
-        }
-
-        /* --- LESSON & QUIZ --- */
-        /* --- STYLE DES TITRES DE SECTION (I, II, III...) --- */
-        h2 { 
-            color: var(--brand-school) !important; /* Titre en VIOLET */
-            text-align: center !important;         /* CENTRÉ */
-            margin-top: 40px !important; 
-            margin-bottom: 25px !important;
-            /* Soulignement ORANGE épais */
-            text-decoration: underline var(--brand-izy) 4px !important; 
-            /* Espace entre le texte et le trait */
-            text-underline-offset: 10px; 
-            font-size: 1.8rem;
-            font-weight: 800;
-        }
-
-        /* --- TEXTE DE BASE EN NOIR --- */
-        .lesson-container p, 
-        .lesson-container li, 
-        .lesson-container div {
-            color: #000000 !important; /* NOIR PUR pour la lisibilité */
-            font-size: 1.05rem;
-        }
-
-        /* --- MISE EN VALEUR DES MOTS-CLÉS --- */
-        .lesson-container strong {
-            color: var(--brand-school); /* Les mots en gras passent en VIOLET */
-        }
-
-        /* Les labels des boîtes gardent leur style contrasté */
-        .label {
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .lesson-container { background: white; padding: 3rem; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.05); margin-bottom: 2rem;}
-        .lesson-container h1 { color: var(--brand-school); border-bottom: 3px solid var(--brand-izy); padding-bottom: 1rem; margin-bottom: 2rem; }
-        .definition { background-color: #f3f0ff; border-left: 5px solid var(--brand-school); padding: 1.5rem; margin: 1.5rem 0; border-radius: 8px;}
-        .propriete { background-color: #fff9e6; border-left: 5px solid var(--accent-yellow); padding: 1.5rem; margin: 1.5rem 0; border-radius: 8px;}
-        .label { font-weight: bold; display: block; margin-bottom: 0.5rem; text-transform: uppercase; font-size: 0.9rem; }
-
-        .quiz-question-card { background: white; padding: 2rem; border-radius: 15px; margin-bottom: 2rem; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .quiz-question-text { font-size: 1.2rem; font-weight: bold; margin-bottom: 1.5rem; }
-        .quiz-option { padding: 1rem; border: 2px solid #eee; border-radius: 10px; margin-bottom: 0.5rem; cursor: pointer; transition: 0.2s; }
-        .quiz-option:hover { background: #f9f9fb; border-color: #ccc; }
-        .quiz-option.correct { background: #e8f8f0; border-color: var(--accent-green); color: #155724; }
-        .quiz-option.wrong { background: #fce8e6; border-color: var(--accent-red); color: #721c24; }
-
-        /* --- STYLE RÉSULTAT QUIZ --- */
-        .quiz-result-box {
-            background: white;
-            border: 2px solid var(--brand-school);
-            border-radius: 15px;
-            padding: 2rem;
-            text-align: center;
-            margin-top: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 10px 30px rgba(108, 99, 255, 0.2);
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        .quiz-score {
-            font-size: 3rem;
-            font-weight: 800;
-            color: var(--brand-school);
-            margin: 1rem 0;
-        }
-
-        .btn-restart {
-            background-color: var(--brand-izy); /* Jaune orangé */
-            color: var(--text-dark);
-            border: none;
-            padding: 1rem 2rem;
-            font-size: 1.1rem;
-            font-weight: bold;
-            border-radius: 50px;
-            cursor: pointer;
-            margin-top: 1rem;
-            transition: transform 0.2s, box-shadow 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .btn-restart:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            background-color: #ffca28;
-        }
-
-/* --- STYLES SPÉCIFIQUES FICHES RÉCAP --- */
-        .fiche-container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        .fiche-section {
-            background: white;
-            border-left: 6px solid var(--brand-izy); /* Bordure jaune/orange */
-            padding: 2rem;
-            margin-bottom: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-        .fiche-section h3 {
-            color: var(--brand-school);
-            font-size: 1.4rem;
-            margin-bottom: 1.5rem;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .fiche-section ul {
-            list-style: none;
-        }
-        .fiche-section li {
-            margin-bottom: 1rem;
-            padding-left: 1rem;
-            border-left: 2px solid #eee;
-        }
-        .formule-box {
-            background-color: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin: 1rem 0;
-            text-align: center;
-            font-size: 1.1rem;
-            color: var(--text-dark);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .nav-links { display: none; }
-            .hero-title { font-size: 2rem; }
-            .slogan-part { font-size: 1.5rem; }
-            .big-level-btn { width: 100%; max-width: 300px; padding: 1rem; margin: 0 auto; display:flex; align-items:center; text-align: left; gap: 1rem;}
-            .big-level-btn span { margin-bottom: 0; font-size: 2rem; }
-            .big-level-btn div { flex: 1; }
-            .level-buttons-container { flex-direction: column; gap: 1rem; }
-        }
-
-    /* --- STYLES OUTILS --- */
-        .tool-layout {
-            display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center;
-        }
-        .canvas-container {
-            background: white; padding: 1rem; border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; justify-content: center; align-items: center;
-        }
-        canvas { border: 1px solid #eee; background: #fdfdfd; cursor: crosshair; max-width: 100%; }
-        .tool-controls {
-            flex: 1; min-width: 250px; background: white; padding: 1.5rem;
-            border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-        .info-box p { font-size: 1.1rem; margin-bottom: 0.5rem; }
-        .instruction { font-size: 0.9rem; color: #888; margin-top: 1rem; font-style: italic;}
-        .input-group { margin-bottom: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 1rem; }
-        .input-group input { padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
-        .input-group button { 
-            background: var(--brand-school); color: white; border: none; 
-            padding: 5px 10px; border-radius: 4px; cursor: pointer; 
-        }
-
-/* TABLEAU PÉRIODIQUE - STYLE ET COULEURS */
-        .periodic-grid {
-            display: grid; 
-            grid-template-columns: repeat(18, 1fr); 
-            gap: 3px;
-            overflow-x: auto; 
-            padding-bottom: 1rem;
-        }
-
-        .element-card {
-            aspect-ratio: 1/1.1; /* Un peu plus haut que large pour l'espace */
-            border: 1px solid rgba(0,0,0,0.1);
-            border-radius: 4px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between; /* Écarte le contenu haut/bas */
-            padding: 3px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            overflow: hidden; /* Sécurité anti-débordement */
-            color: #2D2D3A;
-        }
-
-        .element-card:hover {
-            transform: scale(1.3);
-            z-index: 100;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            border-color: #333;
-        }
-
-        /* Gestion du texte à l'intérieur de la case */
-        .elem-header {
-            display: flex;
-            justify-content: flex-start;
-        }
-        .element-number { 
-            font-size: 0.65rem; 
-            font-weight: bold;
-            opacity: 0.7; 
-        }
-
-        .elem-body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-grow: 1; /* Prend toute la place disponible au milieu */
-        }
-        .element-symbol { 
-            font-size: 1.1rem; /* Taille ajustée */
-            font-weight: 800; 
-            font-family: 'Segoe UI', sans-serif;
-        }
-
-        .elem-footer {
-            display: flex;
-            justify-content: center;
-        }
-        .element-molar { 
-            font-size: 0.5rem; 
-            color: #555; 
-            white-space: nowrap; /* Empêche le retour à la ligne */
-        }
-
-        .empty-cell { pointer-events: none; border: none; background: transparent; }
-
-        /* 1. BOUTONS DU REPÈRE (VECTEURS) */
-        .toolbar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-        }
-        .mode-btn {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #eee;
-            background: #f9f9fb;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-weight: bold;
-            color: #555;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 5px;
-        }
-        .mode-btn:hover {
-            background: #eee;
-            transform: translateY(-2px);
-        }
-        .mode-btn.active {
-            background: var(--brand-school);
-            color: white;
-            border-color: var(--brand-school);
-            box-shadow: 0 4px 10px rgba(108, 99, 255, 0.3);
-        }
-        /* Le bouton gomme en rouge quand il est actif */
-        #btn-mode-delete.active {
-            background: var(--accent-red);
-            border-color: var(--accent-red);
-        }
-
-        /* 2. CONVERTISSEUR */
-        .converter-wrapper {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .converter-tabs {
-            /* On utilise une GRILLE (Grid) au lieu du Flexbox */
-            display: grid;
-            /* Cela crée 3 colonnes de largeur égale */
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 10px; /* Espace entre les boutons */
-            margin-bottom: 1.5rem;
-            padding: 0;
-            /* Plus de scroll, plus de débordement */
-            overflow: visible;
-        }
-
-        /* On supprime les anciens hacks de scroll */
-        .converter-tabs::before,
-        .converter-tabs::after { display: none; }
-        .converter-tabs::-webkit-scrollbar { display: none; }
-
-/* ONGLETS DU CONVERTISSEUR */
-        
-        /* État par défaut (Pas cliqué) */
-        .conv-tab {
-            padding: 10px 5px;
-            border: 2px solid transparent; /* Bordure invisible pour éviter le décalage */
-            background: #f0f0f5; /* Gris clair par défaut */
-            border-radius: 12px;
-            cursor: pointer;
-            text-align: center;
-            font-weight: 600;
-            color: #666;
-            transition: all 0.2s;
-            flex-shrink: 0;
-        }
-        
-        /* État ACTIF (Quand on clique dessus) */
-        /* C'est ici qu'on applique le style demandé */
-        .conv-tab.active {
-            /* Fond Orange Clair */
-            background-color: #fffcf5 !important; 
-            
-            /* Bordure Violette */
-            border-color: var(--brand-school) !important;
-            
-            /* Texte Violet */
-            color: var(--brand-school) !important;
-            
-            box-shadow: 0 4px 10px rgba(132, 89, 207, 0.15);
-            transform: translateY(-2px);
-        }
-        
-        /* Au survol simple */
-        .conv-tab:hover {
-            background-color: white;
-            color: var(--brand-school);
-        }
-
-        .converter-card {
-            background: #fff;
-            padding: 2rem;
-            border-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            align-items: center;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-            border: 1px solid #f0f0f0;
-        }
-
-        .conv-row {
-            display: flex;
-            gap: 10px;
-            width: 100%;
-            align-items: center;
-        }
-        
-        .conv-row input {
-            flex: 1;
-            padding: 12px;
-            border-radius: 10px;
-            border: 2px solid #eee;
-            font-size: 1.2rem;
-            font-weight: bold;
-            text-align: center;
-            outline: none;
-            transition: border 0.2s;
-            min-width: 0; /* Important pour ne pas casser le flex sur petit écran */
-        }
-        .conv-row input:focus { border-color: var(--brand-school); }
-
-        .conv-row select {
-            flex: 1;
-            padding: 12px;
-            border-radius: 10px;
-            border: 2px solid #eee;
-            background: #f9f9fb;
-            font-size: 1rem;
-            cursor: pointer;
-            min-width: 0;
-        }
-
-        .conv-equal {
-            font-size: 2rem;
-            color: var(--brand-izy);
-            font-weight: bold;
-            margin: -10px 0;
-        }
-
-        /* Responsive Convertisseur mobile */
-        @media (max-width: 600px) {
-            .conv-row { flex-direction: column; }
-            /* Sur très petit écran, on peut réduire un peu la police des onglets */
-            .conv-tab { font-size: 0.8rem; padding: 10px 2px; }
-        }
-
-        /* 1. Le bouton "Tout effacer" (Vecteurs) */
-        .btn-danger-full {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--accent-red);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 15px;
-            box-shadow: 0 4px 6px rgba(231, 76, 60, 0.2);
-        }
-        .btn-danger-full:hover {
-            background-color: #c0392b;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(231, 76, 60, 0.3);
-        }
-
-        /* 2. Correction des onglets du convertisseur (Coupure) */
-        .converter-tabs {
-            /* On rajoute du padding pour ne pas couper les ombres */
-            padding: 10px; 
-            /* On s'assure que les boutons ne s'écrasent pas */
-            flex-wrap: nowrap; 
-        }
-        
-        .conv-tab {
-            /* Empêche le bouton de rétrécir si l'écran est petit */
-            flex-shrink: 0; 
-        }
-        
-        /* COULEURS DES FAMILLES (Pastels) */
-        .fam-alkali { background-color: #ffadad; }       /* Alcalins (Rouge doux) */
-        .fam-alkaline { background-color: #ffd6a5; }     /* Alcalino-terreux (Orange doux) */
-        .fam-transition { background-color: #fdffb6; }   /* Métaux de transition (Jaune doux) */
-        .fam-post-trans { background-color: #caffbf; }   /* Métaux pauvres (Vert doux) */
-        .fam-metalloid { background-color: #9bf6ff; }    /* Métalloïdes (Cyan doux) */
-        .fam-nonmetal { background-color: #a0c4ff; }     /* Non-métaux (Bleu doux) */
-        .fam-halogen { background-color: #bdb2ff; }      /* Halogènes (Violet doux) */
-        .fam-noble { background-color: #ffc6ff; }        /* Gaz nobles (Rose doux) */
-        .fam-lanthanide { background-color: #ffebd3; border: 2px solid #ffd6a5; } /* Spécial bas */
-        .fam-actinide { background-color: #eecbff; border: 2px solid #bdb2ff; }   /* Spécial bas */
-        
-        .element-details {
-            background: white; color: var(--text-dark); padding: 1rem;
-            border-radius: 8px; margin-bottom: 1rem; text-align: center;
-            border: 2px solid var(--brand-school);
-            min-height: 80px; display: flex; flex-direction: column; justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        }
-
-        /* Mobile */
-        @media (max-width: 600px) {
-            .periodic-grid { grid-template-columns: repeat(18, 16px); width: 100%; overflow-x: scroll; }
-            .element-card { width: 34px; height: 40px; }
-            .element-symbol { font-size: 0.7rem; }
-            .element-number, .element-molar { font-size: 0.35rem; }
-        }
-
-/* 2. STYLE POMODORO (Centré + Couleurs demandées + Boutons finaux) */
-        .pomodoro-wrapper {
-            /* CENTRAGE ABSOLU PARFAIT */
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 100;
-
-            /* DESIGN BASE */
-            display: flex;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.5); 
-            padding: 5px 10px;
-            border-radius: 50px;
-            border: 2px solid transparent; 
-            transition: all 0.3s ease;
-            cursor: pointer;
-            overflow: hidden;
-        }
-
-        .pomo-icon {
-            font-size: 1.5rem;
-            transition: transform 0.3s;
-            line-height: 1;
-        }
-
-        /* DÉTAILS (Cachés par défaut) */
-        .pomo-details {
-            display: flex;
-            align-items: center;
-            /* Rapproche les boutons l'un de l'autre */
-            gap: 2px; 
-            max-width: 0;
-            opacity: 0;
-            margin-left: 0;
-            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-        }
-
-        /* --- INTERACTIONS & COULEURS --- */
-        
-        .pomodoro-wrapper:hover,
-        .pomodoro-wrapper.running {
-            background: #fffcf5; /* Fond Orange Clair */
-            border-color: var(--brand-school); /* Bord Violet */
-            box-shadow: 0 4px 15px rgba(132, 89, 207, 0.15);
-            padding-right: 15px;
-        }
-
-        .pomodoro-wrapper:hover .pomo-details,
-        .pomodoro-wrapper.running .pomo-details {
-            max-width: 200px;
-            opacity: 1;
-            margin-left: 10px;
-        }
-        
-        .pomodoro-wrapper.running .pomo-icon {
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-
-        /* --- CONTENU --- */
-        #pomo-timer {
-            font-weight: bold; 
-            font-family: monospace; 
-            font-size: 1.1rem;
-            color: black; 
-            min-width: 50px; 
-            text-align: center;
-        }
-
-/* CONFIGURATION DES BOUTONS SVG */
-        #pomo-btn, #pomo-reset {
-            border: none; 
-            cursor: pointer; 
-            width: 30px; height: 30px;
-            display: flex; align-items: center; justify-content: center; 
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Rebond sympa */
-            background-color: transparent !important; 
-            padding: 0;
-            margin: 0;
-        }
-
-        /* On cible directement le SVG pour lui donner la bonne couleur */
-        #pomo-btn svg, #pomo-reset svg {
-            color: var(--brand-school); /* Applique le VIOLET */
-            transition: color 0.2s;
-        }
-
-        /* Au survol */
-        #pomo-btn:hover, #pomo-reset:hover {
-            transform: scale(1.15); /* Grossissement */
-            opacity: 0.8;
-        }
-
-        /* Le Reset devient Rouge (Stop) au survol */
-        #pomo-reset:hover svg {
-            color: var(--accent-red);
-        }
-
-/* --- STYLE CALCULATRICE NUMWORKS --- */
-        .numworks-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 2rem;
-            background: white; /* Fond blanc pour faire ressortir la calculette */
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            max-width: 500px; /* Largeur optimale */
-            margin: 0 auto; /* Centrage horizontal */
-            overflow: hidden;
-        }
-
-        .numworks-container iframe {
-            width: 340px; /* Largeur réelle de la NumWorks */
-            height: 660px; /* Hauteur réelle */
-            border: none;
-            /* Petit effet de zoom pour les petits écrans si besoin */
-            transform-origin: top center;
-        }
-
-        /* Adaptation Mode Sombre */
-        body.dark-mode .numworks-container {
-            background: #2c2c44; /* Fond gris foncé */
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            border: 1px solid #444;
-        }
-
-        /* Responsive Mobile : On réduit un peu l'iframe si l'écran est petit */
-        @media (max-width: 500px) {
-            .numworks-container {
-                padding: 1rem;
-                width: 100%;
-            }
-            .numworks-container iframe {
-                transform: scale(0.85); /* On la réduit un peu pour qu'elle rentre */
-                height: 580px; /* On ajuste la hauteur du conteneur */
-            }
-        }
-
-        /* --- STYLE BIBLIOTHÈQUE ANNALES --- */
-        .biblio-filters {
-            background: white; padding: 1.5rem; border-radius: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 2rem;
-            max-width: 800px; margin-left: auto; margin-right: auto;
-        }
-
-        .biblio-filters input {
-            width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 12px;
-            font-size: 1rem; margin-bottom: 10px; outline: none; display: block;
-        }
-        .biblio-filters input:focus { border-color: var(--brand-school); }
-
-        .filters-row { display: flex; gap: 10px; }
-        .filters-row select {
-            flex: 1; padding: 10px; border: 2px solid #eee; border-radius: 12px;
-            background: white; cursor: pointer; font-family: inherit;
-        }
-
-        /* CARTE SUJET */
-        .annale-card {
-            background: white; padding: 1.5rem; border-radius: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05); transition: transform 0.2s;
-            border-left: 5px solid #ccc; /* Couleur par défaut */
-            display: flex; flex-direction: column; text-align: left;
-        }
-        .annale-card:hover { transform: translateY(-3px); }
-
-        /* Couleurs des bordures selon la matière */
-        .annale-card.maths { border-left-color: var(--brand-school); }
-        .annale-card.physique { border-left-color: var(--brand-izy); }
-        .annale-card.svt { border-left-color: var(--accent-green); }
-
-        .annale-header { display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center;}
-        .annale-subject { font-size: 0.8rem; color: #888; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;}
-        .annale-year { font-weight: bold; background: #eee; padding: 4px 8px; border-radius: 6px; font-size: 0.85rem; color: #555; }
-        
-        .annale-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 10px; color: var(--text-dark); }
-
-        /* LES TAGS (Chapitres) */
-        .annale-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
-        .tag {
-            font-size: 0.75rem; padding: 4px 10px; border-radius: 20px;
-            background: #f4f4f4; color: #666; font-weight: 600;
-        }
-
-        /* BOUTONS PDF */
-        .annale-actions { margin-top: auto; display: flex; gap: 10px; }
-        .btn-pdf {
-            flex: 1; text-decoration: none; padding: 10px; text-align: center;
-            border-radius: 10px; font-weight: bold; font-size: 0.9rem; transition: 0.2s;
-            display: flex; align-items: center; justify-content: center; gap: 5px;
-        }
-        .btn-sujet { background: #f3f0ff; color: var(--brand-school); }
-        .btn-corrige { background: var(--brand-school); color: white; }
-        
-        .btn-sujet:hover { background: #e0d4fc; }
-        .btn-corrige:hover { background: var(--primary-purple); }
-
-        /* --- MODE SOMBRE POUR ANNALES --- */
-        body.dark-mode .biblio-filters { background: #1e1e2f; }
-        body.dark-mode .biblio-filters input, body.dark-mode .filters-row select { 
-            background: #2c2c44; color: white; border-color: #444; 
-        }
-        body.dark-mode .annale-card { background: #1e1e2f; color: white; }
-        body.dark-mode .annale-title { color: white; }
-        body.dark-mode .tag { background: #2c2c44; color: #bbb; }
-        body.dark-mode .annale-year { background: #333; color: #ddd; }
-        body.dark-mode .btn-sujet { background: #2c2c44; color: var(--primary-purple); }
-
-        /* --- CSS CERCLE TRIGONOMÉTRIQUE (FINAL) --- */
-
-        .trigo-layout {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
-            align-items: flex-start;
-        }
-
-        /* CARTE GAUCHE */
-        .trigo-visual-card {
-            background: white;
-            padding: 20px;
-            border-radius: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            display: flex; flex-direction: column; align-items: center;
-        }
-        #trigoCanvas {
-            width: 300px; height: 300px;
-            max-width: 100%; cursor: crosshair;
-        }
-        .instruction { color: #888; font-size: 0.9rem; margin-top: 10px; font-style: italic; }
-
-        /* PANNEAU DROIT */
-        .trigo-data-panel {
-            flex: 1; min-width: 300px;
-            display: flex; flex-direction: column; gap: 15px;
-        }
-
-        /* --- BARRE D'ANGLE (Harmonisée & Centrée) --- */
-                .angle-display-box {
-                    display: flex;
-                    justify-content: center;
-                    align-items: center; /* Aligne le = avec les chiffres */
-                    background-color: #fcfaff;
-                    border: 2px solid var(--brand-school);
-                    border-radius: 15px;
-                    padding: 15px;
-                    box-shadow: 0 4px 10px rgba(132, 89, 207, 0.1);
-                    margin-bottom: 20px;
-                }
-
-                .angle-item {
-                    display: flex;
-                    flex-direction: column; /* Titre au-dessus, Valeur en dessous */
-                    align-items: center;    /* Centrage horizontal parfait */
-                    justify-content: center;
-                    width: 140px;           /* Largeur fixe pour que ça ne bouge pas */
-                }
-
-                .angle-label {
-                    font-size: 0.75rem;
-                    text-transform: uppercase;
-                    color: #999;
-                    font-weight: bold;
-                    margin-bottom: 8px; /* Espace entre titre et chiffre */
-                    letter-spacing: 1px;
-                    font-family: sans-serif; /* Police simple pour le titre */
-                }
-
-                .angle-value {
-                    font-family: "Times New Roman", Times, serif; /* Police Maths pour TOUT */
-                    font-size: 2rem;       /* Même taille pour Degrés et Radians */
-                    font-weight: normal;   /* MathJax n'est pas gras, donc le degré non plus */
-                    color: var(--brand-school);
-                    line-height: 1.2;
-                    min-height: 40px;      /* Évite les sauts de hauteur */
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    text-align: center;
-                }
-
-                .angle-separator {
-                    font-family: "Times New Roman", Times, serif;
-                    font-size: 2rem;
-                    color: #ccc;
-                    margin: 0 5px;
-                    padding-top: 20px; /* Petit décalage pour s'aligner avec les chiffres */
-                }
-
-                /* --- CASES VALEURS (Outline Style) --- */
-                .grid-values { display: flex; gap: 10px; }
-
-                .val-box {
-                    flex: 1; padding: 10px; border-radius: 12px;
-                    text-align: center; display: flex; flex-direction: column; gap: 5px;
-                    transition: transform 0.2s;
-                }
-                .val-box:hover { transform: translateY(-3px); }
-
-                /* Force minuscule pour cos/sin/tan et alpha */
-                .val-box .label { 
-                    font-size: 0.9rem; font-weight: bold; font-style: italic;
-                    text-transform: none !important; 
-                    font-variant: normal !important; 
-                }
-                .val-box .result { font-weight: 800; font-size: 1.2rem; }
-
-                /* COULEURS SPÉCIFIQUES */
-                .cos-box { background: #fff5f5 !important; border: 2px solid #FF6B6B !important; color: #FF6B6B !important; }
-                .sin-box { background: #f0f7ff !important; border: 2px solid #4D96FF !important; color: #4D96FF !important; }
-                .tan-box { background: #f0fff4 !important; border: 2px solid #6BCB77 !important; color: #6BCB77 !important; }
-
-                /* --- FORMULES --- */
-                .formula-card { background: #fffcf5; border-left: 5px solid var(--brand-school); border-radius: 12px; padding: 15px; }
-                .card-title { margin: 0 0 10px 0; font-size: 1rem; color: var(--brand-school); border-bottom: 1px solid #eee; padding-bottom: 5px;}
-                .formula-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.9rem; color: #555; }
-                .badge { background: white; border: 1px solid #ddd; padding: 4px 8px; border-radius: 6px; color: var(--brand-school); font-weight: bold; }
-
-                /* --- DARK MODE --- */
-                body.dark-mode .trigo-visual-card, body.dark-mode .formula-card { background: #1e1e2f; color: white; border-color: #444; }
-                body.dark-mode .angle-display-box { background: #2c2c44; border-color: #555; }
-                body.dark-mode .angle-value { color: white; }
-                
-                /* Ajustement couleurs sombres pour les cases outline */
-                body.dark-mode .cos-box { background: #3a1e1e !important; color: #FF6B6B !important; }
-                body.dark-mode .sin-box { background: #1e2a3a !important; color: #4D96FF !important; }
-                body.dark-mode .tan-box { background: #1e3a25 !important; color: #6BCB77 !important; }
-
-                /* --- NOUVEAU STYLE : BOUTONS OUTILS UNIFORMES --- */
-
-                /* --- BOUTONS OUTILS (TAILLE x1.05) --- */
-
-                .tools-grid {
-                    display: grid;
-                    /* Colonnes légèrement plus larges (160px min) */
-                    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-                    gap: 20px;
-                    margin-top: 2rem;
-                }
-
-                .tools-grid .card {
-                    /* Hauteur légèrement augmentée (190px) */
-                    height: 190px;       
-                    width: 100%;
-                    
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
-                    text-align: center;
-                    
-                    padding: 15px;
-                    box-sizing: border-box;
-                }
-
-                /* L'Emoji (Un tout petit peu plus gros) */
-                .tools-grid .card span {
-                    font-size: 3.2rem !important; 
-                    display: block;
-                    margin-bottom: 8px;
-                    line-height: 1;
-                }
-
-                /* Le Titre */
-                .tools-grid .card h3 {
-                    font-size: 1.2rem;
-                    margin: 5px 0;
-                    width: 100%;
-                }
-
-                /* La Description */
-                .tools-grid .card p {
-                    font-size: 0.9rem;
-                    margin: 0;
-                    opacity: 0.8;
-                    font-weight: normal;
-                    line-height: 1.2;
-                }
-
-                /* --- STYLE CALCULATEUR MASSE MOLAIRE (COMPLET & RESPONSIVE) --- */
-
-            /* --- CSS CALCULATEUR CHIMIE (DESIGN CLASSIQUE) --- */
-
-/* =============================================================================
-   OUTIL : CALCULATEUR DE MASSE MOLAIRE (DESIGN PRO & SIDE-BY-SIDE)
-   ============================================================================= */
-
-/* 1. L'ÉCRAN D'AFFICHAGE ET SON TEXTE FANTÔME */
-.mol-screen-container {
-    position: relative; /* Référentiel pour le placeholder */
-    max-width: 900px;
-    margin: 0 auto 25px auto;
-}
-
-.mol-screen {
-    background: #ffffff;
-    border: 1px solid #ccc;
-    border-radius: 12px;
-    height: 80px;
-    display: flex;
-    align-items: center;
-    padding: 0 20px;
-    position: relative;
-    z-index: 2;
+    /* --- VARIABLES & BASE --- */
+    :root {
+        --primary-purple: #6C63FF; --accent-yellow: #FFD700; --accent-orange: #FF8C42;
+        --accent-green: #2ecc71; --accent-red: #e74c3c; --brand-school: #8459cf;
+        --brand-izy: #f5bf78; --bg-light: #F9F9FB; --text-dark: #2D2D3A;
+        --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font-main); background-color: var(--bg-light); color: var(--text-dark); line-height: 1.6; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+    /* --- NAVIGATION --- */
+    header { background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); z-index: 1000; }
+    nav { max-width: 1200px; margin: 0 auto; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: relative; }
+    .logo { font-size: 1.5rem; font-weight: bold; color: var(--brand-school); cursor: pointer; text-decoration: none; }
+    .logo span { color: var(--brand-izy); }
+    .nav-links { list-style: none; display: flex; gap: 2rem; }
+    .nav-links li { cursor: pointer; font-weight: 500; transition: 0.3s; }
+    .nav-links li:hover { color: var(--brand-school); }
+
+    /* --- CONTENEUR PRINCIPAL --- */
+    main { flex: 1; overflow-y: auto; position: relative; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    .view { display: none; animation: fadeIn 0.4s ease-out; padding: 2rem; }
+    .view.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* --- TITRES --- */
+    h2.view-title { font-size: 2.8rem; text-align: center; margin-bottom: 2rem; font-weight: 900; color: var(--brand-izy); -webkit-text-stroke: 2.5px var(--brand-school); text-transform: uppercase; }
+
+    /* --- GRID & CARDS --- */
+    .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
+    .card, .big-level-btn, .class-btn, .subject-card { background: white; padding: 2rem; border-radius: 20px; border: 2px solid transparent; box-shadow: 0 5px 15px rgba(0,0,0,0.05); cursor: pointer; transition: 0.3s; text-align: center; }
+    .card:hover, .big-level-btn:hover { border-color: var(--brand-school); background: #fffcf5; transform: translateY(-5px); }
+
+    /* --- CALCULATRICE FLOTTANTE --- */
+    #floating-calc-btn { position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; background: var(--brand-school); color: white; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; z-index: 4000; }
+    .calc-popup { position: fixed; bottom: 95px; right: 25px; width: 380px; height: 550px; background: white; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: none; flex-direction: column; z-index: 4000; border: 3px solid var(--brand-school); transform: scaleX(-1) scaleY(-1); resize: both; overflow: hidden; }
+    .calc-popup-header, .calc-popup-body { transform: scaleX(-1) scaleY(-1); }
+    .calc-popup-header { height: 40px; display: flex; justify-content: flex-start; align-items: center; padding: 0 15px; }
+    .calc-popup-header button { border: none; background: none; color: var(--brand-school); font-size: 2.2rem; cursor: pointer; }
+    .calc-popup-body iframe { width: 100%; height: 100%; border: none; }
+
+    /* --- QUIZ GENERATOR STYLES --- */
+    .chapter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; margin: 2rem 0; }
+    .chapter-item { padding: 15px; background: white; border: 2px solid #eee; border-radius: 12px; cursor: pointer; transition: 0.3s; font-weight: bold; }
+    .chapter-item.selected { border-color: var(--brand-school); background: #f0edff; color: var(--brand-school); }
     
-    font-family: 'Segoe UI', Arial, sans-serif;
-    font-size: 2.5rem;
-    color: #333;
+    .quiz-options { margin-bottom: 2rem; display: flex; justify-content: center; }
+    .switch-container { display: flex; align-items: center; gap: 15px; padding: 15px 25px; background: white; border-radius: 50px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer; }
     
-    overflow-x: auto;
-    box-shadow: inset 0 2px 6px rgba(0,0,0,0.08);
-}
-
-/* Gestion des indices chimiques */
-.mol-screen sub {
-    font-size: 0.6em;
-    vertical-align: baseline;
-    position: relative;
-    top: 0.4em;
-    color: var(--brand-school); /* On met les chiffres en violet pour le style */
-}
-
-/* Texte "Tape ta molécule" corrigé et centré */
-.mol-placeholder {
-    position: absolute;
-    top: 50%;
-    left: 22px;
-    transform: translateY(-50%);
-    color: #bbb;
-    pointer-events: none;
-    font-family: var(--font-main);
-    font-size: 1.3rem;
-    opacity: 0.7;
-    z-index: 5;
-}
-
-/* 2. LAYOUT DEUX COLONNES (CLAVIER | RÉSULTAT) */
-.mol-main-layout {
-    display: flex;
-    gap: 25px;
-    align-items: flex-start;
-    justify-content: center;
-    max-width: 900px;
-    margin: 0 auto;
-}
-
-/* 3. LE CLAVIER CHIMIQUE */
-.mol-keyboard {
-    flex: 1.2; /* Un peu plus large que la colonne résultat */
-    background: #f0f0f5;
-    padding: 18px;
-    border-radius: 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    border: 1px solid #ddd;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-}
-
-.key-row {
-    display: flex;
-    gap: 10px;
-    width: 100%;
-}
-
-/* Style des touches classiques */
-.btn-calc {
-    flex: 1;
-    height: 55px;
-    border: 1px solid #bbb;
-    border-radius: 8px;
-    font-size: 1.15rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.1s ease;
-    box-shadow: 0 3px 0 #aaa; /* Effet touche physique */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-calc:active {
-    transform: translateY(3px);
-    box-shadow: none;
-}
-
-/* Couleurs des boutons */
-.btn-calc.num { background: white; color: #333; }
-.btn-calc.atom { background: #e8eaed; color: #444; }
-.btn-calc.atom.main { 
-    background: #dee4f0; 
-    color: var(--brand-school); 
-    border-color: var(--brand-school); 
-    font-size: 1.3rem;
-}
-
-.btn-calc.action.red {
-    background: #ffeded;
-    color: #e74c3c;
-    border-color: #f5c6cb;
-    box-shadow: 0 3px 0 #d9a3a3;
-}
-
-/* Bouton CALCULER */
-.btn-calc.action.green {
-    background: var(--brand-school) !important;
-    color: white !important;
-    border: 2px solid var(--brand-school);
-    font-size: 1.2rem;
-    letter-spacing: 2px;
-    box-shadow: 0 4px 0 #5d3eb3;
-}
-
-.btn-calc.action.green:hover {
-    filter: brightness(1.1);
-    transform: translateY(-1px);
-}
-
-/* 4. LA BOÎTE DE RÉSULTAT (À CÔTÉ) */
-.result-box {
-    flex: 1;
-    min-width: 320px;
-    height: 300px; /* Aligné sur la hauteur du clavier */
-    background: white;
-    border: 2px solid #eee;
-    border-left: 6px solid var(--brand-school);
-    padding: 20px;
-    border-radius: 15px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-    overflow-y: auto; /* Scroll si le calcul est long */
-    animation: fadeIn 0.3s ease-out;
-}
-
-.step-line {
-    padding: 8px 0;
-    border-bottom: 1px dashed #eee;
-    color: #444;
-    font-size: 0.95rem;
-}
-
-.step-total {
-    margin-top: 15px;
-    font-size: 1.6rem;
-    font-weight: 900;
-    color: var(--brand-school);
-    text-align: right;
-    border-top: 2px solid #f0f0f5;
-    padding-top: 10px;
-}
-
-/* 5. RESPONSIVE MOBILE */
-@media (max-width: 850px) {
-    .mol-main-layout {
-        flex-direction: column;
-        align-items: center;
-    }
-    .mol-keyboard, .result-box {
-        width: 100%;
-        max-width: 500px;
-    }
-    .result-box {
-        height: auto;
-        min-height: 200px;
-    }
-}
-    
-/* --- STYLES EXERCICES (VERSION FINALE) --- */
-            .exercise-container {
-                max-width: 900px;
-                margin: 0 auto;
-            }
-
-            .exercise-card {
-                background: white;
-                padding: 2rem;
-                border-radius: 20px;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-                margin-bottom: 2rem;
-                
-                /* CHANGEMENT : Bordure violette complète au lieu de border-left */
-                border: 2px solid var(--brand-school); 
-                
-                /* Petit effet de soulèvement au survol pour l'interactivité */
-                transition: transform 0.3s ease, box-shadow 0.3s ease;
-            }
-
-            .exercise-card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 10px 25px rgba(108, 99, 255, 0.15);
-            }
-
-            /* --- NOUVEAUX STYLES POUR L'EN-TÊTE (Difficulté/Temps) --- */
-            .exercise-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 1.5rem;
-                border-bottom: 1px solid #eee;
-                padding-bottom: 0.8rem;
-            }
-
-            .exercise-badge {
-                background: var(--brand-school);
-                color: white;
-                padding: 4px 12px;
-                border-radius: 8px;
-                font-weight: bold;
-                font-size: 0.9rem;
-            }
-
-            .exercise-meta {
-                display: flex;
-                gap: 15px;
-                align-items: center;
-            }
-
-            .difficulty-stars {
-                color: var(--brand-school);
-                font-size: 1.2rem;
-                letter-spacing: 2px;
-            }
-
-            .estimated-time {
-                background: #f0f0f0;
-                padding: 4px 10px;
-                border-radius: 20px;
-                font-size: 0.85rem;
-                color: #666;
-                font-weight: 600;
-            }
-
-            /* --- BOUTON ET CORRECTION --- */
-            .btn-reveal {
-                background-color: var(--brand-izy);
-                color: var(--text-dark);
-                border: none;
-                padding: 0.8rem 1.5rem;
-                font-weight: bold;
-                border-radius: 50px;
-                cursor: pointer;
-                margin-top: 1.5rem;
-                transition: all 0.3s ease;
-                display: inline-flex;
-                align-items: center;
-                gap: 8px;
-            }
-
-            .btn-reveal:hover {
-                transform: scale(1.05);
-                background-color: #ffca28;
-            }
-
-            .correction-box {
-                margin-top: 1.5rem;
-                padding: 1.5rem;
-                /* CHANGEMENT : Fond très légèrement violet pour la correction */
-                background-color: #fcfaff; 
-                border-radius: 12px;
-                border: 2px dashed var(--brand-school);
-                animation: fadeIn 0.5s ease-out;
-            }
-
-            .correction-title {
-                color: var(--accent-green);
-                font-weight: bold;
-                display: block;
-                margin-bottom: 0.5rem;
-                text-transform: uppercase;
-                font-size: 0.9rem;
-            }
-/* --- NAVIGATION RAPIDE BAS DE PAGE --- */
-.quick-nav-footer {
-    display: flex;
-    gap: 15px;
-    margin-top: 3rem;
-    padding-top: 2rem;
-    border-top: 2px solid #eee;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.btn-nav-quick {
-    padding: 0.8rem 1.5rem;
-    border-radius: 50px;
-    border: 2px solid var(--brand-school);
-    background: white;
-    color: var(--brand-school);
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.btn-nav-quick:hover {
-    background: #fffcf5;
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(108, 99, 255, 0.1);
-}
-
-.btn-nav-quick.primary {
-    background: var(--brand-school);
-    color: white;
-}
-
-/* =============================================================================
-   SECTION FLASHCARDS - DESIGN PREMIUM
-   ============================================================================= */
-
-/* 1. Disposition des 3 cartes en ligne */
-.flashcards-grid-row {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    width: 100%;
-    margin: 2rem 0;
-}
-
-/* 2. Structure de la carte et effet de lévitation */
-.flashcard {
-    flex: 1;
-    max-width: 300px;
-    height: 220px;
-    cursor: pointer;
-    perspective: 1200px;
-    transition: transform 0.3s ease;
-}
-
-.flashcard:hover:not(.flipped) {
-    transform: translateY(-12px) rotateX(4deg);
-}
-
-/* 3. Conteneur interne pour la rotation 3D */
-.flashcard-inner {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); /* Effet rebond */
-    transform-style: preserve-3d;
-}
-
-.flashcard.flipped .flashcard-inner {
-    transform: rotateY(180deg);
-}
-
-/* 4. Faces Recto et Verso (Identiques en Blanc Bord Violet) */
-.flashcard-front, .flashcard-back {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    border-radius: 25px;
-    border: 3px solid var(--brand-school);
-    background: white;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    text-align: center;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.05);
-}
-
-.flashcard-back {
-    transform: rotateY(180deg);
-}
-
-/* 5. Éléments internes (Icône et Étiquettes) */
-.flashcard-front::after {
-    content: "🔄";
-    position: absolute;
-    bottom: 15px;
-    right: 15px;
-    font-size: 1.2rem;
-    opacity: 0.3;
-}
-
-.flashcard-hint {
-    position: absolute;
-    top: 15px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    padding: 4px 12px;
-    border-radius: 10px;
-    background: #f0edff;
-    color: var(--brand-school);
-}
-
-.flash-txt {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--text-dark);
-}
-
-/* 6. Barre d'actions unique (Boutons regroupés) */
-.actions-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    background: white;
-    padding: 12px 25px;
-    border-radius: 100px;
-    border: 2px solid #eee;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
-    margin: 20px auto;
-    width: fit-content;
-}
-
-.separator-v {
-    width: 2px;
-    height: 25px;
-    background: #eee;
-    margin: 0 5px;
-}
-
-/* 7. Style des boutons (Blanc Bord Violet) */
-.btn-nav-quick {
-    background: white !important;
-    color: var(--brand-school) !important;
-    border: 2px solid var(--brand-school) !important;
-    border-radius: 50px;
-    padding: 10px 18px;
-    font-weight: 800;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.btn-nav-quick:hover {
-    background: var(--brand-school) !important;
-    color: white !important;
-    transform: translateY(-2px);
-}
-
-/* Style spécial pour le bouton Piocher (Pointillés) */
-.btn-piocher {
-    border: 2px dashed var(--brand-school) !important;
-    background-color: #fffcf5 !important;
-}
-
-/* --- BOUTON FLOTTANT --- */
-#floating-calc-btn {
-    position: fixed;
-    bottom: 25px;
-    right: 25px;
-    width: 60px;
-    height: 60px;
-    background-color: var(--brand-school);
-    color: white;
-    border-radius: 50%;
-    display: none; /* Basculé en flex par JS */
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(132, 89, 207, 0.4);
-    z-index: 4000;
-    transition: transform 0.2s ease;
-}
-
-#floating-calc-btn:hover { transform: scale(1.1); }
-
-/* --- POPUP CALCULATRICE (MIROIR POUR RESIZE HAUT-GAUCHE) --- */
-.calc-popup {
-    position: fixed;
-    bottom: 95px;
-    right: 25px;
-    width: 380px;
-    height: 550px;
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-    display: none; 
-    flex-direction: column;
-    z-index: 4000;
-    border: 3px solid var(--brand-school);
-    
-    /* MAGIE DU MIROIR : On retourne toute la boîte */
-    transform: scaleX(-1) scaleY(-1); 
-    resize: both; 
-    overflow: hidden; 
-    min-width: 300px;
-    min-height: 400px;
-}
-
-/* ON REMET LE CONTENU À L'ENDROIT */
-.calc-popup-header, 
-.calc-popup-body {
-    transform: scaleX(-1) scaleY(-1);
-}
-
-.calc-popup-header {
-    background: white;
-    height: 40px;
-    display: flex;
-    /* justify-content: flex-start place la croix à DROITE visuelle à cause du scaleX inversé */
-    justify-content: flex-start; 
-    align-items: center;
-    padding: 0 15px;
-    border-bottom: 1px solid #eee;
-}
-
-.calc-popup-header button {
-    background: none;
-    border: none;
-    color: var(--brand-school);
-    font-size: 2.2rem;
-    cursor: pointer;
-    line-height: 1;
-}
-
-.calc-popup-body {
-    flex: 1;
-    width: 100%;
-    height: 100%;
-}
-
-.calc-popup-body iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-
-/* On n'a plus besoin du .resize-handle manuel car le navigateur 
-   placera la zone de resize native en haut à gauche grâce au miroir */
-
-/* --- ADAPTABILITÉ MOBILE --- */
-@media (max-width: 900px) {
-    .flashcards-grid-row { 
-        flex-direction: column; 
-        align-items: center; 
-    }
-    .flashcard {
-        width: 100%;
-        max-width: 350px;
-        height: 180px;
-    }
-    .actions-toolbar {
-        flex-wrap: wrap;
-        border-radius: 20px;
-        justify-content: center;
-    }
-    .separator-v { display: none; }
-    
-    /* Sur petit mobile, on désactive le miroir pour plus de simplicité */
-    .calc-popup {
-        width: 90%;
-        right: 5%;
-        height: 70vh;
-        transform: none;
-        resize: none; /* On bloque le resize sur mobile pour éviter les bugs */
-    }
-    .calc-popup-header, .calc-popup-body {
-        transform: none;
-    }
-    .calc-popup-header { justify-content: flex-end; }
-}
-
-/* Fond de la Modal */
-.pdf-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8); /* Fond noir transparent */
-    display: none; /* Caché par défaut */
-    justify-content: center;
-    align-items: center;
-    z-index: 5000; /* Toujours au-dessus de tout */
-}
-
-/* Le conteneur du document */
-.pdf-modal-content {
-    width: 90%;
-    height: 90%;
-    background: white;
-    border-radius: 15px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    animation: zoomIn 0.3s ease-out;
-}
-
-@keyframes zoomIn {
-    from { transform: scale(0.9); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-
-.pdf-modal-header {
-    background: var(--brand-school);
-    color: white;
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-weight: bold;
-}
-
-.pdf-modal-header button {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 2rem;
-    cursor: pointer;
-}
-
-.pdf-modal-body {
-    flex: 1;
-}
-
-#pdf-viewer {
-    width: 100%;
-    height: 100%;
-}
-
-.chapter-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.chapter-item {
-    padding: 10px;
-    border: 2px solid #eee;
-    border-radius: 10px;
-    cursor: pointer;
-    text-align: center;
-    transition: 0.3s;
-}
-
-.chapter-item.selected {
-    border-color: var(--brand-school);
-    background: #f0ebf8;
-}
-
-/* Le Switch style iOS */
-.switch-container {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    cursor: pointer;
-    background: #f9f9f9;
-    padding: 15px;
-    border-radius: 12px;
-}
-
-#quiz-timer {
-    font-size: 2rem;
-    font-weight: bold;
-    color: var(--brand-school);
-    text-align: center;
-}
-    
+    .btn-start { display: block; width: 250px; margin: 0 auto; padding: 1rem; background: var(--brand-school); color: white; border: none; border-radius: 50px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: 0.3s; }
+    .btn-start:hover { transform: scale(1.05); filter: brightness(1.1); }
+
+    .quiz-stats { display: flex; justify-content: space-around; background: white; padding: 1rem; border-radius: 15px; margin-bottom: 2rem; border: 2px solid var(--brand-school); }
+    #quiz-timer { font-size: 2rem; font-weight: 800; color: var(--accent-red); }
+    #quiz-score { font-size: 1.5rem; font-weight: bold; display: flex; align-items: center; }
+
+    /* --- PDF MODAL --- */
+    .pdf-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 5000; }
+    .pdf-modal-content { width: 90%; height: 90%; background: white; border-radius: 15px; display: flex; flex-direction: column; overflow: hidden; }
+    .pdf-modal-header { background: var(--brand-school); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
+    .pdf-modal-header button { background: none; border: none; color: white; font-size: 2rem; cursor: pointer; }
+
+    /* --- HOME STYLE --- */
+    .home-content-wrapper { text-align: center; }
+    .hero-title { font-size: 3.5rem; margin-bottom: 1rem; }
+    .search-wrapper { position: relative; max-width: 600px; margin: 2rem auto; }
+    .search-container { display: flex; background: white; padding: 5px; border-radius: 50px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+    .search-input { flex: 1; border: none; padding: 0.8rem 1.5rem; outline: none; border-radius: 50px; }
+    .search-btn { background: #fffcf5; border: 2px solid var(--brand-school); color: var(--brand-school); padding: 0.5rem 1.5rem; border-radius: 50px; cursor: pointer; }
 </style>
-    
 </head>
 <body>
 
-    <!-- Header / Nav -->
 <header>
-        <nav>
-            <div class="logo" onclick="navigateTo('view-home')">School<span>izy</span>.</div>
-            
-            <div class="pomodoro-wrapper" id="pomo-container">
-                <span class="pomo-icon">⏱️</span>
-                
-            <div class="pomo-details">
-                <span id="pomo-timer">25:00</span>
-                
-                <button id="pomo-btn" onclick="togglePomodoro()">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M8 5V19L19 12L8 5Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                    </svg>
-                </button>
-                
-                <button id="pomo-reset" onclick="resetPomodoro()" title="Arrêter / Reset">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="4" y="4" width="16" height="16" rx="4" fill="currentColor"/>
-                    </svg>
-                </button>
-            </div>
-            </div>
-            <ul class="nav-links">
-                <li onclick="navigateTo('view-home')">Accueil</li>
-                <li onclick="navigateTo('view-apropos')">À propos</li>
-                <li onclick="navigateTo('view-outils')">Outils</li>
-            </ul>
-        </nav>
-    
-    </header>
+    <nav>
+        <div class="logo" onclick="navigateTo('view-home')">School<span>izy</span>.</div>
+        <ul class="nav-links">
+            <li onclick="navigateTo('view-home')">Accueil</li>
+            <li onclick="navigateTo('view-apropos')">À propos</li>
+            <li onclick="navigateTo('view-outils')">Outils</li>
+        </ul>
+    </nav>
+</header>
 
-    <!-- MAIN CONTAINER -->
-    <main id="app-container">
-        
-        <!-- VUE 1 : ACCUEIL (FIXE, SANS SCROLL) -->
-        <div id="view-home" class="view active">
-            <div class="home-content-wrapper">
-                <h1 class="hero-title">
-                    <span class="title-school">School</span><span class="title-izy">izy</span><br>
-                    <span class="slogan-part"><span>l'école c'est cool ici !</span></span>
-                </h1>
-                <p class="hero-subtitle">Ta plateforme de révision gratuite, du CP à la Terminale.</p>
-                
-                <!-- Recherche -->
-                <div class="search-wrapper">
-                    <div class="search-container">
-                        <input 
-                            type="text" 
-                            id="site-search" 
-                            class="search-input" 
-                            placeholder="Que veux-tu réviser ? (ex: Maths, Terminale...)" 
-                            onkeyup="performSearch()"
-                        >
-                        <button class="search-btn" onclick="performSearch()">🔍</button>
-                    </div>
-                    <div id="search-results"></div>
-                </div>
-
-                <!-- Boutons Niveaux (Intégrés ici) -->
-                <div class="level-buttons-container">
-                    <div class="big-level-btn btn-primaire" onclick="openLevelPage('primaire')">
-                        <span>🧸</span>
-                        <div>
-                            <h3>Primaire</h3>
-                            <p>CP au CM2</p>
-                        </div>
-                    </div>
-                    <div class="big-level-btn btn-college" onclick="openLevelPage('college')">
-                        <span>🎓</span>
-                        <div>
-                            <h3>Collège</h3>
-                            <p>6ème à 3ème</p>
-                        </div>
-                    </div>
-                    <div class="big-level-btn btn-lycee" onclick="openLevelPage('lycee')">
-                        <span>🚀</span>
-                        <div>
-                            <h3>Lycée</h3>
-                            <p>2nde à Terminale</p>
-                        </div>
-                    </div>
+<main id="app-container">
+    <div id="view-home" class="view active">
+        <div class="home-content-wrapper">
+            <h1 class="hero-title"><span style="color:var(--brand-school)">School</span><span style="color:var(--brand-izy)">izy</span><br>l'école c'est cool ici !</h1>
+            <div class="search-wrapper">
+                <div class="search-container">
+                    <input type="text" id="site-search" class="search-input" placeholder="Que veux-tu réviser ?">
+                    <button class="search-btn">🔍</button>
                 </div>
             </div>
-        </div>
-
-        <!-- VUE A PROPOS (Nouvelle page distincte) -->
-        <div id="view-apropos" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-home')">← Retour Accueil</div>
-            <h2 class="view-title">À Propos</h2>
-            <div class="info-page-content">
-                <h3>Notre Mission</h3>
-                <p style="color: #666; font-size: 1.1rem; margin-top: 1rem;">
-                    Schoolizy est né d'une volonté simple : rendre l'éducation accessible à tous, gratuitement et sans stress. 
-                    <br><br>
-                    Nous croyons que chaque élève peut réussir s'il dispose des bons outils et d'un environnement bienveillant.
-                    Ici, pas de notes, pas de jugement, juste du contenu clair pour avancer à son rythme.
-                </p>
+            <div class="level-buttons-container" style="display:flex; gap:1.5rem; justify-content:center; flex-wrap:wrap;">
+                <div class="big-level-btn" onclick="openLevelPage('primaire')">🧸 <h3>Primaire</h3></div>
+                <div class="big-level-btn" onclick="openLevelPage('college')">🎓 <h3>Collège</h3></div>
+                <div class="big-level-btn" onclick="openLevelPage('lycee')">🚀 <h3>Lycée</h3></div>
             </div>
-        </div>
-
-        <!-- VUE OUTILS (Nouvelle page distincte) -->
-        <div id="view-outils" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-home')">← Retour Accueil</div>
-            <h2 class="view-title">Boîte à Outils</h2>
-            
-            <div class="tools-grid">
-                
-                <div class="card purple" onclick="initTrigo(); navigateTo('view-tool-trigo')">
-                    <span style="font-size:3rem;">📐</span>
-                    <h3>Cercle Trigo</h3>
-                    <p>Visualiser Cos, Sin, Tan</p>
-                </div>
-
-                <div class="card orange" onclick="initRepere(); navigateTo('view-tool-repere')">
-                    <span style="font-size:3rem;">📈</span>
-                    <h3>Repère Graphique</h3>
-                    <p>Placer des points</p>
-                </div>
-
-                <div class="card yellow" onclick="initTableau(); navigateTo('view-tool-tableau')">
-                    <span style="font-size:3rem;">🧪</span>
-                    <h3>Tableau Périodique</h3>
-                    <p>Chimie & Atomes</p>
-                </div>
-
-                <div class="card green" onclick="initConverter(); navigateTo('view-tool-converter')">
-                    <span style="font-size:3rem;">🔄</span>
-                    <h3>Convertisseur</h3>
-                    <p>Unités & Mesures</p>
-                </div>
-
-                <div class="card purple" onclick="initGraph(); navigateTo('view-tool-graph')">
-                    <span style="font-size:3rem;">📉</span>
-                    <h3>Traceur</h3>
-                    <p>Fonctions graphiques</p>
-                </div>
-
-                <div class="card" onclick="navigateTo('view-tool-numworks')">
-                    <span style="font-size:3rem;">🧮</span>
-                    <h3>NumWorks</h3>
-                    <p>Calculatrice Lycée</p>
-                </div>
-
-                <div class="card" onclick="initBiblio(); navigateTo('view-tool-biblio')">
-                    <span style="font-size:3rem;">📚</span>
-                    <h3>Annales</h3>
-                    <p>Sujets Bac & Corrigés</p>
-                </div>
-
-                <div class="card" onclick="navigateTo('view-tool-mol')">
-                    <span style="font-size:3.2rem;">⚗️</span>
-                    <h3>Masse Molaire</h3>
-                    <p>Calculateur Chimie</p>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- Cercle Trigo -->
-
-        <div id="view-tool-trigo" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-outils')">← Retour Outils</div>
-            <h2 class="view-title">Cercle Trigonométrique</h2>
-
-            <div class="trigo-layout">
-                
-                <div class="trigo-visual-card">
-                    <canvas id="trigoCanvas" width="400" height="400"></canvas>
-                    <p class="instruction">👆 Glisse sur le cercle pour changer l'angle</p>
-                </div>
-
-                <div class="trigo-data-panel">
-                                    
-                <div class="angle-display-box">
-                    
-                    <div class="angle-col">
-                        <span class="angle-label">DEGRÉS</span>
-                        <span id="val-angle-deg" class="angle-value serif-font">0</span>
-                    </div>
-                    
-                    <div class="angle-separator">=</div>
-
-                    <div class="angle-col">
-                        <span class="angle-label">RADIANS</span>
-                        <span id="val-angle-rad" class="angle-value serif-font">0</span>
-                    </div>
-
-                </div>
-
-                    <div class="grid-values">
-                        <div class="val-box cos-box">
-                            <span class="label">cos(&alpha;)</span>
-                            <span id="val-cos" class="result">1</span>
-                        </div>
-                        <div class="val-box sin-box">
-                            <span class="label">sin(&alpha;)</span>
-                            <span id="val-sin" class="result">0</span>
-                        </div>
-                        <div class="val-box tan-box">
-                            <span class="label">tan(&alpha;)</span>
-                            <span id="val-tan" class="result">0</span>
-                        </div>
-                    </div>
-
-                    <div class="data-card formula-card">
-                        <h3 class="card-title">📐 Conversions</h3>
-                        <div class="formula-list">
-                            <div class="formula-item">
-                                <span>Degrés <span class="arrow">→</span> Radians :</span>
-                                <span class="badge">× \(\frac{\pi}{180}\)</span>
-                            </div>
-                            <div class="formula-item">
-                                <span>Radians <span class="arrow">→</span> Degrés :</span>
-                                <span class="badge">× \(\frac{180}{\pi}\)</span>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
-        <!-- Repère vecteurs -->
-
-<div id="view-tool-repere" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-outils')">← Retour Outils</div>
-            <h2 class="view-title">Repère Interactif</h2>
-        
-            <div class="tool-layout">
-                <div class="canvas-container" style="position:relative;">
-                    <canvas id="repereCanvas" width="400" height="400"></canvas>
-                    <div id="mouse-tooltip" style="position:absolute; top:10px; right:10px; background:rgba(255,255,255,0.8); padding:5px; border-radius:4px; font-size:0.8rem; pointer-events:none;">x:0, y:0</div>
-                </div>
-                <div class="tool-controls">
-                    <h3>Boîte à outils</h3>
-                    <div class="toolbar" style="display:flex; gap:10px; margin-bottom:1rem; flex-wrap:wrap;">
-                        <button id="btn-mode-point" class="mode-btn active" onclick="setRepereMode('point')" style="flex:1;">📍 Point</button>
-                        <button id="btn-mode-vector" class="mode-btn" onclick="setRepereMode('vector')" style="flex:1;">➡️ Vecteur</button>
-                        <button id="btn-mode-move" class="mode-btn" onclick="setRepereMode('move')" style="flex:1;">✋ Déplacer</button>
-                        <button id="btn-mode-delete" class="mode-btn" onclick="setRepereMode('delete')" style="background:#fee; color:#c0392b; flex:1;">🗑️ Gomme</button>
-                    </div>
-
-                    <div class="instruction-box" style="background:#f9f9f9; padding:10px; border-radius:8px; font-size:0.9rem; color:#555;">
-                        <p id="repere-instruction"><strong>Mode Point :</strong> Cliquez sur la grille pour ajouter un point (précision 0,25).</p>
-                    </div>
-                    
-                    <div style="margin-top:15px; font-size:0.9rem;">
-                        <strong>Coordonnées souris :</strong> <span id="mouse-coords">x: 0, y: 0</span>
-                    </div>
-
-                    <button onclick="clearRepere()" class="btn-danger-full">🗑️ Tout effacer</button>
-                </div>
-            </div> 
-        </div>
-
-        <!-- Tableau Periodique -->
-
-        <div id="view-tool-tableau" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-outils')">← Retour Outils</div>
-            <h2 class="view-title">Tableau Périodique</h2>
-            <div id="periodic-details" class="element-details">
-                Survolez un élément pour voir les détails ici.
-            </div>
-            <div id="periodic-grid" class="periodic-grid">
-                </div>
-        </div>
-
-        <!-- Convertisseur -->
-
-        <div id="view-tool-converter" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-outils')">← Retour Outils</div>
-            <h2 class="view-title">Convertisseur Universel</h2>
-            
-            <div class="converter-wrapper" style="max-width: 600px; margin: 0 auto;">
-                
-                <div class="converter-tabs">
-                    <button class="conv-tab active" onclick="setConvCategory('length')">📏 Longueur</button>
-                    <button class="conv-tab" onclick="setConvCategory('mass')">⚖️ Masse</button>
-                    <button class="conv-tab" onclick="setConvCategory('time')">⏱️ Temps</button>
-                    <button class="conv-tab" onclick="setConvCategory('speed')">🚀 Vitesse</button>
-                    <button class="conv-tab" onclick="setConvCategory('volume')">💧 Volume</button>
-                    <button class="conv-tab" onclick="setConvCategory('data')">💾 Données</button>
-                </div>
-
-                <div class="converter-card">
-                    
-                    <div class="conv-row">
-                        <input type="number" id="conv-input-1" value="1" oninput="calculateConv(1)">
-                        <select id="conv-unit-1" onchange="calculateConv(1)"></select>
-                    </div>
-
-                    <div class="conv-equal">=</div>
-
-                    <div class="conv-row">
-                        <input type="number" id="conv-input-2" oninput="calculateConv(2)">
-                        <select id="conv-unit-2" onchange="calculateConv(1)"></select>
-                    </div>
-
-                </div>
-
-                <div id="conv-formula" style="text-align:center; color:#666; margin-top:1rem; font-style:italic;"></div>
-            </div>
-        </div>
-
-        <!-- Graphique -->
-
-        <div id="view-tool-graph" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-outils')">← Retour Outils</div>
-            <h2 class="view-title">Calculatrice Graphique</h2>
-    
-            <div class="tool-layout">
-                <div class="canvas-container">
-                    <canvas id="graphCanvas" width="400" height="400"></canvas>
-                </div>
-                <div class="tool-controls">
-                    <h3>Paramètres</h3>
-                    <div class="input-group">
-                        <label style="display:block; margin-bottom:5px; font-weight:bold;">Fonction f(x) =</label>
-                        <input type="text" id="func-input" value="x^2" placeholder="ex: x^2 ou sin(x)..." style="width:100%; padding:10px; font-size:1.1rem;">
-                        <p style="font-size:0.8rem; color:#666; margin-top:5px;">Utilisez x pour la variable. Ex: <code>x+2</code>, <code>cos(x)</code>, <code>x^3</code></p>
-                    </div>
-                    
-                    <button onclick="drawGraph()" style="width:100%; padding:10px; background:var(--brand-school); color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">Tracer la courbe</button>
-                    
-                    <div style="margin-top:20px; border-top:1px solid #eee; padding-top:10px;">
-                        <label>Zoom : <span id="zoom-val">40</span>px/unité</label>
-                        <input type="range" id="zoom-slider" min="10" max="100" value="40" oninput="updateZoom(this.value)" style="width:100%;">
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Numeworks -->
-
-        <div id="view-tool-numworks" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-outils')">← Retour Outils</div>
-            
-            <h2 class="view-title">Calculatrice NumWorks</h2>
-
-            <div class="numworks-container">
-                <iframe 
-                    src="https://www.numworks.com/simulator/embed/" 
-                    frameborder="0" 
-                    allow="clipboard-write"    
-                    allowfullscreen>
-                </iframe>
-            </div>
-            
-            <p class="instruction" style="text-align:center; margin-top:1rem;">
-                Utilise ton clavier ou la souris pour naviguer. <br>
-                <em>Simulateur officiel NumWorks.</em>
-            </p>
-        </div>
-
-        <!-- Calcul masse molaire -->
-
-        <div id="view-tool-mol" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-outils')">← Retour Outils</div>
-            <h2 class="view-title">Calculateur Masse Molaire</h2>
-        
-            <div class="tool-content" style="max-width: 950px; margin: 0 auto;">
-                
-                <div class="mol-screen-container">
-                    <div id="mol-display" class="mol-screen"></div>
-                    <div id="mol-placeholder" class="mol-placeholder">Tape ta molécule...</div>
-                </div>
-        
-                <div class="mol-main-layout"> 
-                    
-                    <div class="mol-keyboard">
-                        <div class="key-row">
-                            <button class="btn-calc num" onclick="addMolChar('2')">2</button>
-                            <button class="btn-calc num" onclick="addMolChar('3')">3</button>
-                            <button class="btn-calc num" onclick="addMolChar('4')">4</button>
-                            <button class="btn-calc num" onclick="addMolChar('6')">6</button>
-                            <button class="btn-calc action red" onclick="deleteMolChar()">⌫</button>
-                        </div>
-        
-                        <div class="key-row">
-                            <button class="btn-calc num" onclick="addMolChar('(')">(</button>
-                            <button class="btn-calc num" onclick="addMolChar(')')">)</button>
-                            <button class="btn-calc atom main" onclick="addMolChar('C')">C</button>
-                            <button class="btn-calc atom main" onclick="addMolChar('H')">H</button>
-                            <button class="btn-calc atom main" onclick="addMolChar('O')">O</button>
-                        </div>
-        
-                        <div class="key-row">
-                            <button class="btn-calc atom" onclick="addMolChar('N')">N</button>
-                            <button class="btn-calc atom" onclick="addMolChar('S')">S</button>
-                            <button class="btn-calc atom" onclick="addMolChar('P')">P</button>
-                            <button class="btn-calc atom" onclick="addMolChar('Cl')">Cl</button>
-                            <button class="btn-calc atom" onclick="addMolChar('Na')">Na</button>
-                        </div>
-        
-                        <div class="key-row">
-                            <button class="btn-calc atom" onclick="addMolChar('Ca')">Ca</button>
-                            <button class="btn-calc atom" onclick="addMolChar('Cu')">Cu</button>
-                            <button class="btn-calc atom" onclick="addMolChar('Fe')">Fe</button>
-                            <button class="btn-calc atom" onclick="addMolChar('Mg')">Mg</button>
-                            <button class="btn-calc atom" onclick="addMolChar('Al')">Al</button>
-                        </div>
-        
-                        <div class="key-row">
-                            <button class="btn-calc action green" style="width: 100%;" onclick="calculateComplexMass()">CALCULER</button>
-                        </div>
-                    </div>
-        
-                    <div id="mol-result-box" class="result-box" style="display:none;">
-                        </div>
-        
-                </div> </div>
-        </div>
-        <!-- Sujet bac -->
-
-        <div id="view-tool-biblio" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-outils')">← Retour Outils</div>
-            
-            <h2 class="view-title">Annales & Sujets</h2>
-
-            <div class="biblio-filters">
-                <input type="text" id="biblio-search" placeholder="🔎 Rechercher (ex: Probabilités, Liban...)" onkeyup="filterAnnales()">
-                
-                <div class="filters-row">
-                    <select id="filter-year" onchange="filterAnnales()">
-                        <option value="all">Toutes les années</option>
-                        <option value="2024">2024</option>
-                        <option value="2023">2023</option>
-                    </select>
-
-                    <select id="filter-subject" onchange="filterAnnales()">
-                        <option value="all">Toutes matières</option>
-                        <option value="Maths">Maths</option>
-                        <option value="Physique">Physique</option>
-                        <option value="SVT">SVT</option>
-                    </select>
-                </div>
-            </div>
-
-            <div id="biblio-grid" class="grid-container">
-                </div>
-            
-            <p id="no-result" style="display:none; text-align:center; margin-top:2rem; color:#888;">
-                Aucun sujet trouvé. Essaie une autre recherche ! 🕵️‍♂️
-            </p>
-        </div>
-
-        <!-- VUE 2 : DÉTAIL DU NIVEAU (Liste des Classes) -->
-        <div id="view-level-classes" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-home')">← Retour à l'accueil</div>
-            <h2 id="level-title" class="view-title">Classes</h2>
-            
-            <div id="classes-grid" class="grid-container">
-                <!-- Généré par JS -->
-            </div>
-        </div>
-
-        <!-- VUE 3 : LISTE DES MATIÈRES -->
-        <div id="view-subjects" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-level-classes')">← Changer de classe</div>
-            <h2 id="subject-title" class="view-title">Matières</h2>
-            
-            <div id="subjects-grid" class="grid-container">
-                <!-- Généré par JS -->
-            </div>
-        </div>
-
-        <!-- VUE 4 : CHOIX DU MODE -->
-        <div id="view-mode" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-subjects')">← Retour</div>
-            <h2 class="view-title">Que veux-tu faire ?</h2>
-            
-            <div class="grid-container" style="max-width: 800px; margin: 0 auto;">
-                <div class="card purple" onclick="chooseMode('lesson')">
-                    <span style="font-size:3rem; margin-bottom:1rem;">📖</span>
-                    <h3>Réviser le cours</h3>
-                    <p>Leçons complètes.</p>
-                </div>
-                <div class="card green" onclick="chooseMode('quiz')">
-                    <span style="font-size:3rem; margin-bottom:1rem;">✍️</span>
-                    <h3>S'entraîner (Quiz)</h3>
-                    <p>Tester ses connaissances.</p>
-                </div>
-                    <div class="card yellow" onclick="chooseMode('fiche')">
-                    <span style="font-size:3rem; margin-bottom:1rem;">📝</span>
-                    <h3>Fiche Récap</h3>
-                    <p>L'essentiel à retenir.</p>
-                </div>
-                <div class="card orange" onclick="chooseMode('exercise')">
-                    <span style="font-size:3rem; margin-bottom:1rem;">🧠</span>
-                    <h3>Exercices</h3>
-                    <p>Pour appliquer les leçons</p>
-                </div>
-                <div class="card purple" onclick="chooseMode('flashcard')">
-                    <span style="font-size:3rem; margin-bottom:1rem;">📄</span>
-                    <h3>Flashcards</h3>
-                    <p>Mémorisation rapide.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- VUE 5 : LISTE DES CHAPITRES -->
-        <div id="view-chapters" class="view container">
-            <div class="btn-back" onclick="backFromChapters()">← Choisir une autre activité</div>
-            <h2 id="chapters-title" class="view-title">Chapitres</h2>
-            <div id="chapters-grid" class="grid-container">
-                </div>
-        </div>
-
-        <!-- VUE 6 : LEÇON -->
-        <div id="view-lesson" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-chapters')">← Retour aux chapitres</div>
-            <div id="lesson-container" class="lesson-container">
-                <!-- Contenu HTML -->
-            </div>
-        </div>
-
-        <!-- VUE 7 : QUIZ -->
-        <div id="view-quiz" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-chapters')">← Retour aux chapitres</div>
-            <h2 id="quiz-page-title" class="view-title">Quiz</h2>
-            <div id="quiz-container" style="max-width: 800px; margin: 0 auto;">
-                <!-- Questions -->
-            </div>
-        </div>
-
-        <!-- EXERCICES -->
-        
-        <div id="view-final-exercises" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-chapters')">← Retour aux chapitres</div>
-            <h2 class="view-title">Exercices</h2>
-            <div id="final-exercise-list">
-                </div>
-        </div>
-
-        <!-- FLASHCARDS -->
-        
-        <div id="view-flashcards" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-chapters')">← Retour aux chapitres</div>
-            <h2 id="flashcards-page-title" class="view-title">Flashcards</h2>
-            
-            <div id="flashcards-grid-container" class="flashcards-grid">
-                </div>
-        </div>
-
-        <!-- FICHE RECAP -->
-        
-        <div id="view-fiche" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-chapters')">← Retour aux chapitres</div>
-            <div class="fiche-layout">
-                <div id="fiche-header" class="fiche-header-box">
-                    </div>
-                <div id="fiche-content" class="fiche-main-content">
-                    </div>
-            </div>
-        </div>
-
-    </main>
-
-    <div id="floating-calc-btn" onclick="toggleFloatingCalc()">
-        <span>🧮</span>
-    </div>
-    
-    <div id="calc-popup" class="calc-popup">
-        <div class="calc-popup-header">
-            <button onclick="toggleFloatingCalc()">&times;</button>
-        </div>
-        <div class="calc-popup-body">
-            <iframe src="https://www.numworks.com/simulator/embed/" frameborder="0"></iframe>
-            <div class="resize-handle"></div>
         </div>
     </div>
 
-    <div id="pdf-modal" class="pdf-modal">
+    <div id="view-level-classes" class="view container">
+        <div class="btn-back" onclick="navigateTo('view-home')">← Accueil</div>
+        <h2 id="level-title" class="view-title">Classes</h2>
+        <div id="classes-grid" class="grid-container"></div>
+    </div>
+
+    <div id="view-subjects" class="view container">
+        <div class="btn-back" onclick="navigateTo('view-level-classes')">← Classes</div>
+        <h2 id="subject-title" class="view-title">Matières</h2>
+        <div id="subjects-grid" class="grid-container"></div>
+    </div>
+
+    <div id="view-mode" class="view container">
+        <div class="btn-back" onclick="navigateTo('view-subjects')">← Retour</div>
+        <h2 class="view-title">Activités</h2>
+        <div class="grid-container">
+            <div class="card" onclick="chooseMode('lesson')">📖 <h3>Leçons</h3></div>
+            <div class="card" onclick="chooseMode('quiz')">✍️ <h3>Quiz Simple</h3></div>
+            <div class="card" onclick="prepareQuizGenerator()">🧠 <h3>Générateur Quiz</h3></div>
+            <div class="card" onclick="chooseMode('flashcard')">📄 <h3>Flashcards</h3></div>
+        </div>
+    </div>
+
+    <div id="view-quiz-generator" class="view container">
+        <div class="btn-back" onclick="navigateTo('view-mode')">← Retour</div>
+        <h2 class="view-title">Custom Quiz</h2>
+        <div class="quiz-setup">
+            <p style="text-align:center;">Choisis un ou plusieurs chapitres :</p>
+            <div id="quiz-chapter-selection" class="chapter-grid"></div>
+            <div class="quiz-options">
+                <label class="switch-container">
+                    <input type="checkbox" id="timer-mode"> Mode "Minute Question" ⏱️
+                </label>
+            </div>
+            <button onclick="startGeneratedQuiz()" class="btn-start">Lancer le défi !</button>
+        </div>
+        <div id="quiz-active-area" style="display:none;">
+            <div class="quiz-stats">
+                <div id="quiz-timer">01:00</div>
+                <div id="quiz-score">Score: 0</div>
+            </div>
+            <div id="quiz-question-container"></div>
+        </div>
+    </div>
+
+    <div id="view-chapters" class="view container">
+        <div class="btn-back" onclick="backFromChapters()">← Retour</div>
+        <h2 id="chapters-title" class="view-title">Chapitres</h2>
+        <div id="chapters-grid" class="grid-container"></div>
+    </div>
+    <div id="view-lesson" class="view container">
+        <div class="btn-back" onclick="navigateTo('view-chapters')">← Chapitres</div>
+        <div id="lesson-container" style="background:white; padding:2rem; border-radius:15px;"></div>
+    </div>
+    <div id="view-quiz" class="view container">
+        <div id="quiz-container"></div>
+    </div>
+    <div id="view-flashcards" class="view container">
+        <div id="flashcards-grid-container"></div>
+    </div>
+
+</main>
+
+<div id="floating-calc-btn" onclick="toggleFloatingCalc()">🧮</div>
+<div id="calc-popup" class="calc-popup">
+    <div class="calc-popup-header"><button onclick="toggleFloatingCalc()">&times;</button></div>
+    <div class="calc-popup-body"><iframe src="https://www.numworks.com/simulator/embed/"></iframe></div>
+</div>
+
+<div id="pdf-modal" class="pdf-modal">
     <div class="pdf-modal-content">
-        <div class="pdf-modal-header">
-            <span id="pdf-title">Sujet d'Annales</span>
-            <button onclick="closePdfModal()">&times;</button>
-        </div>
-        <div class="pdf-modal-body">
-            <iframe id="pdf-viewer" src="" frameborder="0"></iframe>
-        </div>
+        <div class="pdf-modal-header"><span id="pdf-title">Sujet</span><button onclick="closePdfModal()">&times;</button></div>
+        <div class="pdf-modal-body"><iframe id="pdf-viewer"></iframe></div>
     </div>
 </div>
 
-<div id="view-quiz-generator" class="view">
-    <div class="header-section">
-        <h1>Générateur de Quiz 🧠</h1>
-        <p>Prêt pour le défi ? Sélectionne tes chapitres.</p>
-    </div>
-
-    <div class="quiz-setup">
-        <div id="quiz-chapter-selection" class="chapter-grid">
-            </div>
-
-        <div class="quiz-options">
-            <label class="switch-container">
-                <input type="checkbox" id="timer-mode">
-                <span class="slider"></span>
-                <span class="label-text">⏱️ Mode "Minute Question" (1:00)</span>
-            </label>
-        </div>
-
-        <button onclick="startGeneratedQuiz()" class="btn-start">C'est parti !</button>
-    </div>
-
-    <div id="quiz-active-area" style="display:none;">
-        <div class="quiz-stats">
-            <div id="quiz-timer">--:--</div>
-            <div id="quiz-score">Score: 0</div>
-        </div>
-        <div id="quiz-question-container"></div>
-    </div>
-</div>
-    
 </body>
 </html>
+2. Le code JavaScript (Logique du Générateur)
+Ajoute ou remplace ces fonctions dans ton script.js. J'ai ajouté la logique pour récupérer les chapitres de la base Supabase et lancer le mode chrono.
+
+JavaScript
+
+// --- VARIABLES GLOBALES QUIZ ---
+let currentQuizQuestions = [];
+let quizTimerIdx = null;
+let quizScore = 0;
+let timeLeft = 60;
+
+// 1. Préparer le générateur (Charger les chapitres de la matière actuelle)
+async function prepareQuizGenerator() {
+    const container = document.getElementById('quiz-chapter-selection');
+    container.innerHTML = "<p>Chargement des chapitres...</p>";
+    navigateTo('view-quiz-generator');
+
+    // Récupérer les chapitres uniques depuis Supabase pour cette matière
+    const { data, error } = await sb
+        .from('lessons')
+        .select('chapter_number, content')
+        .eq('class_id', state.currentClassCode)
+        .eq('subject_id', state.currentSubject.toLowerCase());
+
+    if (error || !data) return alert("Erreur chargement chapitres");
+
+    container.innerHTML = "";
+    data.forEach(item => {
+        // Extraction du titre (H1) du contenu
+        const temp = document.createElement('div'); temp.innerHTML = item.content;
+        const title = temp.querySelector('h1')?.innerText || "Chapitre " + item.chapter_number;
+        
+        const div = document.createElement('div');
+        div.className = "chapter-item";
+        div.dataset.chapId = item.chapter_number;
+        div.innerText = title;
+        div.onclick = () => div.classList.toggle('selected');
+        container.appendChild(div);
+    });
+}
+
+// 2. Lancer le quiz personnalisé
+async function startGeneratedQuiz() {
+    const selected = Array.from(document.querySelectorAll('.chapter-item.selected')).map(el => el.dataset.chapId);
+    if (selected.length === 0) return alert("Sélectionne au moins un chapitre !");
+
+    // Récupérer toutes les questions des chapitres sélectionnés
+    const { data, error } = await sb
+        .from('es')
+        .select('*')
+        .eq('class_id', state.currentClassCode)
+        .eq('subject_id', state.currentSubject.toLowerCase())
+        .in('chapter_number', selected);
+
+    if (error || !data || data.length === 0) return alert("Aucune question trouvée pour ces chapitres.");
+
+    currentQuizQuestions = data.sort(() => 0.5 - Math.random());
+    quizScore = 0;
+    document.getElementById('quiz-score').innerText = "Score: 0";
+    
+    // Switch affichage
+    document.querySelector('.quiz-setup').style.display = 'none';
+    document.getElementById('quiz-active-area').style.display = 'block';
+
+    // Mode Chrono ?
+    const isTimer = document.getElementById('timer-mode').checked;
+    if (isTimer) {
+        startQuizCountdown();
+    } else {
+        document.getElementById('quiz-timer').innerText = "Mode Libre";
+    }
+
+    renderNextQuestion(0);
+}
+
+// 3. Gestion du Timer
+function startQuizCountdown() {
+    timeLeft = 60;
+    const timerDisplay = document.getElementById('quiz-timer');
+    timerDisplay.innerText = "01:00";
+    
+    if(quizTimerIdx) clearInterval(quizTimerIdx);
+    
+    quizTimerIdx = setInterval(() => {
+        timeLeft--;
+        timerDisplay.innerText = `00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
+        
+        if (timeLeft <= 0) {
+            clearInterval(quizTimerIdx);
+            endQuizChallenge();
+        }
+    }, 1000);
+}
+
+// 4. Affichage des questions
+function renderNextQuestion(idx) {
+    const container = document.getElementById('quiz-question-container');
+    if (idx >= currentQuizQuestions.length) return endQuizChallenge();
+
+    const q = currentQuizQuestions[idx];
+    container.innerHTML = `
+        <div class="quiz-question-card" style="margin-top:2rem;">
+            <div class="quiz-question-text" style="font-size:1.3rem; font-weight:bold; margin-bottom:1.5rem;">${q.question}</div>
+            <div id="options-list"></div>
+        </div>
+    `;
+
+    const optionsDiv = container.querySelector('#options-list');
+    q.options.forEach((opt, optIdx) => {
+        const btn = document.createElement('div');
+        btn.className = "quiz-option";
+        btn.style = "padding:1rem; border:2px solid #eee; margin-bottom:10px; border-radius:10px; cursor:pointer;";
+        btn.innerText = opt;
+        btn.onclick = () => {
+            if (optIdx === q.correct_index) {
+                quizScore++;
+                document.getElementById('quiz-score').innerText = "Score: " + quizScore;
+                renderNextQuestion(idx + 1); // Question suivante direct pour la vitesse
+            } else {
+                btn.style.borderColor = "var(--accent-red)";
+                btn.style.background = "#fee";
+                // Petite pause avant de continuer si erreur
+                setTimeout(() => renderNextQuestion(idx + 1), 500);
+            }
+        };
+        optionsDiv.appendChild(btn);
+    });
+}
+
+function endQuizChallenge() {
+    clearInterval(quizTimerIdx);
+    alert("Défi terminé ! Ton score final est de " + quizScore);
+    // Reset pour le prochain coup
+    document.querySelector('.quiz-setup').style.display = 'block';
+    document.getElementById('quiz-active-area').style.display = 'none';
+    navigateTo('view-home');
+}
