@@ -2503,35 +2503,32 @@
             </div>
         </div>
 
-    <div id="view-quiz-generator" class="view">
-    <div class="header-section">
-        <h1>Générateur de Quiz 🧠</h1>
-        <p>Prêt pour le défi ? Sélectionne tes chapitres.</p>
-    </div>
-
-    <div class="quiz-setup">
-        <div id="quiz-chapter-selection" class="chapter-grid">
+        <div id="view-quiz-generator" class="view container">
+            <div class="btn-back" onclick="navigateTo('view-mode')">← Retour</div>
+            <h2 class="view-title">Générateur de Quiz</h2>
+            
+            <div class="quiz-setup">
+                <p style="text-align:center;">Choisis tes chapitres pour le défi :</p>
+                <div id="quiz-chapter-selection" class="chapter-grid"></div>
+                
+                <div class="quiz-options">
+                    <label class="switch-container">
+                        <input type="checkbox" id="timer-mode">
+                        <span>Mode "Minute Question" ⏱️</span>
+                    </label>
+                </div>
+                
+                <button onclick="startGeneratedQuiz()" class="btn-start">Lancer le défi !</button>
             </div>
-
-        <div class="quiz-options">
-            <label class="switch-container">
-                <input type="checkbox" id="timer-mode">
-                <span class="slider"></span>
-                <span class="label-text">⏱️ Mode "Minute Question" (1:00)</span>
-            </label>
+        
+            <div id="quiz-active-area" style="display:none;">
+                <div class="quiz-stats">
+                    <div id="quiz-timer">01:00</div>
+                    <div id="quiz-score">Score: 0</div>
+                </div>
+                <div id="quiz-question-container"></div>
+            </div>
         </div>
-
-        <button onclick="startGeneratedQuiz()" class="btn-start">C'est parti !</button>
-    </div>
-
-    <div id="quiz-active-area" style="display:none;">
-        <div class="quiz-stats">
-            <div id="quiz-timer">--:--</div>
-            <div id="quiz-score">Score: 0</div>
-        </div>
-        <div id="quiz-question-container"></div>
-    </div>
-</div>
 
     </main>
 
