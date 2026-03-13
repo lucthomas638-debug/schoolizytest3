@@ -308,7 +308,6 @@ function renderQuizSlide(chapterNum) {
         const btn = document.createElement('div');
         btn.className = 'quiz-option';
         
-        // Garder l'état si on revient en arrière
         if (userAnswers[currentStep] !== undefined) {
             if (idx === q.correct_index) btn.classList.add('correct');
             if (userAnswers[currentStep] === idx && idx !== q.correct_index) btn.classList.add('wrong');
@@ -318,15 +317,18 @@ function renderQuizSlide(chapterNum) {
         btn.onclick = () => {
             if (userAnswers[currentStep] !== undefined) return;
             userAnswers[currentStep] = idx;
-            renderQuizSlide(chapterNum); // On rafraîchit pour montrer la correction immédiatement
+            renderQuizSlide(chapterNum); 
         };
         optionsBox.appendChild(btn);
     });
 
-    // --- LA CORRECTION EST ICI ---
-    // On dit à MathJax de transformer les \sqrt, \frac, etc. en jolies formules
+    // --- RENDU MATHÉMATIQUE SÉCURISÉ ---
     if (window.MathJax) {
-        MathJax.typesetPromise([container]);
+        // On attend 10ms que le navigateur affiche le HTML avant de lancer MathJax
+        setTimeout(() => {
+            MathJax.typesetClear([container]); 
+            MathJax.typesetPromise([container]).catch((err) => console.log(err));
+        }, 10);
     }
 }
 
@@ -339,18 +341,16 @@ function finishQuiz(chapterNum) {
     let finalScore = 0;
     const container = document.getElementById('quiz-container');
     
-    // 1. Calcul du score
     quizData.forEach((q, idx) => {
         if (userAnswers[idx] === q.correct_index) finalScore++;
     });
 
-    // 2. ON RE-AFFICHE TOUTES LES QUESTIONS (Mode Revue)
     container.innerHTML = '<h2 style="text-align:center; margin-bottom:20px;">Revue de vos réponses</h2>';
     
     quizData.forEach((q, idx) => {
         const card = document.createElement('div');
         card.className = 'quiz-question-card';
-        card.style.marginBottom = "20px"; // Espace entre les questions
+        card.style.marginBottom = "20px";
         
         card.innerHTML = `<div class="quiz-question-text">Question ${idx + 1} : ${q.question}</div>`;
         
@@ -360,7 +360,6 @@ function finishQuiz(chapterNum) {
             btn.className = 'quiz-option';
             btn.innerHTML = opt;
 
-            // Affichage des couleurs de correction
             if (optIdx === q.correct_index) {
                 btn.classList.add('correct');
                 if (userAnswers[idx] === optIdx) btn.innerHTML += " ✅";
@@ -375,16 +374,16 @@ function finishQuiz(chapterNum) {
         container.appendChild(card);
     });
 
-    // 3. ON AJOUTE LE RÉSULTAT TOUT EN BAS
     showQuizResult(finalScore, quizData.length, container, chapterNum);
 
-    // 4. RELANCE DU RENDU MATHÉMATIQUE
-    // C'est cette ligne qui transforme les sqrt, frac, etc. en symboles
+    // --- RENDU MATHÉMATIQUE SÉCURISÉ ---
     if (window.MathJax) {
-        MathJax.typesetPromise([container]);
+        setTimeout(() => {
+            MathJax.typesetClear([container]);
+            MathJax.typesetPromise([container]).catch((err) => console.log(err));
+        }, 10);
     }
 
-    // 5. Scroll vers le résultat pour que l'élève voie sa note d'abord
     setTimeout(() => {
         const resultBox = container.querySelector('.quiz-result-box');
         if(resultBox) resultBox.scrollIntoView({ behavior: 'smooth' });
