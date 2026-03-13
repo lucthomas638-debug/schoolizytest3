@@ -255,19 +255,19 @@ function shuffleArray(array) {
 
 // --- FONCTION POUR CHARGER LE QUIZ DEPUIS SUPABASE ---
 async function openQuiz(chapterNum) {
-    // 1. Récupération des données depuis Supabase
+    // On change 'es' par 'quizzes' ici
     const { data, error } = await sb
-        .from('quizzes')
+        .from('quizzes') 
         .select('*')
         .eq('class_id', state.currentClassCode)
         .eq('subject_id', state.currentSubject.toLowerCase())
         .eq('chapter_number', chapterNum);
 
     if (error || !data || data.length === 0) {
+        console.error("Erreur ou table vide:", error);
         return alert("Pas de quiz disponible pour ce chapitre.");
     }
 
-    // 2. Mélanger et prendre 5 questions
     let qList = [...data].sort(() => 0.5 - Math.random()).slice(0, 5);
     
     const container = document.getElementById('quiz-container');
@@ -275,20 +275,17 @@ async function openQuiz(chapterNum) {
 
     let score = 0;
     let answeredCount = 0;
-    const totalQuestions = qList.length;
 
     qList.forEach((q, idx) => {
         const card = document.createElement('div');
         card.className = 'quiz-question-card';
         
-        // On utilise directement q.question (déjà propre dans Supabase)
+        // Utilisation de q.question (au singulier comme dans ta base)
         card.innerHTML = `<div class="quiz-question-text">Question ${idx + 1} : ${q.question}</div>`;
         
         q.options.forEach((opt, optIdx) => {
             const btn = document.createElement('div');
             btn.className = 'quiz-option';
-            
-            // On utilise directement opt
             btn.innerHTML = opt; 
             
             btn.onclick = function() {
@@ -308,8 +305,8 @@ async function openQuiz(chapterNum) {
                     allButtons[q.correct_index].classList.add('correct');
                 }
 
-                if (answeredCount === totalQuestions) {
-                    showQuizResult(score, totalQuestions, container, chapterNum);
+                if (answeredCount === qList.length) {
+                    showQuizResult(score, qList.length, container, chapterNum);
                 }
             };
             card.appendChild(btn);
