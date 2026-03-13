@@ -474,6 +474,87 @@
             background-color: #ffca28;
         }
 
+/* --- NAVIGATION DU QUIZ (FLÈCHES) --- */
+.quiz-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.btn-nav {
+    padding: 10px 20px;
+    border: 2px solid var(--brand-school);
+    background-color: white;
+    color: var(--brand-school);
+    border-radius: 50px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-nav:hover {
+    background-color: var(--brand-school);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(132, 89, 207, 0.2);
+}
+
+/* Style spécial pour le bouton "Valider" (Dernière slide) */
+.btn-nav[onclick*="finishQuiz"] {
+    background-color: var(--accent-green);
+    border-color: var(--accent-green);
+    color: white;
+}
+
+.btn-nav[onclick*="finishQuiz"]:hover {
+    background-color: #27ae60;
+    border-color: #27ae60;
+    box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+}
+
+/* Gestion du bouton masqué (Précédente sur la Q1) */
+.btn-nav[style*="visibility:hidden"] {
+    pointer-events: none;
+}
+
+/* --- AJUSTEMENT DES OPTIONS DU QUIZ --- */
+.quiz-option {
+    padding: 15px 20px;
+    margin-bottom: 12px;
+    border: 2px solid #eee;
+    border-radius: 15px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.quiz-option:hover {
+    border-color: #ccc;
+    background-color: #fcfcfc;
+}
+
+.quiz-option.correct {
+    background-color: #e8f8f0 !important;
+    border-color: var(--accent-green) !important;
+    color: #155724 !important;
+}
+
+.quiz-option.wrong {
+    background-color: #fce8e6 !important;
+    border-color: var(--accent-red) !important;
+    color: #721c24 !important;
+}
+    
 /* --- STYLES SPÉCIFIQUES FICHES RÉCAP --- */
         .fiche-container {
             max-width: 900px;
