@@ -1801,73 +1801,154 @@ function closePdfModal() {
     viewer.src = ''; // On vide l'iframe pour stopper le chargement
 }
 
+// --- VARIABLES GLOBALES POUR LE GÉNÉRATEUR ---
 let currentGeneratedQuiz = [];
+let currentQuestionIndex = 0;
 let quizTimer = null;
 let timeLeft = 60;
 let generatedScore = 0;
 
-// 1. Initialise la liste des chapitres dispo
-function loadQuizChapters(subject) {
+// 1. Préparer le générateur : Charger les titres des chapitres depuis Supabase
+async function prepareQuizGenerator() {
     const container = document.getElementById('quiz-chapter-selection');
-    container.innerHTML = '';
-    
-    // On récupère les chapitres uniques de la matière
-    const chapters = [...new Set(allQuestions.filter(q => q.subject === subject).map(q => q.chapter))];
-    
-    chapters.forEach(chap => {
+    container.innerHTML = "<p style='text-align:center;'>Chargement des thèmes...</p>";
+    navigateTo('view-quiz-generator');
+
+    // On récupère les chapitres existants (table lessons)
+    const { data, error } = await sb
+        .from('lessons')
+        .select('chapter_number, content')
+        .eq('class_id', state.currentClassCode)
+        .eq('subject_id', state.currentSubject.toLowerCase());
+
+    if (error || !data) return alert("Erreur lors de la récupération des chapitres.");
+
+    container.innerHTML = "";
+    data.forEach(item => {
+        // On extrait le titre H1 du contenu HTML stocké
+        const temp = document.createElement('div');
+        temp.innerHTML = item.content;
+        const title = temp.querySelector('h1')?.innerText || "Chapitre " + item.chapter_number;
+        
         const div = document.createElement('div');
-        div.className = 'chapter-item';
-        div.innerText = chap;
+        div.className = "chapter-item";
+        div.innerText = title;
+        div.dataset.num = item.chapter_number; // Important pour le filtrage plus tard
         div.onclick = () => div.classList.toggle('selected');
         container.appendChild(div);
     });
 }
 
-// 2. Lance le quiz
-function startGeneratedQuiz() {
-    const selectedChapters = Array.from(document.querySelectorAll('.chapter-item.selected')).map(el => el.innerText);
-    const isTimerMode = document.getElementById('timer-mode').checked;
+// 2. Lancer le quiz personnalisé (Appelé par le bouton "C'est parti !")
+async function startGeneratedQuiz() {
+    const selectedNodes = document.querySelectorAll('.chapter-item.selected');
+    const selectedNums = Array.from(selectedNodes).map(el => el.dataset.num);
     
-    if(selectedChapters.length === 0) {
-        alert("Choisis au moins un chapitre !");
-        return;
+    if (selectedNums.length === 0) return alert("Sélectionne au moins un chapitre !");
+
+    // APPEL SUPABASE : Table 'quizzes' / Colonne 'question'
+    const { data, error } = await sb
+        .from('quizzes') 
+        .select('*')
+        .eq('class_id', state.currentClassCode)
+        .eq('subject_id', state.currentSubject.toLowerCase())
+        .in('chapter_number', selectedNums);
+
+    if (error || !data || data.length === 0) {
+        return alert("Désolé, aucune question trouvée dans 'quizzes' pour ces chapitres.");
     }
 
-    // Filtrer et mélanger les questions
-    currentGeneratedQuiz = allQuestions
-        .filter(q => selectedChapters.includes(q.chapter))
-        .sort(() => Math.random() - 0.5);
-
+    // Préparation
+    currentGeneratedQuiz = data.sort(() => 0.5 - Math.random());
+    currentQuestionIndex = 0;
+    generatedScore = 0;
+    
     document.querySelector('.quiz-setup').style.display = 'none';
     document.getElementById('quiz-active-area').style.display = 'block';
-    
-    generatedScore = 0;
-    showNextGeneratedQuestion();
+    document.getElementById('quiz-score').innerText = "Score: 0";
 
-    if(isTimerMode) {
+    // Minute Question ?
+    if (document.getElementById('timer-mode').checked) {
         startQuizTimer();
+    } else {
+        document.getElementById('quiz-timer').innerText = "Mode Libre";
     }
+
+    showNextGeneratedQuestion();
 }
 
+// 3. Boucle de jeu (Affichage des questions)
+function showNextGeneratedQuestion() {
+    const container = document.getElementById('quiz-question-container');
+    
+    if (currentQuestionIndex >= currentGeneratedQuiz.length) {
+        return endQuiz("Bravo ! Toutes les questions sont terminées.");
+    }
+
+    const q = currentGeneratedQuiz[currentQuestionIndex];
+    
+    // On utilise q.question (singulier) et q.options (pluriel)
+    container.innerHTML = `
+        <div class="quiz-question-card">
+            <div class="quiz-question-text">${q.question}</div>
+            <div id="gen-options-list"></div>
+        </div>
+    `;
+
+    const optionsDiv = container.querySelector('#gen-options-list');
+    
+    q.options.forEach((opt, idx) => {
+        const btn = document.createElement('div');
+        btn.className = "quiz-option";
+        btn.innerHTML = opt;
+        btn.onclick = () => {
+            // Empêcher le double clic
+            if(optionsDiv.classList.contains('answered')) return;
+            optionsDiv.classList.add('answered');
+
+            if (idx === q.correct_index) {
+                generatedScore++;
+                document.getElementById('quiz-score').innerText = "Score: " + generatedScore;
+                btn.style.backgroundColor = "#e8f8f0";
+                btn.style.borderColor = "var(--accent-green)";
+            } else {
+                btn.style.backgroundColor = "#fce8e6";
+                btn.style.borderColor = "var(--accent-red)";
+            }
+
+            // Flash visuel et passage rapide à la suite (200ms pour garder le rythme)
+            setTimeout(() => {
+                currentQuestionIndex++;
+                showNextGeneratedQuestion();
+            }, 200);
+        };
+        optionsDiv.appendChild(btn);
+    });
+
+    if (window.MathJax) MathJax.typesetPromise();
+}
+
+// 4. Timer et Fin
 function startQuizTimer() {
     timeLeft = 60;
-    const timerDisplay = document.getElementById('quiz-timer');
-    
+    const display = document.getElementById('quiz-timer');
+    if(quizTimer) clearInterval(quizTimer);
+
     quizTimer = setInterval(() => {
         timeLeft--;
-        timerDisplay.innerText = `00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
-        
-        if(timeLeft <= 0) {
-            endQuiz("Temps écoulé ! ⏱️");
-        }
+        display.innerText = `00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
+        if (timeLeft <= 0) endQuiz("Temps écoulé ! ⏱️");
     }, 1000);
 }
 
-function endQuiz(message) {
+function endQuiz(msg) {
     clearInterval(quizTimer);
-    alert(`${message}\nTon score final : ${generatedScore}`);
-    // Retour au menu
-    navigateTo('view-home'); 
+    alert(`${msg}\nTon score final : ${generatedScore}`);
+    
+    // Reset interface
+    document.querySelector('.quiz-setup').style.display = 'block';
+    document.getElementById('quiz-active-area').style.display = 'none';
+    navigateTo('view-home');
 }
 
 /* =============================================================================
