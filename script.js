@@ -148,11 +148,11 @@ async function checkContentAndNavigate(subject) {
 function chooseMode(mode) {
     state.currentMode = mode;
     
-    // Si on a cliqué sur le générateur, on lance sa préparation spécifique
+    // Si c'est le générateur, on court-circuite tout pour aller vers sa préparation
     if (mode === 'quiz-generator') {
         prepareQuizGenerator();
     } else {
-        // Sinon (cours, quiz simple, flashcards), on charge la liste classique
+        // Sinon (lesson, quiz simple, exo, flashcard), on charge la liste classique des chapitres
         loadChapters();
     }
 }
@@ -1861,23 +1861,26 @@ async function prepareQuizGenerator() {
 // 2. Lancer le quiz personnalisé (Appelé par le bouton "C'est parti !")
 async function startGeneratedQuiz() {
     const selectedNodes = document.querySelectorAll('.chapter-item.selected');
-    const selectedNums = Array.from(selectedNodes).map(el => el.dataset.num);
+    const selectedNums = Array.from(selectedNodes).map(el => parseInt(el.dataset.num));
     
     if (selectedNums.length === 0) return alert("Sélectionne au moins un chapitre !");
 
-    // APPEL SUPABASE : Table 'quizzes' / Colonne 'question'
+    // APPEL SUPABASE : On nettoie les variables pour éviter les erreurs de texte
+    const cleanClass = state.currentClassCode.trim();
+    const cleanSub = state.currentSubject.toLowerCase().trim();
+
     const { data, error } = await sb
         .from('quizzes') 
         .select('*')
-        .eq('class_id', state.currentClassCode)
-        .eq('subject_id', state.currentSubject.toLowerCase())
+        .eq('class_id', cleanClass)
+        .eq('subject_id', cleanSub)
         .in('chapter_number', selectedNums);
 
     if (error || !data || data.length === 0) {
-        return alert("Désolé, aucune question trouvée dans 'quizzes' pour ces chapitres.");
+        console.error("Erreur Supabase:", error);
+        return alert("Désolé, aucune question trouvée pour ces chapitres.");
     }
 
-    // Préparation
     currentGeneratedQuiz = data.sort(() => 0.5 - Math.random());
     currentQuestionIndex = 0;
     generatedScore = 0;
@@ -1886,7 +1889,6 @@ async function startGeneratedQuiz() {
     document.getElementById('quiz-active-area').style.display = 'block';
     document.getElementById('quiz-score').innerText = "Score: 0";
 
-    // Minute Question ?
     if (document.getElementById('timer-mode').checked) {
         startQuizTimer();
     } else {
@@ -1895,7 +1897,6 @@ async function startGeneratedQuiz() {
 
     showNextGeneratedQuestion();
 }
-
 // 3. Boucle de jeu (Affichage des questions)
 function showNextGeneratedQuestion() {
     const container = document.getElementById('quiz-question-container');
