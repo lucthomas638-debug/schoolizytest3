@@ -1867,6 +1867,45 @@
     width: 100%;
     height: 100%;
 }
+
+.chapter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.chapter-item {
+    padding: 10px;
+    border: 2px solid #eee;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: center;
+    transition: 0.3s;
+}
+
+.chapter-item.selected {
+    border-color: var(--brand-school);
+    background: #f0ebf8;
+}
+
+/* Le Switch style iOS */
+.switch-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 12px;
+}
+
+#quiz-timer {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--brand-school);
+    text-align: center;
+}
     
 </style>
     
@@ -2456,6 +2495,36 @@
         <div class="pdf-modal-body">
             <iframe id="pdf-viewer" src="" frameborder="0"></iframe>
         </div>
+    </div>
+</div>
+
+<div id="view-quiz-generator" class="view">
+    <div class="header-section">
+        <h1>Générateur de Quiz 🧠</h1>
+        <p>Prêt pour le défi ? Sélectionne tes chapitres.</p>
+    </div>
+
+    <div class="quiz-setup">
+        <div id="quiz-chapter-selection" class="chapter-grid">
+            </div>
+
+        <div class="quiz-options">
+            <label class="switch-container">
+                <input type="checkbox" id="timer-mode">
+                <span class="slider"></span>
+                <span class="label-text">⏱️ Mode "Minute Question" (1:00)</span>
+            </label>
+        </div>
+
+        <button onclick="startGeneratedQuiz()" class="btn-start">C'est parti !</button>
+    </div>
+
+    <div id="quiz-active-area" style="display:none;">
+        <div class="quiz-stats">
+            <div id="quiz-timer">--:--</div>
+            <div id="quiz-score">Score: 0</div>
+        </div>
+        <div id="quiz-question-container"></div>
     </div>
 </div>
     
