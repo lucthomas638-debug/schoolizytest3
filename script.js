@@ -147,8 +147,14 @@ async function checkContentAndNavigate(subject) {
 // Étape 2 : Quand on choisit un mode (ex: Quiz)
 function chooseMode(mode) {
     state.currentMode = mode;
-    // On va chercher les chapitres disponibles pour ce sujet et cette classe
-    loadChapters();
+    
+    // Si on a cliqué sur le générateur, on lance sa préparation spécifique
+    if (mode === 'quiz-generator') {
+        prepareQuizGenerator();
+    } else {
+        // Sinon (cours, quiz simple, flashcards), on charge la liste classique
+        loadChapters();
+    }
 }
 
 // Étape 3 : Charger la liste des chapitres depuis Supabase
