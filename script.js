@@ -1801,6 +1801,75 @@ function closePdfModal() {
     viewer.src = ''; // On vide l'iframe pour stopper le chargement
 }
 
+let currentGeneratedQuiz = [];
+let quizTimer = null;
+let timeLeft = 60;
+let generatedScore = 0;
+
+// 1. Initialise la liste des chapitres dispo
+function loadQuizChapters(subject) {
+    const container = document.getElementById('quiz-chapter-selection');
+    container.innerHTML = '';
+    
+    // On récupère les chapitres uniques de la matière
+    const chapters = [...new Set(allQuestions.filter(q => q.subject === subject).map(q => q.chapter))];
+    
+    chapters.forEach(chap => {
+        const div = document.createElement('div');
+        div.className = 'chapter-item';
+        div.innerText = chap;
+        div.onclick = () => div.classList.toggle('selected');
+        container.appendChild(div);
+    });
+}
+
+// 2. Lance le quiz
+function startGeneratedQuiz() {
+    const selectedChapters = Array.from(document.querySelectorAll('.chapter-item.selected')).map(el => el.innerText);
+    const isTimerMode = document.getElementById('timer-mode').checked;
+    
+    if(selectedChapters.length === 0) {
+        alert("Choisis au moins un chapitre !");
+        return;
+    }
+
+    // Filtrer et mélanger les questions
+    currentGeneratedQuiz = allQuestions
+        .filter(q => selectedChapters.includes(q.chapter))
+        .sort(() => Math.random() - 0.5);
+
+    document.querySelector('.quiz-setup').style.display = 'none';
+    document.getElementById('quiz-active-area').style.display = 'block';
+    
+    generatedScore = 0;
+    showNextGeneratedQuestion();
+
+    if(isTimerMode) {
+        startQuizTimer();
+    }
+}
+
+function startQuizTimer() {
+    timeLeft = 60;
+    const timerDisplay = document.getElementById('quiz-timer');
+    
+    quizTimer = setInterval(() => {
+        timeLeft--;
+        timerDisplay.innerText = `00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
+        
+        if(timeLeft <= 0) {
+            endQuiz("Temps écoulé ! ⏱️");
+        }
+    }, 1000);
+}
+
+function endQuiz(message) {
+    clearInterval(quizTimer);
+    alert(`${message}\nTon score final : ${generatedScore}`);
+    // Retour au menu
+    navigateTo('view-home'); 
+}
+
 /* =============================================================================
    6. INITIALISATION
    ============================================================================= */
