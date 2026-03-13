@@ -257,7 +257,7 @@ function shuffleArray(array) {
 async function openQuiz(chapterNum) {
     // 1. Récupération des données depuis Supabase
     const { data, error } = await sb
-        .from('es')
+        .from('quizzes')
         .select('*')
         .eq('class_id', state.currentClassCode)
         .eq('subject_id', state.currentSubject.toLowerCase())
