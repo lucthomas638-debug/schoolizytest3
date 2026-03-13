@@ -286,18 +286,21 @@ function renderQuizSlide(chapterNum) {
     const q = quizData[currentStep];
     const isLast = currentStep === quizData.length - 1;
 
+    // On ajoute la classe 'rendering' pour cacher le flash de texte brut
+    container.classList.add('rendering');
+
     container.innerHTML = `
         <div class="quiz-question-card">
             <p style="color:#888; font-size:0.8rem; margin-bottom:10px;">Question ${currentStep + 1} / ${quizData.length}</p>
             <div class="quiz-question-text">${q.question}</div>
             <div id="options-box"></div>
             
-            <div class="quiz-navigation" style="display:flex; justify-content:space-between; margin-top:20px;">
-                <button class="btn-nav" onclick="changeSlide(-1, ${chapterNum})" ${currentStep === 0 ? 'style="visibility:hidden"' : ''}>⬅ Précédente</button>
+            <div class="quiz-navigation">
+                <button class="btn-nav" onclick="changeSlide(-1, ${chapterNum})" ${currentStep === 0 ? 'style="visibility:hidden"' : ''}><span>‹</span> Précédent</button>
                 
                 ${isLast ? 
-                    `<button class="btn-nav" style="background:var(--accent-green); color:white;" onclick="finishQuiz(${chapterNum})">Valider et voir mes erreurs 🏁</button>` : 
-                    `<button class="btn-nav" onclick="changeSlide(1, ${chapterNum})">Suivante ➡</button>`
+                    `<button class="btn-nav" onclick="finishQuiz(${chapterNum})">Terminer <span>✓</span></button>` : 
+                    `<button class="btn-nav" onclick="changeSlide(1, ${chapterNum})">Suivant <span>›</span></button>`
                 }
             </div>
         </div>
@@ -308,30 +311,39 @@ function renderQuizSlide(chapterNum) {
         const btn = document.createElement('div');
         btn.className = 'quiz-option';
         
-        if (userAnswers[currentStep] !== undefined) {
-            if (idx === q.correct_index) btn.classList.add('correct');
-            if (userAnswers[currentStep] === idx && idx !== q.correct_index) btn.classList.add('wrong');
+        // On remet la sélection si l'élève revient en arrière
+        if (userAnswers[currentStep] === idx) {
+            btn.classList.add('selected');
         }
 
         btn.innerHTML = opt;
         btn.onclick = () => {
-            if (userAnswers[currentStep] !== undefined) return;
+            // Désélectionne les autres
+            const allBtns = optionsBox.querySelectorAll('.quiz-option');
+            allBtns.forEach(b => b.classList.remove('selected'));
+            
+            // Sélectionne le nouveau
+            btn.classList.add('selected');
             userAnswers[currentStep] = idx;
-            renderQuizSlide(chapterNum); 
+
+            // Optionnel : passer à la suite auto après 400ms sans montrer la réponse
+            /* if (!isLast) setTimeout(() => changeSlide(1, chapterNum), 400); */
         };
         optionsBox.appendChild(btn);
     });
 
-    // --- RENDU MATHÉMATIQUE SÉCURISÉ ---
+    // Rendu MathJax avec gestion de l'opacité pour éviter le clignotement
     if (window.MathJax) {
-        // On attend 10ms que le navigateur affiche le HTML avant de lancer MathJax
         setTimeout(() => {
-            MathJax.typesetClear([container]); 
-            MathJax.typesetPromise([container]).catch((err) => console.log(err));
+            MathJax.typesetClear([container]);
+            MathJax.typesetPromise([container]).then(() => {
+                container.classList.remove('rendering'); // On remontre le texte une fois propre
+            });
         }, 10);
+    } else {
+        container.classList.remove('rendering');
     }
 }
-
 function changeSlide(direction, chapterNum) {
     currentStep += direction;
     renderQuizSlide(chapterNum);
@@ -340,18 +352,19 @@ function changeSlide(direction, chapterNum) {
 function finishQuiz(chapterNum) {
     let finalScore = 0;
     const container = document.getElementById('quiz-container');
-    
+    container.classList.add('rendering');
+
+    // Calcul du score
     quizData.forEach((q, idx) => {
         if (userAnswers[idx] === q.correct_index) finalScore++;
     });
 
-    container.innerHTML = '<h2 style="text-align:center; margin-bottom:20px;">Revue de vos réponses</h2>';
+    container.innerHTML = '<h2 style="text-align:center; margin-bottom:20px; color:var(--brand-school);">Correction détaillée</h2>';
     
     quizData.forEach((q, idx) => {
         const card = document.createElement('div');
         card.className = 'quiz-question-card';
         card.style.marginBottom = "20px";
-        
         card.innerHTML = `<div class="quiz-question-text">Question ${idx + 1} : ${q.question}</div>`;
         
         const optionsBox = document.createElement('div');
@@ -360,11 +373,12 @@ function finishQuiz(chapterNum) {
             btn.className = 'quiz-option';
             btn.innerHTML = opt;
 
+            // Révélation de la vérité
             if (optIdx === q.correct_index) {
-                btn.classList.add('correct');
+                btn.classList.add('correct'); // La bonne réponse est en vert
                 if (userAnswers[idx] === optIdx) btn.innerHTML += " ✅";
             } else if (userAnswers[idx] === optIdx) {
-                btn.classList.add('wrong');
+                btn.classList.add('wrong'); // Si l'élève a cliqué ici et que c'est faux
                 btn.innerHTML += " ❌";
             }
             optionsBox.appendChild(btn);
@@ -376,11 +390,12 @@ function finishQuiz(chapterNum) {
 
     showQuizResult(finalScore, quizData.length, container, chapterNum);
 
-    // --- RENDU MATHÉMATIQUE SÉCURISÉ ---
     if (window.MathJax) {
         setTimeout(() => {
             MathJax.typesetClear([container]);
-            MathJax.typesetPromise([container]).catch((err) => console.log(err));
+            MathJax.typesetPromise([container]).then(() => {
+                container.classList.remove('rendering');
+            });
         }, 10);
     }
 
