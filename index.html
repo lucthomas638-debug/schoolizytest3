@@ -2506,21 +2506,17 @@
         <div id="view-quiz-generator" class="view container">
             <div class="btn-back" onclick="navigateTo('view-mode')">← Retour</div>
             <h2 class="view-title">Générateur de Quiz</h2>
-            
             <div class="quiz-setup">
                 <p style="text-align:center;">Choisis tes chapitres pour le défi :</p>
                 <div id="quiz-chapter-selection" class="chapter-grid"></div>
-                
                 <div class="quiz-options">
                     <label class="switch-container">
                         <input type="checkbox" id="timer-mode">
                         <span>Mode "Minute Question" ⏱️</span>
                     </label>
                 </div>
-                
                 <button onclick="startGeneratedQuiz()" class="btn-start">Lancer le défi !</button>
             </div>
-        
             <div id="quiz-active-area" style="display:none;">
                 <div class="quiz-stats">
                     <div id="quiz-timer">01:00</div>
