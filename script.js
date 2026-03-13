@@ -1817,32 +1817,45 @@ let generatedScore = 0;
 // 1. Préparer le générateur : Charger les titres des chapitres depuis Supabase
 async function prepareQuizGenerator() {
     const container = document.getElementById('quiz-chapter-selection');
-    container.innerHTML = "<p style='text-align:center;'>Chargement des thèmes...</p>";
+    if (!container) return console.error("Conteneur introuvable");
+
+    // On affiche la vue d'abord
     navigateTo('view-quiz-generator');
+    container.innerHTML = "<p style='text-align:center;'>Chargement des thèmes...</p>";
 
-    // On récupère les chapitres existants (table lessons)
-    const { data, error } = await sb
-        .from('lessons')
-        .select('chapter_number, content')
-        .eq('class_id', state.currentClassCode)
-        .eq('subject_id', state.currentSubject.toLowerCase());
+    try {
+        const { data, error } = await sb
+            .from('lessons')
+            .select('chapter_number, content')
+            .eq('class_id', state.currentClassCode)
+            .eq('subject_id', state.currentSubject.toLowerCase().trim());
 
-    if (error || !data) return alert("Erreur lors de la récupération des chapitres.");
+        if (error) throw error;
 
-    container.innerHTML = "";
-    data.forEach(item => {
-        // On extrait le titre H1 du contenu HTML stocké
-        const temp = document.createElement('div');
-        temp.innerHTML = item.content;
-        const title = temp.querySelector('h1')?.innerText || "Chapitre " + item.chapter_number;
-        
-        const div = document.createElement('div');
-        div.className = "chapter-item";
-        div.innerText = title;
-        div.dataset.num = item.chapter_number; // Important pour le filtrage plus tard
-        div.onclick = () => div.classList.toggle('selected');
-        container.appendChild(div);
-    });
+        if (!data || data.length === 0) {
+            container.innerHTML = "<p style='text-align:center;'>Aucun chapitre trouvé pour cette matière.</p>";
+            return;
+        }
+
+        container.innerHTML = "";
+        data.forEach(item => {
+            // Extraction sécurisée du titre
+            let title = "Chapitre " + item.chapter_number;
+            if (item.content.includes('<h1>')) {
+                title = item.content.split('<h1>')[1].split('</h1>')[0];
+            }
+            
+            const div = document.createElement('div');
+            div.className = "chapter-item";
+            div.innerText = title;
+            div.dataset.num = item.chapter_number; 
+            div.onclick = () => div.classList.toggle('selected');
+            container.appendChild(div);
+        });
+    } catch (err) {
+        console.error("Erreur Générateur:", err);
+        container.innerHTML = "<p>Erreur de connexion à la base de données.</p>";
+    }
 }
 
 // 2. Lancer le quiz personnalisé (Appelé par le bouton "C'est parti !")
