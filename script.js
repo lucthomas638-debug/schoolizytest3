@@ -322,6 +322,12 @@ function renderQuizSlide(chapterNum) {
         };
         optionsBox.appendChild(btn);
     });
+
+    // --- LA CORRECTION EST ICI ---
+    // On dit à MathJax de transformer les \sqrt, \frac, etc. en jolies formules
+    if (window.MathJax) {
+        MathJax.typesetPromise([container]);
+    }
 }
 
 function changeSlide(direction, chapterNum) {
@@ -370,11 +376,15 @@ function finishQuiz(chapterNum) {
     });
 
     // 3. ON AJOUTE LE RÉSULTAT TOUT EN BAS
-    // On appelle ta fonction showQuizResult qui va faire un appendChild
     showQuizResult(finalScore, quizData.length, container, chapterNum);
 
-    // 4. Scroll vers le haut pour commencer la revue, ou vers le bas pour le score ?
-    // On scroll vers le résultat pour que l'élève voie sa note d'abord
+    // 4. RELANCE DU RENDU MATHÉMATIQUE
+    // C'est cette ligne qui transforme les sqrt, frac, etc. en symboles
+    if (window.MathJax) {
+        MathJax.typesetPromise([container]);
+    }
+
+    // 5. Scroll vers le résultat pour que l'élève voie sa note d'abord
     setTimeout(() => {
         const resultBox = container.querySelector('.quiz-result-box');
         if(resultBox) resultBox.scrollIntoView({ behavior: 'smooth' });
