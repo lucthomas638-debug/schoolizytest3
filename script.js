@@ -254,8 +254,13 @@ function shuffleArray(array) {
 }
 
 // --- FONCTION POUR CHARGER LE QUIZ DEPUIS SUPABASE ---
+
+let quizData = []; // Stockera les questions du chapitre
+let currentStep = 0; // L'index de la question affichée
+let userAnswers = {}; // Pour se souvenir des réponses si on revient en arrière
+
 async function openQuiz(chapterNum) {
-    // On change 'es' par 'quizzes' ici
+    console.log("DÉMARRAGE DU QUIZ - TABLE QUIZZES");
     const { data, error } = await sb
         .from('quizzes') 
         .select('*')
@@ -264,58 +269,116 @@ async function openQuiz(chapterNum) {
         .eq('chapter_number', chapterNum);
 
     if (error || !data || data.length === 0) {
-        console.error("Erreur ou table vide:", error);
         return alert("Pas de quiz disponible pour ce chapitre.");
     }
 
-    let qList = [...data].sort(() => 0.5 - Math.random()).slice(0, 5);
-    
+    // On stocke les questions et on reset l'index
+    quizData = [...data].sort(() => 0.5 - Math.random()).slice(0, 5);
+    currentStep = 0;
+    userAnswers = {}; // On vide les anciennes réponses
+
+    renderQuizSlide(chapterNum);
+    navigateTo('view-quiz');
+}
+
+function renderQuizSlide(chapterNum) {
     const container = document.getElementById('quiz-container');
-    container.innerHTML = ''; 
+    const q = quizData[currentStep];
+    const isLast = currentStep === quizData.length - 1;
 
-    let score = 0;
-    let answeredCount = 0;
+    container.innerHTML = `
+        <div class="quiz-question-card">
+            <p style="color:#888; font-size:0.8rem; margin-bottom:10px;">Question ${currentStep + 1} / ${quizData.length}</p>
+            <div class="quiz-question-text">${q.question}</div>
+            <div id="options-box"></div>
+            
+            <div class="quiz-navigation" style="display:flex; justify-content:space-between; margin-top:20px;">
+                <button class="btn-nav" onclick="changeSlide(-1, ${chapterNum})" ${currentStep === 0 ? 'style="visibility:hidden"' : ''}>⬅ Précédente</button>
+                
+                ${isLast ? 
+                    `<button class="btn-nav" style="background:var(--accent-green); color:white;" onclick="finishQuiz(${chapterNum})">Valider et voir mes erreurs 🏁</button>` : 
+                    `<button class="btn-nav" onclick="changeSlide(1, ${chapterNum})">Suivante ➡</button>`
+                }
+            </div>
+        </div>
+    `;
 
-    qList.forEach((q, idx) => {
+    const optionsBox = container.querySelector('#options-box');
+    q.options.forEach((opt, idx) => {
+        const btn = document.createElement('div');
+        btn.className = 'quiz-option';
+        
+        // Garder l'état si on revient en arrière
+        if (userAnswers[currentStep] !== undefined) {
+            if (idx === q.correct_index) btn.classList.add('correct');
+            if (userAnswers[currentStep] === idx && idx !== q.correct_index) btn.classList.add('wrong');
+        }
+
+        btn.innerHTML = opt;
+        btn.onclick = () => {
+            if (userAnswers[currentStep] !== undefined) return;
+            userAnswers[currentStep] = idx;
+            renderQuizSlide(chapterNum); // On rafraîchit pour montrer la correction immédiatement
+        };
+        optionsBox.appendChild(btn);
+    });
+}
+
+function changeSlide(direction, chapterNum) {
+    currentStep += direction;
+    renderQuizSlide(chapterNum);
+}
+
+function finishQuiz(chapterNum) {
+    let finalScore = 0;
+    const container = document.getElementById('quiz-container');
+    
+    // 1. Calcul du score
+    quizData.forEach((q, idx) => {
+        if (userAnswers[idx] === q.correct_index) finalScore++;
+    });
+
+    // 2. ON RE-AFFICHE TOUTES LES QUESTIONS (Mode Revue)
+    container.innerHTML = '<h2 style="text-align:center; margin-bottom:20px;">Revue de vos réponses</h2>';
+    
+    quizData.forEach((q, idx) => {
         const card = document.createElement('div');
         card.className = 'quiz-question-card';
+        card.style.marginBottom = "20px"; // Espace entre les questions
         
-        // Utilisation de q.question (au singulier comme dans ta base)
         card.innerHTML = `<div class="quiz-question-text">Question ${idx + 1} : ${q.question}</div>`;
         
+        const optionsBox = document.createElement('div');
         q.options.forEach((opt, optIdx) => {
             const btn = document.createElement('div');
             btn.className = 'quiz-option';
-            btn.innerHTML = opt; 
-            
-            btn.onclick = function() {
-                if (card.classList.contains('answered')) return;
-                
-                card.classList.add('answered');
-                answeredCount++;
+            btn.innerHTML = opt;
 
-                if (optIdx === q.correct_index) {
-                    btn.classList.add('correct');
-                    btn.innerHTML += " ✅";
-                    score++;
-                } else {
-                    btn.classList.add('wrong');
-                    btn.innerHTML += " ❌";
-                    const allButtons = card.querySelectorAll('.quiz-option');
-                    allButtons[q.correct_index].classList.add('correct');
-                }
-
-                if (answeredCount === qList.length) {
-                    showQuizResult(score, qList.length, container, chapterNum);
-                }
-            };
-            card.appendChild(btn);
+            // Affichage des couleurs de correction
+            if (optIdx === q.correct_index) {
+                btn.classList.add('correct');
+                if (userAnswers[idx] === optIdx) btn.innerHTML += " ✅";
+            } else if (userAnswers[idx] === optIdx) {
+                btn.classList.add('wrong');
+                btn.innerHTML += " ❌";
+            }
+            optionsBox.appendChild(btn);
         });
+        
+        card.appendChild(optionsBox);
         container.appendChild(card);
     });
 
-    if (window.MathJax) MathJax.typesetPromise();
-    navigateTo('view-quiz');
+    // 3. ON AJOUTE LE RÉSULTAT TOUT EN BAS
+    // On appelle ta fonction showQuizResult qui va faire un appendChild
+    showQuizResult(finalScore, quizData.length, container, chapterNum);
+
+    // 4. Scroll vers le haut pour commencer la revue, ou vers le bas pour le score ?
+    // On scroll vers le résultat pour que l'élève voie sa note d'abord
+    setTimeout(() => {
+        const resultBox = container.querySelector('.quiz-result-box');
+        if(resultBox) resultBox.scrollIntoView({ behavior: 'smooth' });
+    }, 300);
 }
 
 function showQuizResult(score, total, container, chapterNum) {
