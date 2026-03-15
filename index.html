@@ -1968,6 +1968,33 @@
     width: 100%;
     height: 100%;
 }
+
+.btn-sablier {
+    background: #fff;
+    border: 2px solid var(--brand-izy);
+    font-size: 1.5rem;
+    padding: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s;
+}
+
+.btn-sablier:hover {
+    transform: rotate(180deg); /* Effet de retournement du sablier */
+    background: var(--brand-izy);
+}
+
+/* Style spécifique quand le mode survie est actif */
+.survival-mode {
+    border: 3px solid #e74c3c; /* Contour rouge pour le stress */
+    animation: flash-border 1s infinite alternate;
+}
+
+@keyframes flash-border {
+    from { border-color: #e74c3c; }
+    to { border-color: transparent; }
+}
     
 </style>
     
@@ -2480,6 +2507,12 @@
         <div id="view-chapters" class="view container">
             <div class="btn-back" onclick="backFromChapters()">← Choisir une autre activité</div>
             <h2 id="chapters-title" class="view-title">Chapitres</h2>
+
+            <div id="multi-quiz-action" style="display:none; text-align:center; margin-bottom:20px;">
+                <button class="btn-nav" style="background:var(--brand-school); color:white;" onclick="prepareMultiQuiz()">🚀 Lancer la Révision Globale</button>
+                <p style="font-size:0.8rem; color:#666; margin-top:5px;">Coche les chapitres que tu veux réviser ensemble</p>
+            </div>
+            
             <div id="chapters-grid" class="grid-container">
                 </div>
         </div>
