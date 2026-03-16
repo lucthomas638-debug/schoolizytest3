@@ -1967,50 +1967,60 @@
     height: 100%;
 }
 
-/* --- LE BOUTON SABLIER (MODE SURVIE) --- */
+/* Cache le timer par défaut, il sera affiché en JS via style.display = 'block' */
+#quiz-timer-display {
+    display: none;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--brand-school);
+}
+
+/* Le bouton sablier "extensible" */
 .btn-sablier {
     background: #fff;
-    border: 2px solid var(--brand-izy);
-    font-size: 1.5rem;
+    border: 2px solid #e74c3c;
     width: 45px;
     height: 45px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    border-radius: 50%;
+    justify-content: flex-start; /* Aligne l'émoji à gauche */
+    border-radius: 25px;
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    transition: all 0.4s ease;
+    overflow: hidden; /* Cache le texte quand il est petit */
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    padding: 0 10px;
+    white-space: nowrap;
     position: relative;
     z-index: 999;
 }
 
-/* On ne fait tourner que l'émoji, pas tout le bouton */
-.btn-sablier:hover span {
+/* L'émoji tourne sur lui-même */
+.btn-sablier span {
+    font-size: 1.5rem;
+    transition: transform 0.4s ease;
     display: inline-block;
-    transform: rotate(180deg);
+    min-width: 25px;
 }
 
-.btn-sablier:hover {
-    background: #e74c3c !important;
-    border-color: #c0392b !important;
-}
-
-/* Le texte reste à l'endroit ici */
+/* Le texte "Défi 1 minute" caché à droite de l'émoji */
 .btn-sablier::after {
-    content: "Mode Survie";
-    position: absolute;
-    bottom: -40px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 0.75rem;
-    background: #e74c3c;
-    color: white;
-    padding: 4px 10px;
-    border-radius: 6px;
+    content: "Défi 1 minute";
+    margin-left: 10px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #e74c3c;
     opacity: 0;
-    transition: opacity 0.3s;
-    white-space: nowrap;
+    transition: opacity 0.3s ease;
+}
+
+/* État au survol : on élargit et on montre le texte */
+.btn-sablier:hover {
+    width: 160px; /* S'adapte à la longueur du texte */
+    background: #fdf2f2;
+}
+
+.btn-sablier:hover span {
+    transform: rotate(180deg);
 }
 
 .btn-sablier:hover::after {
