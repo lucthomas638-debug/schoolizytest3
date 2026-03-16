@@ -181,31 +181,17 @@ function renderChaptersGrid(chaptersList) {
         document.getElementById('multi-validate-area').style.display = 'none';
     }
 
-    chaptersList.forEach(l => {
+chaptersList.forEach(l => {
         const temp = document.createElement('div'); 
         temp.innerHTML = l.content;
         const title = temp.querySelector('h1')?.innerText || "Chapitre " + l.chapter_number;
         
         const card = document.createElement('div');
-        // On utilise la classe interactive qui a le display flex centré en CSS
         card.className = 'card chapter-card-interactive';
-        
-        // Le switch : on utilise les classes exactes (switch, slider, round)
-        let switchHtml = '';
-        if (state.currentMode === 'quiz') {
-            switchHtml = `
-                <div class="chapter-switch-container" style="display:none;">
-                    <label class="switch small">
-                        <input type="checkbox" class="chapter-checkbox" value="${l.chapter_number}" onclick="event.stopPropagation()">
-                        <span class="slider round"></span>
-                    </label>
-                </div>
-            `;
-        }
+        card.dataset.chapterId = l.chapter_number; // Important pour la sélection multiple
 
-        // On enlève la div "width:100%" pour que align-items: center du parent fonctionne
         card.innerHTML = `
-            ${switchHtml}
+            <div class="chapter-badge-selection"></div>
             <p style="color:#aaa; font-size:0.75rem; font-weight:700; text-transform:uppercase; margin:0 0 8px 0; letter-spacing:1px;">
                 Chapitre ${l.chapter_number}
             </p>
@@ -217,10 +203,10 @@ function renderChaptersGrid(chaptersList) {
         card.onclick = () => {
             const multiActive = document.getElementById('toggle-multi-mode').checked;
             if (multiActive) {
-                const cb = card.querySelector('.chapter-checkbox');
-                cb.checked = !cb.checked;
-                card.style.borderColor = cb.checked ? 'var(--brand-school)' : '#eee';
+                // On allume/éteint la carte
+                card.classList.toggle('selected');
             } else {
+                // Mode normal : lancement direct
                 if (state.currentMode === 'quiz') openQuiz(l.chapter_number);
                 else if (state.currentMode === 'exercise') openExercises(l.chapter_number);
                 else if (state.currentMode === 'flashcard') openFlashcards(l.chapter_number);
@@ -228,7 +214,6 @@ function renderChaptersGrid(chaptersList) {
                 else displayLesson(l.chapter_number);
             }
         };
-        
         grid.appendChild(card);
     });
 
@@ -264,18 +249,19 @@ async function prepareMultiQuiz() {
 
 function toggleMultiSelectionMode() {
     const isMulti = document.getElementById('toggle-multi-mode').checked;
-    const switchContainers = document.querySelectorAll('.chapter-switch-container');
+    const badges = document.querySelectorAll('.chapter-badge-selection');
     const validateArea = document.getElementById('multi-validate-area');
     const cards = document.querySelectorAll('.chapter-card-interactive');
 
-    switchContainers.forEach(container => {
-        container.style.display = isMulti ? 'block' : 'none';
-    });
+    // On montre les ronds gris
+    badges.forEach(b => b.style.display = isMulti ? 'flex' : 'none');
 
-    // Reset des styles de cartes si on désactive
+    // Si on éteint le mode multi, on nettoie les sélections
     if (!isMulti) {
-        document.querySelectorAll('.chapter-checkbox').forEach(cb => cb.checked = false);
-        cards.forEach(c => c.style.borderColor = '#eee');
+        cards.forEach(c => {
+            c.classList.remove('selected');
+            c.style.borderColor = '#eee';
+        });
     }
 
     validateArea.style.display = isMulti ? 'block' : 'none';
