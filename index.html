@@ -1995,6 +1995,14 @@
     from { border-color: #e74c3c; }
     to { border-color: transparent; }
 }
+
+/* Style du Toggle Switch */
+.switch { position: relative; display: inline-block; width: 45px; height: 24px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+input:checked + .slider { background-color: var(--brand-school); }
+input:checked + .slider:before { transform: translateX(21px); }
     
 </style>
     
@@ -2507,11 +2515,22 @@
         <div id="view-chapters" class="view container">
             <div class="btn-back" onclick="backFromChapters()">← Choisir une autre activité</div>
             <h2 id="chapters-title" class="view-title">Chapitres</h2>
+    
+        <div id="quiz-options-bar" style="display:none; margin-bottom: 20px; background: #f4f4f9; padding: 15px; border-radius: 15px;">
+        <div style="display: flex; justify-content: center; align-items: center; gap: 15px;">
+            <span style="font-weight: bold; font-size: 0.9rem;">Mode sélection multiple</span>
+            <label class="switch">
+                <input type="checkbox" id="toggle-multi-mode" onchange="toggleMultiSelectionMode()">
+                <span class="slider round"></span>
+            </label>
+        </div>
 
-            <div id="multi-quiz-action" style="display:none; text-align:center; margin-bottom:20px;">
-                <button class="btn-nav" style="background:var(--brand-school); color:white;" onclick="prepareMultiQuiz()">🚀 Lancer la Révision Globale</button>
-                <p style="font-size:0.8rem; color:#666; margin-top:5px;">Coche les chapitres que tu veux réviser ensemble</p>
-            </div>
+        <div id="multi-validate-area" style="display:none; margin-top: 15px; border-top: 1px solid #ddd; padding-top: 15px;">
+            <button class="btn-nav" style="background:var(--brand-school); color:white; border:none; width: 100%;" onclick="prepareMultiQuiz()">
+                ✅ Valider la sélection et lancer
+            </button>
+        </div>
+    </div>
             
             <div id="chapters-grid" class="grid-container">
                 </div>
