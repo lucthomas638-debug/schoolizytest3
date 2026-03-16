@@ -320,25 +320,19 @@ function launchSurvieLogic(chapterNum) {
     isTimeAttack = true;
     timeLeft = 60;
     currentStep = 0;
-    userAnswers = {}; // On réinitialise les réponses
+    userAnswers = {};
 
-    // On prend TOUTES les questions stockées dans allQuestionsBackup
-    if (!allQuestionsBackup || allQuestionsBackup.length === 0) {
-        alert("Erreur: pas de questions en mémoire.");
-        return;
-    }
-
-    // Mélange total pour le mode illimité
     quizData = [...allQuestionsBackup].sort(() => Math.random() - 0.5);
 
-    // On ajoute la classe visuelle de survie
     const container = document.getElementById('quiz-container');
     if (container) container.classList.add('survival-mode');
     
-    // NAVIGATION : On va sur la vue du quiz
     navigateTo('view-quiz');
     
-    // On lance le chrono et on affiche la première question
+    // ON FORCE L'AFFICHAGE DU TIMER ICI
+    const timerDisplay = document.getElementById('quiz-timer-display');
+    if (timerDisplay) timerDisplay.style.display = 'block';
+
     startGlobalTimer(chapterNum);
     renderQuizSlide(chapterNum);
 }
@@ -400,10 +394,14 @@ function shuffleArray(array) {
 async function openQuiz(chapterNum) {
     console.log("DÉMARRAGE DU QUIZ - CHAPITRE UNIQUE :", chapterNum);
     
-    // 1. Reset des variables de temps au cas où
+    // 1. Reset des variables et masquage du timer
     if (quizTimer) clearInterval(quizTimer);
     isTimeAttack = false;
     timeLeft = 60;
+
+    // IMPORTANT : On cache le chrono au démarrage du mode normal
+    const timerDisplay = document.getElementById('quiz-timer-display');
+    if (timerDisplay) timerDisplay.style.display = 'none';
 
     const { data, error } = await sb
         .from('quizzes') 
@@ -416,11 +414,10 @@ async function openQuiz(chapterNum) {
         return alert("Pas de quiz disponible pour ce chapitre.");
     }
 
-    // 2. IMPORTANT : On stocke TOUTES les questions ici
-    // C'est ce qui permettra au mode survie d'être "illimité"
+    // 2. Stockage du réservoir complet pour le futur "Défi 1 minute"
     allQuestionsBackup = data;
 
-    // 3. MODE NORMAL : On mélange et on limite à 5 questions
+    // 3. MODE NORMAL : Limité à 5 questions
     quizData = [...data].sort(() => 0.5 - Math.random()).slice(0, 5);
     
     currentStep = 0;
@@ -440,39 +437,36 @@ function renderQuizSlide(chapterNum) {
     container.classList.add('rendering');
 
     container.innerHTML = `
-        <div class="quiz-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:#f9f9f9; padding:10px; border-radius:12px;">
-            <div style="display:flex; align-items:center; gap:12px;">
-                <span id="quiz-timer-display" style="font-weight:bold; font-size:1.1rem; color:var(--brand-school);">⏱️ ${timeLeft}s</span>
-                
-                ${!isTimeAttack ? `
-                    <button class="btn-sablier" 
-                            style="width:35px; height:35px; font-size:1rem; border-radius:50%; border:1px solid #ddd; cursor:pointer; background:white; display:flex; align-items:center; justify-content:center;" 
-                            onclick="startSurvivalMode(${chapterNum})" 
-                            title="Lancer le défi 1 minute">
-                        ⏳
-                    </button>
-                ` : ''}
-            </div>
-            <span style="color:#888; font-weight:600;">Question ${currentStep + 1} / ${quizData.length}</span>
-        </div>
+         <div class="quiz-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:#f9f9f9; padding:10px; border-radius:12px;">
+              <div style="display:flex; align-items:center; gap:12px;">
+                  <span id="quiz-timer-display">⏱️ ${timeLeft}s</span>
+                  
+                  ${!isTimeAttack ? `
+                      <button class="btn-sablier" onclick="startSurvivalMode(${chapterNum})">
+                          <span>⏳</span>
+                      </button>
+                  ` : ''}
+              </div>
+              <span style="color:#888; font-weight:600;">Question ${currentStep + 1} / ${quizData.length}</span>
+         </div>
 
-        <div class="quiz-question-card">
-            <div class="quiz-question-text" style="font-size:1.15rem; line-height:1.5; margin-bottom:20px;">
-                ${q.question}
+         <div class="quiz-question-card">
+                  <div class="quiz-question-text" style="font-size:1.15rem; line-height:1.5; margin-bottom:20px;">
+                      ${q.question}
+                  </div>
+                  <div id="options-box"></div>
+                  
+                  <div class="quiz-navigation" style="margin-top:20px; display:flex; justify-content:space-between;">
+                      <button class="btn-nav" onclick="changeSlide(-1, ${chapterNum})" ${currentStep === 0 ? 'style="visibility:hidden"' : ''}>
+                          <span>‹</span> Précédent
+                      </button>
+                      
+                      ${isLast ? 
+                          `<button class="btn-nav" onclick="finishQuiz(${chapterNum})">Terminer <span>✓</span></button>` : 
+                          `<button class="btn-nav" onclick="changeSlide(1, ${chapterNum})">Suivant <span>›</span></button>`
+                      }
+                  </div>
             </div>
-            <div id="options-box"></div>
-            
-            <div class="quiz-navigation" style="margin-top:20px; display:flex; justify-content:space-between;">
-                <button class="btn-nav" onclick="changeSlide(-1, ${chapterNum})" ${currentStep === 0 ? 'style="visibility:hidden"' : ''}>
-                    <span>‹</span> Précédent
-                </button>
-                
-                ${isLast ? 
-                    `<button class="btn-nav" onclick="finishQuiz(${chapterNum})">Terminer <span>✓</span></button>` : 
-                    `<button class="btn-nav" onclick="changeSlide(1, ${chapterNum})">Suivant <span>›</span></button>`
-                }
-            </div>
-        </div>
     `;
 
     const optionsBox = container.querySelector('#options-box');
