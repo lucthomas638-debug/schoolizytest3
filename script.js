@@ -203,10 +203,16 @@ function renderChaptersGrid(chaptersList) {
             `;
         }
 
-        card.innerHTML = `
+         card.innerHTML = `
             ${switchHtml}
-            <p style="color:#888; font-size:0.8rem; margin-bottom:5px;">CHAPITRE ${l.chapter_number}</p>
-            <h3 style="margin-right: 40px;">${title}</h3>
+            <div style="width: 100%;">
+                <p style="color:#aaa; font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-bottom:8px; letter-spacing:1px;">
+                    Chapitre ${l.chapter_number}
+                </p>
+                <h3 style="margin:0; font-size:1.1rem; line-height:1.4; color:var(--text-dark);">
+                    ${title}
+                </h3>
+            </div>
         `;
         
         card.onclick = () => {
