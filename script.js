@@ -219,31 +219,35 @@ chaptersList.forEach(l => {
 
     navigateTo('view-chapters');
 }
+
 async function prepareMultiQuiz() {
-    const checkedBoxes = document.querySelectorAll('.chapter-checkbox:checked');
-    const selectedChapters = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+    // 1. On récupère les cartes sélectionnées (celles qui ont le badge violet)
+    const selectedCards = document.querySelectorAll('.chapter-card-interactive.selected');
+    
+    // 2. On extrait les IDs des chapitres depuis le dataset qu'on a créé
+    const selectedChapters = Array.from(selectedCards).map(card => parseInt(card.dataset.chapterId));
 
     if (selectedChapters.length === 0) {
-        return alert("Coche d'abord les chapitres que tu souhaites réviser !");
+        return alert("Sélectionne au moins un chapitre en cliquant sur les cartes !");
     }
 
     const { data, error } = await sb
         .from('quizzes') 
         .select('*')
-        .in('chapter_number', selectedChapters) // Cherche dans tous les chapitres sélectionnés
+        .in('chapter_number', selectedChapters)
         .eq('class_id', state.currentClassCode)
         .eq('subject_id', state.currentSubject.toLowerCase());
 
     if (error || !data || data.length === 0) {
-        return alert("Aucune question trouvée pour cette sélection.");
+        return alert("Aucune question trouvée pour ces chapitres.");
     }
 
-    // On charge les questions sélectionnées, on les mélange
+    // Mélange et préparation
     quizData = data.sort(() => 0.5 - Math.random());
     currentStep = 0;
     userAnswers = {};
 
-    renderQuizSlide(selectedChapters[0]); // On lance l'interface du quiz
+    renderQuizSlide(selectedChapters[0]); 
     navigateTo('view-quiz');
 }
 
@@ -253,14 +257,13 @@ function toggleMultiSelectionMode() {
     const validateArea = document.getElementById('multi-validate-area');
     const cards = document.querySelectorAll('.chapter-card-interactive');
 
-    // On montre les ronds gris
+    // On affiche ou cache les petits badges ronds
     badges.forEach(b => b.style.display = isMulti ? 'flex' : 'none');
 
-    // Si on éteint le mode multi, on nettoie les sélections
+    // Si on désactive le mode multi, on enlève le violet de toutes les cartes
     if (!isMulti) {
         cards.forEach(c => {
             c.classList.remove('selected');
-            c.style.borderColor = '#eee';
         });
     }
 
