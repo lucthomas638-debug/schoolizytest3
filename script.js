@@ -175,10 +175,8 @@ function renderChaptersGrid(chaptersList) {
     
     grid.innerHTML = '';
     
-    // On affiche la barre d'options uniquement en mode quiz
     if (quizBar) {
         quizBar.style.display = (state.currentMode === 'quiz') ? 'block' : 'none';
-        // On remet l'interrupteur à zéro quand on change de matière
         document.getElementById('toggle-multi-mode').checked = false;
         document.getElementById('multi-validate-area').style.display = 'none';
     }
@@ -189,30 +187,36 @@ function renderChaptersGrid(chaptersList) {
         const title = temp.querySelector('h1')?.innerText || "Chapitre " + l.chapter_number;
         
         const card = document.createElement('div');
-        card.className = 'card';
-        card.id = `chapter-card-${l.chapter_number}`;
+        card.className = 'card chapter-card-interactive';
+        card.style.position = 'relative'; // Pour positionner le switch par rapport à la carte
         
-        card.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-                <div style="flex:1;">
-                    <p style="color:#888; font-size:0.8rem; margin-bottom:5px;">CHAPITRE ${l.chapter_number}</p>
-                    <h3 style="margin:0;">${title}</h3>
+        // On crée le switch individuel (masqué par défaut)
+        let switchHtml = '';
+        if (state.currentMode === 'quiz') {
+            switchHtml = `
+                <div class="chapter-switch-container" style="display:none; position:absolute; top:15px; right:15px; z-index:10;">
+                    <label class="switch small">
+                        <input type="checkbox" class="chapter-checkbox" value="${l.chapter_number}" onclick="event.stopPropagation()">
+                        <span class="slider round"></span>
+                    </label>
                 </div>
-                <input type="checkbox" class="chapter-checkbox" 
-                       value="${l.chapter_number}" 
-                       style="display:none; width:22px; height:22px; cursor:pointer;"
-                       onclick="event.stopPropagation()">
-            </div>
+            `;
+        }
+
+        card.innerHTML = `
+            ${switchHtml}
+            <p style="color:#888; font-size:0.8rem; margin-bottom:5px;">CHAPITRE ${l.chapter_number}</p>
+            <h3 style="margin-right: 40px;">${title}</h3>
         `;
         
         card.onclick = () => {
             const multiActive = document.getElementById('toggle-multi-mode').checked;
             if (multiActive) {
-                // En mode multiple : on coche la case au clic sur la carte
                 const cb = card.querySelector('.chapter-checkbox');
                 cb.checked = !cb.checked;
+                // Optionnel : ajouter une classe visuelle à la carte quand elle est cochée
+                card.style.borderColor = cb.checked ? 'var(--brand-school)' : '#eee';
             } else {
-                // En mode simple : lancement direct
                 if (state.currentMode === 'quiz') openQuiz(l.chapter_number);
                 else if (state.currentMode === 'exercise') openExercises(l.chapter_number);
                 else if (state.currentMode === 'flashcard') openFlashcards(l.chapter_number);
@@ -226,7 +230,6 @@ function renderChaptersGrid(chaptersList) {
 
     navigateTo('view-chapters');
 }
-
 async function prepareMultiQuiz() {
     const checkedBoxes = document.querySelectorAll('.chapter-checkbox:checked');
     const selectedChapters = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
@@ -257,14 +260,19 @@ async function prepareMultiQuiz() {
 
 function toggleMultiSelectionMode() {
     const isMulti = document.getElementById('toggle-multi-mode').checked;
-    const checkboxes = document.querySelectorAll('.chapter-checkbox');
+    const switchContainers = document.querySelectorAll('.chapter-switch-container');
     const validateArea = document.getElementById('multi-validate-area');
+    const cards = document.querySelectorAll('.chapter-card-interactive');
 
-    // On affiche/cache les checkboxes et le bouton valider
-    checkboxes.forEach(cb => {
-        cb.style.display = isMulti ? 'block' : 'none';
-        if (!isMulti) cb.checked = false; // On reset si on désactive
+    switchContainers.forEach(container => {
+        container.style.display = isMulti ? 'block' : 'none';
     });
+
+    // Reset des styles de cartes si on désactive
+    if (!isMulti) {
+        document.querySelectorAll('.chapter-checkbox').forEach(cb => cb.checked = false);
+        cards.forEach(c => c.style.borderColor = '#eee');
+    }
 
     validateArea.style.display = isMulti ? 'block' : 'none';
 }
