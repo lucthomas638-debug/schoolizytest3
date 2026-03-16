@@ -1967,12 +1967,12 @@
     height: 100%;
 }
 
-/* --- BOUTON SABLIER (LANCEMENT MODE CHRONO) --- */
+/* --- LE BOUTON SABLIER (MODE SURVIE) --- */
 .btn-sablier {
     background: #fff;
     border: 2px solid var(--brand-izy);
     font-size: 1.5rem;
-    width: 45px;  /* Légèrement réduit pour mieux s'intégrer */
+    width: 45px;
     height: 45px;
     display: flex;
     align-items: center;
@@ -1982,22 +1982,76 @@
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     
-    /* AJOUTS CRUCIAUX POUR LE CLIC */
+    /* Priorité absolue pour le clic */
     position: relative;
     z-index: 999;
     pointer-events: auto !important;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Tooltip "Mode Survie" qui apparaît au survol */
+.btn-sablier::after {
+    content: "Mode Survie";
+    position: absolute;
+    bottom: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    font-weight: bold;
+    background: #e74c3c;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    opacity: 0;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 .btn-sablier:hover {
     transform: rotate(180deg) scale(1.1);
-    background: var(--brand-izy);
+    background: #e74c3c; /* Devient rouge au survol pour le côté "danger/survie" */
+    border-color: #c0392b;
     color: white;
 }
 
-/* Optionnel : Empêche la sélection de texte sur l'émoji lors du clic */
-.btn-sablier {
-    user-select: none;
-    -webkit-user-select: none;
+.btn-sablier:hover::after {
+    opacity: 1;
+    bottom: -40px; /* Petit effet de glissement vers le bas */
+}
+
+/* --- OVERLAY DU DÉCOMPTE 3-2-1 --- */
+#countdown-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85); /* Fond sombre transparent */
+    display: none; /* Activé via JS */
+    align-items: center;
+    justify-content: center;
+    z-index: 10000; /* Toujours au-dessus de tout */
+    color: white;
+    font-size: 10rem;
+    font-weight: 900;
+    text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+    font-family: 'Arial Black', sans-serif;
+}
+
+/* Animation de pulsation pour le timer en fin de chrono */
+.low-time {
+    color: #ff0000 !important;
+    animation: pulse-red 0.5s infinite alternate;
+    transform: scale(1.2);
+    display: inline-block;
+}
+
+@keyframes pulse-red {
+    from { transform: scale(1); text-shadow: 0 0 0px red; }
+    to { transform: scale(1.2); text-shadow: 0 0 15px red; }
 }
 
 /* --- MODE SURVIE / CHRONO ACTIF --- */
