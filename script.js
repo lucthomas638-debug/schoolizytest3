@@ -189,28 +189,17 @@ function renderChaptersGrid(chaptersList) {
         document.getElementById('multi-validate-area').style.display = 'none';
     }
 
-chaptersList.forEach(l => {
+    chaptersList.forEach(l => {
         const temp = document.createElement('div'); 
         temp.innerHTML = l.content;
         const title = temp.querySelector('h1')?.innerText || "Chapitre " + l.chapter_number;
         
         const card = document.createElement('div');
         card.className = 'card chapter-card-interactive';
-        card.dataset.chapterId = l.chapter_number; // Important pour la sélection multiple
+        card.dataset.chapterId = l.chapter_number; 
 
+        // On affiche juste le badge et le titre ici
         card.innerHTML = `
-            <div class="quiz-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-               <div style="display:flex; align-items:center; gap:10px;">
-                   <span id="quiz-timer-display" style="font-weight:bold; font-size:1.1rem; color:var(--brand-school);">⏱️ ${timeLeft}s</span>
-                  
-                  ${!isTimeAttack ? `
-                      <button class="btn-sablier" style="width:35px; height:35px; font-size:1rem; border-radius:50%;" onclick="startSurvivalMode(${chapterNum})">
-                          ⏳
-                      </button>
-                   ` : ''}
-               </div>
-               <span style="color:#888;">Question ${currentStep + 1} / ${quizData.length}</span>
-            </div>
             <div class="chapter-badge-selection"></div>
             <p style="color:#aaa; font-size:0.75rem; font-weight:700; text-transform:uppercase; margin:0 0 8px 0; letter-spacing:1px;">
                 Chapitre ${l.chapter_number}
@@ -223,10 +212,8 @@ chaptersList.forEach(l => {
         card.onclick = () => {
             const multiActive = document.getElementById('toggle-multi-mode').checked;
             if (multiActive) {
-                // On allume/éteint la carte
                 card.classList.toggle('selected');
             } else {
-                // Mode normal : lancement direct
                 if (state.currentMode === 'quiz') openQuiz(l.chapter_number);
                 else if (state.currentMode === 'exercise') openExercises(l.chapter_number);
                 else if (state.currentMode === 'flashcard') openFlashcards(l.chapter_number);
@@ -239,7 +226,6 @@ chaptersList.forEach(l => {
 
     navigateTo('view-chapters');
 }
-
 async function prepareMultiQuiz() {
     // 1. On récupère les cartes sélectionnées
     const selectedCards = document.querySelectorAll('.chapter-card-interactive.selected');
@@ -394,18 +380,26 @@ function renderQuizSlide(chapterNum) {
     const q = quizData[currentStep];
     const isLast = currentStep === quizData.length - 1;
 
-    // On ajoute la classe 'rendering' pour cacher le flash de texte brut
     container.classList.add('rendering');
 
+    // C'est ICI qu'on met le timer et le sablier
     container.innerHTML = `
+        <div class="quiz-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span id="quiz-timer-display" style="font-weight:bold; font-size:1.1rem; color:var(--brand-school);">⏱️ ${timeLeft}s</span>
+                ${!isTimeAttack ? `
+                    <button class="btn-sablier" style="width:35px; height:35px; font-size:1rem; border-radius:50%;" onclick="startSurvivalMode(${chapterNum})">
+                        ⏳
+                    </button>
+                ` : ''}
+            </div>
+            <span style="color:#888;">Question ${currentStep + 1} / ${quizData.length}</span>
+        </div>
         <div class="quiz-question-card">
-            <p style="color:#888; font-size:0.8rem; margin-bottom:10px;">Question ${currentStep + 1} / ${quizData.length}</p>
             <div class="quiz-question-text">${q.question}</div>
             <div id="options-box"></div>
-            
             <div class="quiz-navigation">
                 <button class="btn-nav" onclick="changeSlide(-1, ${chapterNum})" ${currentStep === 0 ? 'style="visibility:hidden"' : ''}><span>‹</span> Précédent</button>
-                
                 ${isLast ? 
                     `<button class="btn-nav" onclick="finishQuiz(${chapterNum})">Terminer <span>✓</span></button>` : 
                     `<button class="btn-nav" onclick="changeSlide(1, ${chapterNum})">Suivant <span>›</span></button>`
@@ -418,20 +412,12 @@ function renderQuizSlide(chapterNum) {
     q.options.forEach((opt, idx) => {
         const btn = document.createElement('div');
         btn.className = 'quiz-option';
-        
-        // On remet la sélection si l'élève revient en arrière
-        if (userAnswers[currentStep] === idx) {
-            btn.classList.add('selected');
-        }
+        if (userAnswers[currentStep] === idx) btn.classList.add('selected');
 
         btn.innerHTML = opt;
         btn.onclick = () => {
-            // 1. Enregistrer la réponse
             userAnswers[currentStep] = idx;
-
             if (isTimeAttack) {
-                // --- MODE SURVIE : PASSAGE AUTOMATIQUE ---
-                // On ajoute un tout petit délai (150ms) pour que l'élève voit son clic
                 setTimeout(() => {
                     if (currentStep < quizData.length - 1) {
                         currentStep++;
@@ -441,25 +427,26 @@ function renderQuizSlide(chapterNum) {
                     }
                 }, 150);
             } else {
-                // --- MODE NORMAL : SÉLECTION MANUELLE ---
                 const allBtns = optionsBox.querySelectorAll('.quiz-option');
                 allBtns.forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
             }
         };
+        optionsBox.appendChild(btn);
+    });
 
-    // Rendu MathJax avec gestion de l'opacité pour éviter le clignotement
     if (window.MathJax) {
         setTimeout(() => {
             MathJax.typesetClear([container]);
             MathJax.typesetPromise([container]).then(() => {
-                container.classList.remove('rendering'); // On remontre le texte une fois propre
+                container.classList.remove('rendering');
             });
         }, 10);
     } else {
         container.classList.remove('rendering');
     }
 }
+
 function changeSlide(direction, chapterNum) {
     currentStep += direction;
     renderQuizSlide(chapterNum);
