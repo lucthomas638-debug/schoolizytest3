@@ -170,47 +170,68 @@ async function loadChapters() {
 // Étape 4 : Afficher les tuiles des chapitres
 function renderChaptersGrid(chaptersList) {
     const grid = document.getElementById('chapters-grid');
+    const multiBtnArea = document.getElementById('multi-quiz-action'); // Assure-toi d'avoir cet ID dans ton HTML
     if (!grid) return;
     
     grid.innerHTML = '';
     
-    // On change le titre de la page pour savoir dans quel mode on est
+    // 1. Gestion de l'affichage du bouton "Révision Globale"
+    if (multiBtnArea) {
+        multiBtnArea.style.display = (state.currentMode === 'quiz') ? 'block' : 'none';
+    }
+
+    // 2. Mise à jour du titre
     const modeLabel = {
         'lesson': ' (Cours)',
         'quiz': ' (Quiz)',
         'exercise': ' (Exercices)',
-        'flashcard': ' (Flashcards)'
+        'flashcard': ' (Flashcards)',
+        'fiche': ' (Fiches)'
     }[state.currentMode] || '';
 
     document.getElementById('chapters-title').innerText = state.currentSubject + modeLabel;
 
     chaptersList.forEach(l => {
-        // Extraction du titre du chapitre depuis le HTML stocké
         const temp = document.createElement('div'); 
         temp.innerHTML = l.content;
         const title = temp.querySelector('h1')?.innerText || "Chapitre " + l.chapter_number;
         
         const card = document.createElement('div');
         card.className = 'card';
+        
+        // 3. Création de la checkbox (uniquement si mode quiz)
+        let checkboxHtml = '';
+        if (state.currentMode === 'quiz') {
+            checkboxHtml = `
+                <input type="checkbox" class="chapter-checkbox" 
+                       value="${l.chapter_number}" 
+                       onclick="event.stopPropagation()" 
+                       style="width:20px; height:20px; cursor:pointer;">
+            `;
+        }
+
         card.innerHTML = `
-            <p style="color:#888; font-size:0.8rem; margin-bottom:5px;">CHAPITRE ${l.chapter_number}</p>
-            <h3>${title}</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                <div style="flex:1;">
+                    <p style="color:#888; font-size:0.8rem; margin-bottom:5px;">CHAPITRE ${l.chapter_number}</p>
+                    <h3 style="margin:0;">${title}</h3>
+                </div>
+                ${checkboxHtml}
+            </div>
         `;
         
-      // --- LA CONNEXION AUX BOUTONS ---
-      card.onclick = () => {
-         console.log("Chapitre cliqué :", l.chapter_number);
-         console.log("Mode actuel :", state.currentMode);
+        // 4. Clic sur la carte (comportement normal)
+        card.onclick = () => {
             if (state.currentMode === 'quiz') {
-                openQuiz(l.chapter_number); // Appelle la fonction Quiz Supabase
+                openQuiz(l.chapter_number);
             } else if (state.currentMode === 'exercise') {
-                openExercises(l.chapter_number); // Appelle la fonction Exercices Supabase
+                openExercises(l.chapter_number);
             } else if (state.currentMode === 'flashcard') {
-                openFlashcards(l.chapter_number); // Appelle la fonction Flashcards Supabase
+                openFlashcards(l.chapter_number);
             } else if (state.currentMode === 'fiche') {
-                openFicheRecap(l.chapter_number); // Appelle la fonction Fiches Récap Supabase
+                openFicheRecap(l.chapter_number);
             } else {
-                displayLesson(l.chapter_number); // Par défaut : affiche le cours
+                displayLesson(l.chapter_number);
             }
         };
         
@@ -218,6 +239,34 @@ function renderChaptersGrid(chaptersList) {
     });
 
     navigateTo('view-chapters');
+}
+
+async function prepareMultiQuiz() {
+    const checkedBoxes = document.querySelectorAll('.chapter-checkbox:checked');
+    const selectedChapters = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+
+    if (selectedChapters.length === 0) {
+        return alert("Coche d'abord les chapitres que tu souhaites réviser !");
+    }
+
+    const { data, error } = await sb
+        .from('quizzes') 
+        .select('*')
+        .in('chapter_number', selectedChapters) // Cherche dans tous les chapitres sélectionnés
+        .eq('class_id', state.currentClassCode)
+        .eq('subject_id', state.currentSubject.toLowerCase());
+
+    if (error || !data || data.length === 0) {
+        return alert("Aucune question trouvée pour cette sélection.");
+    }
+
+    // On charge les questions sélectionnées, on les mélange
+    quizData = data.sort(() => 0.5 - Math.random());
+    currentStep = 0;
+    userAnswers = {};
+
+    renderQuizSlide(selectedChapters[0]); // On lance l'interface du quiz
+    navigateTo('view-quiz');
 }
 
 function openChaptersPage(list) {
