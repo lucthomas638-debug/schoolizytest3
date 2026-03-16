@@ -170,26 +170,18 @@ async function loadChapters() {
 // Étape 4 : Afficher les tuiles des chapitres
 function renderChaptersGrid(chaptersList) {
     const grid = document.getElementById('chapters-grid');
-    const multiBtnArea = document.getElementById('multi-quiz-action'); // Assure-toi d'avoir cet ID dans ton HTML
+    const quizBar = document.getElementById('quiz-options-bar');
     if (!grid) return;
     
     grid.innerHTML = '';
     
-    // 1. Gestion de l'affichage du bouton "Révision Globale"
-    if (multiBtnArea) {
-        multiBtnArea.style.display = (state.currentMode === 'quiz') ? 'block' : 'none';
+    // On affiche la barre d'options uniquement en mode quiz
+    if (quizBar) {
+        quizBar.style.display = (state.currentMode === 'quiz') ? 'block' : 'none';
+        // On remet l'interrupteur à zéro quand on change de matière
+        document.getElementById('toggle-multi-mode').checked = false;
+        document.getElementById('multi-validate-area').style.display = 'none';
     }
-
-    // 2. Mise à jour du titre
-    const modeLabel = {
-        'lesson': ' (Cours)',
-        'quiz': ' (Quiz)',
-        'exercise': ' (Exercices)',
-        'flashcard': ' (Flashcards)',
-        'fiche': ' (Fiches)'
-    }[state.currentMode] || '';
-
-    document.getElementById('chapters-title').innerText = state.currentSubject + modeLabel;
 
     chaptersList.forEach(l => {
         const temp = document.createElement('div'); 
@@ -198,40 +190,34 @@ function renderChaptersGrid(chaptersList) {
         
         const card = document.createElement('div');
         card.className = 'card';
+        card.id = `chapter-card-${l.chapter_number}`;
         
-        // 3. Création de la checkbox (uniquement si mode quiz)
-        let checkboxHtml = '';
-        if (state.currentMode === 'quiz') {
-            checkboxHtml = `
-                <input type="checkbox" class="chapter-checkbox" 
-                       value="${l.chapter_number}" 
-                       onclick="event.stopPropagation()" 
-                       style="width:20px; height:20px; cursor:pointer;">
-            `;
-        }
-
         card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
                 <div style="flex:1;">
                     <p style="color:#888; font-size:0.8rem; margin-bottom:5px;">CHAPITRE ${l.chapter_number}</p>
                     <h3 style="margin:0;">${title}</h3>
                 </div>
-                ${checkboxHtml}
+                <input type="checkbox" class="chapter-checkbox" 
+                       value="${l.chapter_number}" 
+                       style="display:none; width:22px; height:22px; cursor:pointer;"
+                       onclick="event.stopPropagation()">
             </div>
         `;
         
-        // 4. Clic sur la carte (comportement normal)
         card.onclick = () => {
-            if (state.currentMode === 'quiz') {
-                openQuiz(l.chapter_number);
-            } else if (state.currentMode === 'exercise') {
-                openExercises(l.chapter_number);
-            } else if (state.currentMode === 'flashcard') {
-                openFlashcards(l.chapter_number);
-            } else if (state.currentMode === 'fiche') {
-                openFicheRecap(l.chapter_number);
+            const multiActive = document.getElementById('toggle-multi-mode').checked;
+            if (multiActive) {
+                // En mode multiple : on coche la case au clic sur la carte
+                const cb = card.querySelector('.chapter-checkbox');
+                cb.checked = !cb.checked;
             } else {
-                displayLesson(l.chapter_number);
+                // En mode simple : lancement direct
+                if (state.currentMode === 'quiz') openQuiz(l.chapter_number);
+                else if (state.currentMode === 'exercise') openExercises(l.chapter_number);
+                else if (state.currentMode === 'flashcard') openFlashcards(l.chapter_number);
+                else if (state.currentMode === 'fiche') openFicheRecap(l.chapter_number);
+                else displayLesson(l.chapter_number);
             }
         };
         
@@ -267,6 +253,20 @@ async function prepareMultiQuiz() {
 
     renderQuizSlide(selectedChapters[0]); // On lance l'interface du quiz
     navigateTo('view-quiz');
+}
+
+function toggleMultiSelectionMode() {
+    const isMulti = document.getElementById('toggle-multi-mode').checked;
+    const checkboxes = document.querySelectorAll('.chapter-checkbox');
+    const validateArea = document.getElementById('multi-validate-area');
+
+    // On affiche/cache les checkboxes et le bouton valider
+    checkboxes.forEach(cb => {
+        cb.style.display = isMulti ? 'block' : 'none';
+        if (!isMulti) cb.checked = false; // On reset si on désactive
+    });
+
+    validateArea.style.display = isMulti ? 'block' : 'none';
 }
 
 function openChaptersPage(list) {
