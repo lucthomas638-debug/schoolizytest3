@@ -231,7 +231,7 @@ async function prepareMultiQuiz() {
     }
 
     // 3. Appel Supabase
-    const { data, error } = await sb
+const { data, error } = await sb
         .from('quizzes') 
         .select('*')
         .in('chapter_number', selectedChapters)
@@ -242,9 +242,17 @@ async function prepareMultiQuiz() {
         return alert("Aucune question trouvée pour ces chapitres.");
     }
 
-    // 4. Mélange et limite à 10 questions (puisqu'on est forcément en multi)
-    quizData = data.sort(() => 0.5 - Math.random()).slice(0, 10);
+    // --- LOGIQUE DE LIMITATION ---
+    // 1. On mélange d'abord TOUTES les questions récupérées pour avoir du hasard
+    let shuffledData = data.sort(() => 0.5 - Math.random());
+
+    // 2. On définit la limite : 10 si plusieurs chapitres, 5 si un seul
+    const limit = (selectedChapters.length > 1) ? 10 : 5;
+
+    // 3. On ne garde que les X premières questions du mélange
+    quizData = shuffledData.slice(0, limit);
     
+    // Initialisation habituelle
     currentStep = 0;
     userAnswers = {};
 
