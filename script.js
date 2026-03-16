@@ -221,16 +221,16 @@ chaptersList.forEach(l => {
 }
 
 async function prepareMultiQuiz() {
-    // 1. On récupère les cartes sélectionnées (celles qui ont le badge violet)
+    // 1. On récupère les cartes sélectionnées
     const selectedCards = document.querySelectorAll('.chapter-card-interactive.selected');
-    
-    // 2. On extrait les IDs des chapitres depuis le dataset qu'on a créé
     const selectedChapters = Array.from(selectedCards).map(card => parseInt(card.dataset.chapterId));
 
-    if (selectedChapters.length === 0) {
-        return alert("Sélectionne au moins un chapitre en cliquant sur les cartes !");
+    // 2. Sécurité : Vérifier qu'il y a au moins DEUX chapitres
+    if (selectedChapters.length < 2) {
+        return alert("Pour réviser un chapitre précis, veuillez désélectionner le choix multiple. (Sélectionne au moins 2 chapitres pour ce mode)");
     }
 
+    // 3. Appel Supabase
     const { data, error } = await sb
         .from('quizzes') 
         .select('*')
@@ -242,8 +242,9 @@ async function prepareMultiQuiz() {
         return alert("Aucune question trouvée pour ces chapitres.");
     }
 
-    // Mélange et préparation
-    quizData = data.sort(() => 0.5 - Math.random());
+    // 4. Mélange et limite à 10 questions (puisqu'on est forcément en multi)
+    quizData = data.sort(() => 0.5 - Math.random()).slice(0, 10);
+    
     currentStep = 0;
     userAnswers = {};
 
