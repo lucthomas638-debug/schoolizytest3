@@ -1980,51 +1980,41 @@
     border-radius: 50%;
     cursor: pointer;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    
-    /* Priorité absolue pour le clic */
+    transition: all 0.4s ease;
     position: relative;
     z-index: 999;
-    pointer-events: auto !important;
-    user-select: none;
-    -webkit-user-select: none;
 }
 
-/* --- TOOLTIP "MODE SURVIE" --- */
-.btn-sablier {
-    position: relative; /* Indispensable pour le tooltip */
+/* On ne fait tourner que l'émoji, pas tout le bouton */
+.btn-sablier:hover span {
+    display: inline-block;
+    transform: rotate(180deg);
 }
 
+.btn-sablier:hover {
+    background: #e74c3c !important;
+    border-color: #c0392b !important;
+}
+
+/* Le texte reste à l'endroit ici */
 .btn-sablier::after {
     content: "Mode Survie";
     position: absolute;
-    bottom: -35px;
+    bottom: -40px;
     left: 50%;
-    transform: translateX(-50%) translateY(10px);
+    transform: translateX(-50%);
     font-size: 0.75rem;
-    font-weight: bold;
     background: #e74c3c;
     color: white;
     padding: 4px 10px;
     border-radius: 6px;
     opacity: 0;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: opacity 0.3s;
     white-space: nowrap;
-    pointer-events: none;
-    box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
-    z-index: 1000;
 }
 
 .btn-sablier:hover::after {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
-}
-
-.btn-sablier:hover {
-    transform: rotate(180deg) scale(1.1);
-    background: #e74c3c !important;
-    border-color: #c0392b !important;
-    color: white !important;
 }
 
 /* --- OVERLAY DU DÉCOMPTE 3-2-1 --- */
