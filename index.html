@@ -2000,7 +2000,7 @@
     to { border-color: #f39c12; box-shadow: 0 0 15px #f39c12; }
 }
 
-/* --- STYLE GÉNÉRAL DES TOGGLE SWITCHES (GROS ET PETITS) --- */
+/* --- 1. LE GROS SWITCH (Menu sélection multiple) --- */
 .switch { 
     position: relative; 
     display: inline-block; 
@@ -2031,20 +2031,20 @@
     border-radius: 50%; 
 }
 
-/* État coché (commun aux deux tailles) */
 input:checked + .slider { background-color: var(--brand-school); }
 input:checked + .slider:before { transform: translateX(21px); }
 
-/* --- BADGE DE SÉLECTION (Le petit rond en haut à gauche) --- */
+
+/* --- 2. LE BADGE DE SÉLECTION (Petit rond sur les chapitres) --- */
 .chapter-badge-selection {
     position: absolute;
     top: 15px;
     left: 15px;
     width: 24px;
     height: 24px;
-    background-color: #eee;
+    background-color: #eee; /* Gris quand non sélectionné */
     border-radius: 50%;
-    display: none; /* Apparaît seulement en mode multi */
+    display: none; /* Apparaît via JS en mode multi */
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
@@ -2053,13 +2053,13 @@ input:checked + .slider:before { transform: translateX(21px); }
     z-index: 10;
 }
 
-/* État sélectionné : le rond devient violet */
+/* Quand la carte a la classe .selected (ajoutée en JS) */
 .chapter-card-interactive.selected .chapter-badge-selection {
-    background-color: var(--brand-school);
+    background-color: var(--brand-school); /* Devient violet */
     transform: scale(1.1);
 }
 
-/* Le check blanc à l'intérieur */
+/* Le check blanc dans le rond */
 .chapter-badge-selection::after {
     content: "✓";
     color: white;
@@ -2072,7 +2072,8 @@ input:checked + .slider:before { transform: translateX(21px); }
     display: block;
 }
 
-/* --- CENTRAGE PARFAIT DE LA CARTE --- */
+
+/* --- 3. DESIGN DE LA CARTE CHAPITRE (Centrage parfait) --- */
 .chapter-card-interactive {
     position: relative;
     display: flex !important;
@@ -2086,21 +2087,16 @@ input:checked + .slider:before { transform: translateX(21px); }
     border-radius: 20px;
     background: white;
     transition: all 0.2s ease;
+    cursor: pointer;
 }
 
-.chapter-card-interactive.selected {
-    border-color: var(--brand-school) !important;
-    background-color: #f9f7ff !important;
-    box-shadow: 0 5px 15px rgba(132, 89, 207, 0.1);
-}
-
-/* Effet au survol ou quand coché */
 .chapter-card-interactive:hover {
     transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
 }
 
-.chapter-card-interactive:has(input:checked) {
+/* Style de la carte quand elle est cochée */
+.chapter-card-interactive.selected {
     border-color: var(--brand-school) !important;
     background-color: #f9f7ff !important;
 }
