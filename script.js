@@ -310,7 +310,7 @@ function startSurvivalMode(chapterNum) {
         } else {
             clearInterval(interval);
             overlay.style.display = 'none';
-            // LANCEMENT RÉEL
+            // ON APPELLE LA BONNE FONCTION ICI
             launchSurvieLogic(chapterNum);
         }
     }, 1000);
@@ -322,16 +322,23 @@ function launchSurvieLogic(chapterNum) {
     currentStep = 0;
     userAnswers = {};
 
-    quizData = [...allQuestionsBackup].sort(() => Math.random() - 0.5);
+    // QUESTIONS ILLIMITÉES : On mélange tout le stock du chapitre
+    if (allQuestionsBackup.length > 0) {
+        quizData = [...allQuestionsBackup].sort(() => Math.random() - 0.5);
+    }
 
     const container = document.getElementById('quiz-container');
     if (container) container.classList.add('survival-mode');
     
+    // NAVIGATION : On bascule sur la vue quiz
     navigateTo('view-quiz');
     
-    // ON FORCE L'AFFICHAGE DU TIMER ICI
+    // ON FORCE L'AFFICHAGE DU TIMER
     const timerDisplay = document.getElementById('quiz-timer-display');
-    if (timerDisplay) timerDisplay.style.display = 'block';
+    if (timerDisplay) {
+        timerDisplay.style.display = 'block';
+        timerDisplay.innerText = `⏱️ ${timeLeft}s`;
+    }
 
     startGlobalTimer(chapterNum);
     renderQuizSlide(chapterNum);
@@ -346,7 +353,9 @@ function startGlobalTimer(chapterNum) {
         
         if (timerDisplay) {
             timerDisplay.innerText = `⏱️ ${timeLeft}s`;
-            if (timeLeft <= 10) timerDisplay.classList.add('low-time');
+            if (timeLeft <= 10) {
+                timerDisplay.classList.add('low-time');
+            }
         }
 
         if (timeLeft <= 0) {
