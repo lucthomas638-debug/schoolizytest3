@@ -265,7 +265,7 @@ async function prepareMultiQuiz() {
     currentStep = 0;
     userAnswers = {};
 
-    renderQuizSlide(selectedChapters[0]); 
+    Slide(selectedChapters[0]); 
     navigateTo('view-quiz');
 }
 
@@ -445,10 +445,12 @@ function renderQuizSlide(chapterNum) {
     // On ajoute la classe 'rendering' pour cacher le flash de texte brut
     container.classList.add('rendering');
 
-    container.innerHTML = `
+container.innerHTML = `
          <div class="quiz-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:#f9f9f9; padding:10px; border-radius:12px;">
               <div style="display:flex; align-items:center; gap:12px;">
-                  <span id="quiz-timer-display">⏱️ ${timeLeft}s</span>
+                  <span id="quiz-timer-display" style="display: ${isTimeAttack ? 'block' : 'none'}; font-weight:bold; font-size:1.1rem; color:var(--brand-school);">
+                      ⏱️ ${timeLeft}s
+                  </span>
                   
                   ${!isTimeAttack ? `
                       <button class="btn-sablier" onclick="startSurvivalMode(${chapterNum})">
