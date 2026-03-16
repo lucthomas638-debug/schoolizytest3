@@ -187,14 +187,14 @@ function renderChaptersGrid(chaptersList) {
         const title = temp.querySelector('h1')?.innerText || "Chapitre " + l.chapter_number;
         
         const card = document.createElement('div');
+        // On utilise la classe interactive qui a le display flex centré en CSS
         card.className = 'card chapter-card-interactive';
-        card.style.position = 'relative'; // Pour positionner le switch par rapport à la carte
         
-        // On crée le switch individuel (masqué par défaut)
+        // Le switch : on utilise les classes exactes (switch, slider, round)
         let switchHtml = '';
         if (state.currentMode === 'quiz') {
             switchHtml = `
-                <div class="chapter-switch-container" style="display:none; position:absolute; top:15px; right:15px; z-index:10;">
+                <div class="chapter-switch-container" style="display:none;">
                     <label class="switch small">
                         <input type="checkbox" class="chapter-checkbox" value="${l.chapter_number}" onclick="event.stopPropagation()">
                         <span class="slider round"></span>
@@ -203,16 +203,15 @@ function renderChaptersGrid(chaptersList) {
             `;
         }
 
-         card.innerHTML = `
+        // On enlève la div "width:100%" pour que align-items: center du parent fonctionne
+        card.innerHTML = `
             ${switchHtml}
-            <div style="width: 100%;">
-                <p style="color:#aaa; font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-bottom:8px; letter-spacing:1px;">
-                    Chapitre ${l.chapter_number}
-                </p>
-                <h3 style="margin:0; font-size:1.1rem; line-height:1.4; color:var(--text-dark);">
-                    ${title}
-                </h3>
-            </div>
+            <p style="color:#aaa; font-size:0.75rem; font-weight:700; text-transform:uppercase; margin:0 0 8px 0; letter-spacing:1px;">
+                Chapitre ${l.chapter_number}
+            </p>
+            <h3 style="margin:0; font-size:1.1rem; line-height:1.3; color:var(--text-dark);">
+                ${title}
+            </h3>
         `;
         
         card.onclick = () => {
@@ -220,7 +219,6 @@ function renderChaptersGrid(chaptersList) {
             if (multiActive) {
                 const cb = card.querySelector('.chapter-checkbox');
                 cb.checked = !cb.checked;
-                // Optionnel : ajouter une classe visuelle à la carte quand elle est cochée
                 card.style.borderColor = cb.checked ? 'var(--brand-school)' : '#eee';
             } else {
                 if (state.currentMode === 'quiz') openQuiz(l.chapter_number);
