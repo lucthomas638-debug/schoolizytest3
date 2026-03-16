@@ -1990,13 +1990,17 @@
     -webkit-user-select: none;
 }
 
-/* Tooltip "Mode Survie" qui apparaît au survol */
+/* --- TOOLTIP "MODE SURVIE" --- */
+.btn-sablier {
+    position: relative; /* Indispensable pour le tooltip */
+}
+
 .btn-sablier::after {
     content: "Mode Survie";
     position: absolute;
     bottom: -35px;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) translateY(10px);
     font-size: 0.75rem;
     font-weight: bold;
     background: #e74c3c;
@@ -2004,22 +2008,23 @@
     padding: 4px 10px;
     border-radius: 6px;
     opacity: 0;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     white-space: nowrap;
     pointer-events: none;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
-
-.btn-sablier:hover {
-    transform: rotate(180deg) scale(1.1);
-    background: #e74c3c; /* Devient rouge au survol pour le côté "danger/survie" */
-    border-color: #c0392b;
-    color: white;
+    box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
+    z-index: 1000;
 }
 
 .btn-sablier:hover::after {
     opacity: 1;
-    bottom: -40px; /* Petit effet de glissement vers le bas */
+    transform: translateX(-50%) translateY(0);
+}
+
+.btn-sablier:hover {
+    transform: rotate(180deg) scale(1.1);
+    background: #e74c3c !important;
+    border-color: #c0392b !important;
+    color: white !important;
 }
 
 /* --- OVERLAY DU DÉCOMPTE 3-2-1 --- */
@@ -2029,42 +2034,51 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.85); /* Fond sombre transparent */
-    display: none; /* Activé via JS */
+    background: rgba(0, 0, 0, 0.9);
+    display: none; /* Changé en flex par le JS */
     align-items: center;
     justify-content: center;
-    z-index: 10000; /* Toujours au-dessus de tout */
+    z-index: 10000;
     color: white;
-    font-size: 10rem;
+    font-size: 12rem;
     font-weight: 900;
-    text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
     font-family: 'Arial Black', sans-serif;
+    perspective: 1000px;
 }
 
-/* Animation de pulsation pour le timer en fin de chrono */
+/* Animation sur le texte du décompte (3-2-1) */
+.countdown-animate {
+    animation: zoomInBounce 0.8s forwards;
+}
+
+@keyframes zoomInBounce {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* --- ÉTAT SURVIE ACTIF --- */
+.survival-mode {
+    border: 4px solid #e74c3c !important;
+    animation: flash-border 0.8s infinite alternate;
+}
+
+@keyframes flash-border {
+    from { border-color: #e74c3c; box-shadow: 0 0 10px rgba(231, 76, 60, 0.5); }
+    to { border-color: #f39c12; box-shadow: 0 0 25px rgba(243, 156, 18, 0.7); }
+}
+
+/* --- TIMER FAIBLE (10s) --- */
 .low-time {
     color: #ff0000 !important;
     animation: pulse-red 0.5s infinite alternate;
-    transform: scale(1.2);
     display: inline-block;
 }
 
 @keyframes pulse-red {
-    from { transform: scale(1); text-shadow: 0 0 0px red; }
-    to { transform: scale(1.2); text-shadow: 0 0 15px red; }
+    from { transform: scale(1); }
+    to { transform: scale(1.25); }
 }
-
-/* --- MODE SURVIE / CHRONO ACTIF --- */
-.survival-mode {
-    border: 3px solid #e74c3c !important;
-    animation: flash-border 1s infinite alternate;
-}
-
-@keyframes flash-border {
-    from { border-color: #e74c3c; box-shadow: 0 0 5px #e74c3c; }
-    to { border-color: #f39c12; box-shadow: 0 0 15px #f39c12; }
-}
-
 /* --- 1. LE GROS SWITCH (Menu sélection multiple) --- */
 .switch { 
     position: relative; 
