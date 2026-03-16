@@ -316,23 +316,31 @@ function startSurvivalMode(chapterNum) {
     }, 1000);
 }
 
-function launchSurvieLogic(chapterNum) {
+function launchSurvie(chapterNum) {
     isTimeAttack = true;
     timeLeft = 60;
     currentStep = 0;
     userAnswers = {};
 
+    // 1. On remplit avec TOUTES les questions
     quizData = [...allQuestionsBackup].sort(() => Math.random() - 0.5);
 
+    // 2. On ajoute le style visuel survie
     const container = document.getElementById('quiz-container');
     if (container) container.classList.add('survival-mode');
     
+    // 3. NAVIGATION vers le quiz
     navigateTo('view-quiz');
-    
-    // ON FORCE L'AFFICHAGE DU TIMER ICI
-    const timerDisplay = document.getElementById('quiz-timer-display');
-    if (timerDisplay) timerDisplay.style.display = 'block';
 
+    // --- LE CORRECTIF EST ICI ---
+    // On force l'affichage du timer qui était caché par le CSS
+    const timerDisplay = document.getElementById('quiz-timer-display');
+    if (timerDisplay) {
+        timerDisplay.style.display = 'block'; 
+        timerDisplay.innerText = `⏱️ ${timeLeft}s`;
+    }
+
+    // 4. Lancement du moteur de jeu
     startGlobalTimer(chapterNum);
     renderQuizSlide(chapterNum);
 }
@@ -346,7 +354,12 @@ function startGlobalTimer(chapterNum) {
         
         if (timerDisplay) {
             timerDisplay.innerText = `⏱️ ${timeLeft}s`;
-            if (timeLeft <= 10) timerDisplay.classList.add('low-time');
+            
+            // Si on arrive aux 10 dernières secondes
+            if (timeLeft <= 10) {
+                timerDisplay.classList.add('low-time');
+                timerDisplay.style.color = "red";
+            }
         }
 
         if (timeLeft <= 0) {
