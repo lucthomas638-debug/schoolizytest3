@@ -20,6 +20,13 @@ const subjectsData = {
 
 let state = { currentLevelGroup: '', currentClassCode: '', currentSubject: '', currentMode: 'lesson' };
 
+// AJOUTE ÇA ICI POUR QUE TOUT LE FICHIER LES VOIE
+let quizData = []; 
+let currentStep = 0; 
+let userAnswers = {};
+let isTimeAttack = false;
+let quizTimer = null;
+let timeLeft = 60;
 /* =============================================================================
    2. SYSTÈME DE NAVIGATION & VISIBILITÉ CALCULATRICE
    ============================================================================= */
@@ -231,7 +238,7 @@ async function prepareMultiQuiz() {
     }
 
     // 3. Appel Supabase
-const { data, error } = await sb
+    const { data, error } = await sb
         .from('quizzes') 
         .select('*')
         .in('chapter_number', selectedChapters)
@@ -313,10 +320,6 @@ function shuffleArray(array) {
 }
 
 // --- FONCTION POUR CHARGER LE QUIZ DEPUIS SUPABASE ---
-
-let quizData = []; // Stockera les questions du chapitre
-let currentStep = 0; // L'index de la question affichée
-let userAnswers = {}; // Pour se souvenir des réponses si on revient en arrière
 
 async function openQuiz(chapterNum) {
     console.log("DÉMARRAGE DU QUIZ - TABLE QUIZZES");
