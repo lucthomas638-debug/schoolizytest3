@@ -2040,19 +2040,23 @@ input:checked + .slider:before { transform: translateX(21px); }
 /* --- VERSION SMALL (POUR LE COIN DES CARTES) --- */
 .switch.small { 
     width: 34px; 
-    height: 18px; /* Un peu plus fin */
+    height: 18px; 
 }
 
 .switch.small .slider:before { 
-    height: 12px; /* Plus petit pour bien flotter dedans */
+    height: 12px;
     width: 12px;
     left: 3px;
-    bottom: 3px; /* Centrage vertical manuel */
+    /* Centrage vertical parfait */
+    top: 50%;
+    bottom: auto; 
+    transform: translateY(-50%);
+    transition: .4s;
 }
 
-/* Ajustement précis du déplacement pour qu'il ne tape pas le bord droit */
+/* Position "Cochée" : On combine le centrage vertical et le décalage horizontal */
 input:checked + .switch.small .slider:before { 
-    transform: translateX(16px); 
+    transform: translateY(-50%) translateX(16px); 
 }
 
 /* --- CARTES DES CHAPITRES (CENTRAGE ABSOLU) --- */
