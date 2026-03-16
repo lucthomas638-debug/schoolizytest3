@@ -386,7 +386,13 @@ function shuffleArray(array) {
 // --- FONCTION POUR CHARGER LE QUIZ DEPUIS SUPABASE ---
 
 async function openQuiz(chapterNum) {
-    console.log("DÉMARRAGE DU QUIZ - TABLE QUIZZES");
+    console.log("DÉMARRAGE DU QUIZ - CHAPITRE UNIQUE :", chapterNum);
+    
+    // 1. Reset des variables de temps au cas où
+    if (quizTimer) clearInterval(quizTimer);
+    isTimeAttack = false;
+    timeLeft = 60;
+
     const { data, error } = await sb
         .from('quizzes') 
         .select('*')
@@ -398,11 +404,17 @@ async function openQuiz(chapterNum) {
         return alert("Pas de quiz disponible pour ce chapitre.");
     }
 
-    // On stocke les questions et on reset l'index
-    quizData = [...data].sort(() => 0.5 - Math.random()).slice(0, 5);
-    currentStep = 0;
-    userAnswers = {}; // On vide les anciennes réponses
+    // 2. IMPORTANT : On stocke TOUTES les questions ici
+    // C'est ce qui permettra au mode survie d'être "illimité"
+    allQuestionsBackup = data;
 
+    // 3. MODE NORMAL : On mélange et on limite à 5 questions
+    quizData = [...data].sort(() => 0.5 - Math.random()).slice(0, 5);
+    
+    currentStep = 0;
+    userAnswers = {};
+
+    // 4. Affichage
     renderQuizSlide(chapterNum);
     navigateTo('view-quiz');
 }
