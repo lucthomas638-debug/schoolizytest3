@@ -316,31 +316,23 @@ function startSurvivalMode(chapterNum) {
     }, 1000);
 }
 
-function launchSurvie(chapterNum) {
+function launchSurvieLogic(chapterNum) {
     isTimeAttack = true;
     timeLeft = 60;
     currentStep = 0;
     userAnswers = {};
 
-    // 1. On remplit avec TOUTES les questions
     quizData = [...allQuestionsBackup].sort(() => Math.random() - 0.5);
 
-    // 2. On ajoute le style visuel survie
     const container = document.getElementById('quiz-container');
     if (container) container.classList.add('survival-mode');
     
-    // 3. NAVIGATION vers le quiz
     navigateTo('view-quiz');
-
-    // --- LE CORRECTIF EST ICI ---
-    // On force l'affichage du timer qui était caché par le CSS
+    
+    // ON FORCE L'AFFICHAGE DU TIMER ICI
     const timerDisplay = document.getElementById('quiz-timer-display');
-    if (timerDisplay) {
-        timerDisplay.style.display = 'block'; 
-        timerDisplay.innerText = `⏱️ ${timeLeft}s`;
-    }
+    if (timerDisplay) timerDisplay.style.display = 'block';
 
-    // 4. Lancement du moteur de jeu
     startGlobalTimer(chapterNum);
     renderQuizSlide(chapterNum);
 }
@@ -354,12 +346,7 @@ function startGlobalTimer(chapterNum) {
         
         if (timerDisplay) {
             timerDisplay.innerText = `⏱️ ${timeLeft}s`;
-            
-            // Si on arrive aux 10 dernières secondes
-            if (timeLeft <= 10) {
-                timerDisplay.classList.add('low-time');
-                timerDisplay.style.color = "red";
-            }
+            if (timeLeft <= 10) timerDisplay.classList.add('low-time');
         }
 
         if (timeLeft <= 0) {
@@ -446,48 +433,40 @@ function renderQuizSlide(chapterNum) {
     const q = quizData[currentStep];
     const isLast = currentStep === quizData.length - 1;
 
-    // On ajoute la classe 'rendering' pour cacher le flash de texte brut MathJax
+    // On ajoute la classe 'rendering' pour cacher le flash de texte brut
     container.classList.add('rendering');
 
     container.innerHTML = `
-        <div class="quiz-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:#f9f9f9; padding:10px; border-radius:12px;">
-            <div style="display:flex; align-items:center; gap:12px;">
-                
-                <span id="quiz-timer-display" style="display: ${isTimeAttack ? 'block' : 'none'}; font-weight:bold; font-size:1.1rem; color:var(--brand-school);">
-                    ⏱️ ${timeLeft}s
-                </span>
-                
-                ${!isTimeAttack ? `
-                    <button class="btn-sablier" onclick="startSurvivalMode(${chapterNum})">
-                        <span>⏳</span>
-                    </button>
-                ` : ''}
-            </div>
-            
-            <span style="color:#888; font-weight:600;">
-                Question ${currentStep + 1} / ${quizData.length}
-            </span>
-        </div>
+         <div class="quiz-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:#f9f9f9; padding:10px; border-radius:12px;">
+              <div style="display:flex; align-items:center; gap:12px;">
+                  <span id="quiz-timer-display">⏱️ ${timeLeft}s</span>
+                  
+                  ${!isTimeAttack ? `
+                      <button class="btn-sablier" onclick="startSurvivalMode(${chapterNum})">
+                          <span>⏳</span>
+                      </button>
+                  ` : ''}
+              </div>
+              <span style="color:#888; font-weight:600;">Question ${currentStep + 1} / ${quizData.length}</span>
+         </div>
 
-        <div class="quiz-question-card">
-            <div class="quiz-question-text" style="font-size:1.15rem; line-height:1.5; margin-bottom:20px;">
-                ${q.question}
+         <div class="quiz-question-card">
+                  <div class="quiz-question-text" style="font-size:1.15rem; line-height:1.5; margin-bottom:20px;">
+                      ${q.question}
+                  </div>
+                  <div id="options-box"></div>
+                  
+                  <div class="quiz-navigation" style="margin-top:20px; display:flex; justify-content:space-between;">
+                      <button class="btn-nav" onclick="changeSlide(-1, ${chapterNum})" ${currentStep === 0 ? 'style="visibility:hidden"' : ''}>
+                          <span>‹</span> Précédent
+                      </button>
+                      
+                      ${isLast ? 
+                          `<button class="btn-nav" onclick="finishQuiz(${chapterNum})">Terminer <span>✓</span></button>` : 
+                          `<button class="btn-nav" onclick="changeSlide(1, ${chapterNum})">Suivant <span>›</span></button>`
+                      }
+                  </div>
             </div>
-            
-            <div id="options-box"></div>
-            
-            <div class="quiz-navigation" style="margin-top:20px; display:flex; justify-content:space-between;">
-                <button class="btn-nav" onclick="changeSlide(-1, ${chapterNum})" 
-                    ${currentStep === 0 ? 'style="visibility:hidden"' : ''}>
-                    <span>‹</span> Précédent
-                </button>
-                
-                ${isLast ? 
-                    `<button class="btn-nav" onclick="finishQuiz(${chapterNum})">Terminer <span>✓</span></button>` : 
-                    `<button class="btn-nav" onclick="changeSlide(1, ${chapterNum})">Suivant <span>›</span></button>`
-                }
-            </div>
-        </div>
     `;
 
     const optionsBox = container.querySelector('#options-box');
@@ -495,38 +474,41 @@ function renderQuizSlide(chapterNum) {
         const btn = document.createElement('div');
         btn.className = 'quiz-option';
         
-        // On remet la sélection visuelle si l'élève revient en arrière
+        // On remet la sélection si l'élève revient en arrière
         if (userAnswers[currentStep] === idx) {
             btn.classList.add('selected');
         }
 
         btn.innerHTML = opt;
         btn.onclick = () => {
-            // Sauvegarde de la réponse
+            // 1. Enregistre la réponse
             userAnswers[currentStep] = idx;
 
-            // Désélectionne les autres options visuellement
-            const allBtns = optionsBox.querySelectorAll('.quiz-option');
-            allBtns.forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
-
             if (isTimeAttack) {
-                // MODE DEFI : On passe à la suite automatiquement après un court délai
+                // --- MODE SURVIE : Passage automatique ---
+                const allBtns = optionsBox.querySelectorAll('.quiz-option');
+                allBtns.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+
                 setTimeout(() => {
                     if (currentStep < quizData.length - 1) {
                         currentStep++;
                         renderQuizSlide(chapterNum);
                     } else {
-                        // Si c'est la toute dernière question du stock avant la fin du chrono
                         finishQuiz(chapterNum);
                     }
-                }, 150); 
+                }, 150); // Petit délai pour voir le clic
+            } else {
+                // --- MODE NORMAL : Sélection manuelle ---
+                const allBtns = optionsBox.querySelectorAll('.quiz-option');
+                allBtns.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
             }
         };
         optionsBox.appendChild(btn);
     });
 
-    // Rendu MathJax sécurisé avec gestion du clignotement
+    // Rendu MathJax avec gestion de l'opacité
     if (window.MathJax) {
         setTimeout(() => {
             MathJax.typesetClear([container]);
