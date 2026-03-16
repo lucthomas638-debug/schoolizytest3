@@ -27,6 +27,8 @@ let userAnswers = {};
 let isTimeAttack = false;
 let quizTimer = null;
 let timeLeft = 60;
+let allQuestionsBackup = []; // Variable à remplir quand tu charges le chapitre
+
 /* =============================================================================
    2. SYSTÈME DE NAVIGATION & VISIBILITÉ CALCULATRICE
    ============================================================================= */
@@ -287,47 +289,45 @@ function toggleMultiSelectionMode() {
 }
 
 function startSurvivalMode(chapterNum) {
-    const overlay = document.getElementById('countdown-overlay');
-    overlay.style.display = 'flex';
-    let count = 3;
-    overlay.innerText = count;
+    // 1. Créer l'overlay s'il n'existe pas encore
+    let overlay = document.getElementById('countdown-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'countdown-overlay';
+        document.body.appendChild(overlay);
+    }
 
-    // 1. On prépare TOUTES les questions disponibles pour ce chapitre
-    // On suppose que tu as stocké toutes les questions quelque part, 
-    // ou on les recharge sans le .limit(10)
-    
-    const countdownInterval = setInterval(() => {
+    overlay.style.display = 'flex';
+    overlay.innerHTML = '<div class="countdown-animate">3</div>';
+
+    let count = 3;
+    const interval = setInterval(() => {
         count--;
         if (count > 0) {
-            overlay.innerText = count;
+            overlay.innerHTML = `<div class="countdown-animate">${count}</div>`;
         } else if (count === 0) {
-            overlay.innerText = "GO !";
+            overlay.innerHTML = `<div class="countdown-animate">GO !</div>`;
         } else {
-            clearInterval(countdownInterval);
+            clearInterval(interval);
             overlay.style.display = 'none';
-            
-            // LANCEMENT RÉEL DU MODE SURVIE
-            launchSurvieLogic(chapterNum);
+            launchSurvie(chapterNum);
         }
     }, 1000);
 }
 
-function launchSurvieLogic(chapterNum) {
+function launchSurvie(chapterNum) {
     isTimeAttack = true;
     timeLeft = 60;
     currentStep = 0;
+    userAnswers = [];
+
+    // QUESTIONS ILLIMITÉES : On prend TOUTES les questions au lieu de 10
+    // On les mélange pour l'aléatoire
+    quizData = [...allQuestionsBackup].sort(() => Math.random() - 0.5);
+
+    document.getElementById('quiz-container').classList.add('survival-mode');
     
-    // Mélanger toutes les questions dispo (au lieu de seulement 10)
-    // On utilise quizData (assure-toi que quizData contient tout le chapitre ici)
-    quizData = [...allChapterQuestions].sort(() => Math.random() - 0.5); 
-
-    const container = document.getElementById('quiz-container');
-    container.classList.add('survival-mode');
-
-    // Lancer le décompte du temps
     startGlobalTimer(chapterNum);
-    
-    // Afficher la première question
     renderQuizSlide(chapterNum);
 }
 
@@ -340,19 +340,11 @@ function startGlobalTimer(chapterNum) {
         
         if (timerDisplay) {
             timerDisplay.innerText = `⏱️ ${timeLeft}s`;
-            
-            // Animation et couleur rouge pour les 10 dernières secondes
-            if (timeLeft <= 10) {
-                timerDisplay.classList.add('low-time');
-                // Petit effet de vibration ou changement de taille
-                timerDisplay.style.fontSize = "1.5rem";
-                timerDisplay.style.color = "red";
-            }
+            if (timeLeft <= 10) timerDisplay.classList.add('low-time');
         }
 
         if (timeLeft <= 0) {
             clearInterval(quizTimer);
-            alert("🔥 TEMPS ÉCOULÉ ! Voyons ton score de survie...");
             finishQuiz(chapterNum);
         }
     }, 1000);
