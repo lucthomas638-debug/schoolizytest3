@@ -352,13 +352,32 @@ function renderQuizSlide(chapterNum) {
     container.classList.add('rendering');
 
     container.innerHTML = `
+        <div class="quiz-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:#f9f9f9; padding:10px; border-radius:12px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span id="quiz-timer-display" style="font-weight:bold; font-size:1.1rem; color:var(--brand-school);">⏱️ ${timeLeft}s</span>
+                
+                ${!isTimeAttack ? `
+                    <button class="btn-sablier" 
+                            style="width:35px; height:35px; font-size:1rem; border-radius:50%; border:1px solid #ddd; cursor:pointer; background:white; display:flex; align-items:center; justify-content:center;" 
+                            onclick="startSurvivalMode(${chapterNum})" 
+                            title="Lancer le défi 1 minute">
+                        ⏳
+                    </button>
+                ` : ''}
+            </div>
+            <span style="color:#888; font-weight:600;">Question ${currentStep + 1} / ${quizData.length}</span>
+        </div>
+
         <div class="quiz-question-card">
-            <p style="color:#888; font-size:0.8rem; margin-bottom:10px;">Question ${currentStep + 1} / ${quizData.length}</p>
-            <div class="quiz-question-text">${q.question}</div>
+            <div class="quiz-question-text" style="font-size:1.15rem; line-height:1.5; margin-bottom:20px;">
+                ${q.question}
+            </div>
             <div id="options-box"></div>
             
-            <div class="quiz-navigation">
-                <button class="btn-nav" onclick="changeSlide(-1, ${chapterNum})" ${currentStep === 0 ? 'style="visibility:hidden"' : ''}><span>‹</span> Précédent</button>
+            <div class="quiz-navigation" style="margin-top:20px; display:flex; justify-content:space-between;">
+                <button class="btn-nav" onclick="changeSlide(-1, ${chapterNum})" ${currentStep === 0 ? 'style="visibility:hidden"' : ''}>
+                    <span>‹</span> Précédent
+                </button>
                 
                 ${isLast ? 
                     `<button class="btn-nav" onclick="finishQuiz(${chapterNum})">Terminer <span>✓</span></button>` : 
@@ -380,47 +399,72 @@ function renderQuizSlide(chapterNum) {
 
         btn.innerHTML = opt;
         btn.onclick = () => {
-            // Désélectionne les autres
-            const allBtns = optionsBox.querySelectorAll('.quiz-option');
-            allBtns.forEach(b => b.classList.remove('selected'));
-            
-            // Sélectionne le nouveau
-            btn.classList.add('selected');
+            // 1. Enregistre la réponse
             userAnswers[currentStep] = idx;
 
-            // Optionnel : passer à la suite auto après 400ms sans montrer la réponse
-            /* if (!isLast) setTimeout(() => changeSlide(1, chapterNum), 400); */
+            if (isTimeAttack) {
+                // --- MODE SURVIE : Passage automatique ---
+                const allBtns = optionsBox.querySelectorAll('.quiz-option');
+                allBtns.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+
+                setTimeout(() => {
+                    if (currentStep < quizData.length - 1) {
+                        currentStep++;
+                        renderQuizSlide(chapterNum);
+                    } else {
+                        finishQuiz(chapterNum);
+                    }
+                }, 150); // Petit délai pour voir le clic
+            } else {
+                // --- MODE NORMAL : Sélection manuelle ---
+                const allBtns = optionsBox.querySelectorAll('.quiz-option');
+                allBtns.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+            }
         };
         optionsBox.appendChild(btn);
     });
 
-    // Rendu MathJax avec gestion de l'opacité pour éviter le clignotement
+    // Rendu MathJax avec gestion de l'opacité
     if (window.MathJax) {
         setTimeout(() => {
             MathJax.typesetClear([container]);
             MathJax.typesetPromise([container]).then(() => {
-                container.classList.remove('rendering'); // On remontre le texte une fois propre
+                container.classList.remove('rendering');
             });
         }, 10);
     } else {
         container.classList.remove('rendering');
     }
 }
+
 function changeSlide(direction, chapterNum) {
     currentStep += direction;
     renderQuizSlide(chapterNum);
 }
 
 function finishQuiz(chapterNum) {
-    let finalScore = 0;
+    // 1. ARRÊT DU SYSTÈME DE CHRONO
+    if (quizTimer) {
+        clearInterval(quizTimer);
+        quizTimer = null;
+    }
+    isTimeAttack = false; // Désactive le mode survie
+
+    // 2. NETTOYAGE VISUEL
     const container = document.getElementById('quiz-container');
+    container.classList.remove('survival-mode'); // Retire la bordure rouge animée
     container.classList.add('rendering');
+
+    let finalScore = 0;
 
     // Calcul du score
     quizData.forEach((q, idx) => {
         if (userAnswers[idx] === q.correct_index) finalScore++;
     });
 
+    // 3. GÉNÉRATION DE LA CORRECTION
     container.innerHTML = '<h2 style="text-align:center; margin-bottom:20px; color:var(--brand-school);">Correction détaillée</h2>';
     
     quizData.forEach((q, idx) => {
@@ -452,6 +496,7 @@ function finishQuiz(chapterNum) {
 
     showQuizResult(finalScore, quizData.length, container, chapterNum);
 
+    // 4. TRAITEMENT MATHJAX & SCROLL
     if (window.MathJax) {
         setTimeout(() => {
             MathJax.typesetClear([container]);
@@ -459,6 +504,8 @@ function finishQuiz(chapterNum) {
                 container.classList.remove('rendering');
             });
         }, 10);
+    } else {
+        container.classList.remove('rendering');
     }
 
     setTimeout(() => {
