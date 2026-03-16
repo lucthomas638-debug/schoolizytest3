@@ -287,17 +287,75 @@ function toggleMultiSelectionMode() {
 }
 
 function startSurvivalMode(chapterNum) {
-    console.log("Mode survie lancé pour le chapitre:", chapterNum); // Pour vérifier dans la console
-    isTimeAttack = true; 
-    timeLeft = 60;       
+    const overlay = document.getElementById('countdown-overlay');
+    overlay.style.display = 'flex';
+    let count = 3;
+    overlay.innerText = count;
+
+    // 1. On prépare TOUTES les questions disponibles pour ce chapitre
+    // On suppose que tu as stocké toutes les questions quelque part, 
+    // ou on les recharge sans le .limit(10)
     
+    const countdownInterval = setInterval(() => {
+        count--;
+        if (count > 0) {
+            overlay.innerText = count;
+        } else if (count === 0) {
+            overlay.innerText = "GO !";
+        } else {
+            clearInterval(countdownInterval);
+            overlay.style.display = 'none';
+            
+            // LANCEMENT RÉEL DU MODE SURVIE
+            launchSurvieLogic(chapterNum);
+        }
+    }, 1000);
+}
+
+function launchSurvieLogic(chapterNum) {
+    isTimeAttack = true;
+    timeLeft = 60;
+    currentStep = 0;
+    
+    // Mélanger toutes les questions dispo (au lieu de seulement 10)
+    // On utilise quizData (assure-toi que quizData contient tout le chapitre ici)
+    quizData = [...allChapterQuestions].sort(() => Math.random() - 0.5); 
+
     const container = document.getElementById('quiz-container');
-    container.classList.add('survival-mode'); 
-    
-    if(quizTimer) clearInterval(quizTimer);
+    container.classList.add('survival-mode');
+
+    // Lancer le décompte du temps
     startGlobalTimer(chapterNum);
     
+    // Afficher la première question
     renderQuizSlide(chapterNum);
+}
+
+function startGlobalTimer(chapterNum) {
+    if (quizTimer) clearInterval(quizTimer);
+    
+    quizTimer = setInterval(() => {
+        timeLeft--;
+        const timerDisplay = document.getElementById('quiz-timer-display');
+        
+        if (timerDisplay) {
+            timerDisplay.innerText = `⏱️ ${timeLeft}s`;
+            
+            // Animation et couleur rouge pour les 10 dernières secondes
+            if (timeLeft <= 10) {
+                timerDisplay.classList.add('low-time');
+                // Petit effet de vibration ou changement de taille
+                timerDisplay.style.fontSize = "1.5rem";
+                timerDisplay.style.color = "red";
+            }
+        }
+
+        if (timeLeft <= 0) {
+            clearInterval(quizTimer);
+            alert("🔥 TEMPS ÉCOULÉ ! Voyons ton score de survie...");
+            finishQuiz(chapterNum);
+        }
+    }, 1000);
 }
 
 function openChaptersPage(list) {
