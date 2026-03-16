@@ -446,40 +446,48 @@ function renderQuizSlide(chapterNum) {
     const q = quizData[currentStep];
     const isLast = currentStep === quizData.length - 1;
 
-    // On ajoute la classe 'rendering' pour cacher le flash de texte brut
+    // On ajoute la classe 'rendering' pour cacher le flash de texte brut MathJax
     container.classList.add('rendering');
 
     container.innerHTML = `
-         <div class="quiz-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:#f9f9f9; padding:10px; border-radius:12px;">
-              <div style="display:flex; align-items:center; gap:12px;">
-                  <span id="quiz-timer-display">⏱️ ${timeLeft}s</span>
-                  
-                  ${!isTimeAttack ? `
-                      <button class="btn-sablier" onclick="startSurvivalMode(${chapterNum})">
-                          <span>⏳</span>
-                      </button>
-                  ` : ''}
-              </div>
-              <span style="color:#888; font-weight:600;">Question ${currentStep + 1} / ${quizData.length}</span>
-         </div>
-
-         <div class="quiz-question-card">
-                  <div class="quiz-question-text" style="font-size:1.15rem; line-height:1.5; margin-bottom:20px;">
-                      ${q.question}
-                  </div>
-                  <div id="options-box"></div>
-                  
-                  <div class="quiz-navigation" style="margin-top:20px; display:flex; justify-content:space-between;">
-                      <button class="btn-nav" onclick="changeSlide(-1, ${chapterNum})" ${currentStep === 0 ? 'style="visibility:hidden"' : ''}>
-                          <span>‹</span> Précédent
-                      </button>
-                      
-                      ${isLast ? 
-                          `<button class="btn-nav" onclick="finishQuiz(${chapterNum})">Terminer <span>✓</span></button>` : 
-                          `<button class="btn-nav" onclick="changeSlide(1, ${chapterNum})">Suivant <span>›</span></button>`
-                      }
-                  </div>
+        <div class="quiz-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:#f9f9f9; padding:10px; border-radius:12px;">
+            <div style="display:flex; align-items:center; gap:12px;">
+                
+                <span id="quiz-timer-display" style="display: ${isTimeAttack ? 'block' : 'none'}; font-weight:bold; font-size:1.1rem; color:var(--brand-school);">
+                    ⏱️ ${timeLeft}s
+                </span>
+                
+                ${!isTimeAttack ? `
+                    <button class="btn-sablier" onclick="startSurvivalMode(${chapterNum})">
+                        <span>⏳</span>
+                    </button>
+                ` : ''}
             </div>
+            
+            <span style="color:#888; font-weight:600;">
+                Question ${currentStep + 1} / ${quizData.length}
+            </span>
+        </div>
+
+        <div class="quiz-question-card">
+            <div class="quiz-question-text" style="font-size:1.15rem; line-height:1.5; margin-bottom:20px;">
+                ${q.question}
+            </div>
+            
+            <div id="options-box"></div>
+            
+            <div class="quiz-navigation" style="margin-top:20px; display:flex; justify-content:space-between;">
+                <button class="btn-nav" onclick="changeSlide(-1, ${chapterNum})" 
+                    ${currentStep === 0 ? 'style="visibility:hidden"' : ''}>
+                    <span>‹</span> Précédent
+                </button>
+                
+                ${isLast ? 
+                    `<button class="btn-nav" onclick="finishQuiz(${chapterNum})">Terminer <span>✓</span></button>` : 
+                    `<button class="btn-nav" onclick="changeSlide(1, ${chapterNum})">Suivant <span>›</span></button>`
+                }
+            </div>
+        </div>
     `;
 
     const optionsBox = container.querySelector('#options-box');
@@ -487,41 +495,38 @@ function renderQuizSlide(chapterNum) {
         const btn = document.createElement('div');
         btn.className = 'quiz-option';
         
-        // On remet la sélection si l'élève revient en arrière
+        // On remet la sélection visuelle si l'élève revient en arrière
         if (userAnswers[currentStep] === idx) {
             btn.classList.add('selected');
         }
 
         btn.innerHTML = opt;
         btn.onclick = () => {
-            // 1. Enregistre la réponse
+            // Sauvegarde de la réponse
             userAnswers[currentStep] = idx;
 
-            if (isTimeAttack) {
-                // --- MODE SURVIE : Passage automatique ---
-                const allBtns = optionsBox.querySelectorAll('.quiz-option');
-                allBtns.forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
+            // Désélectionne les autres options visuellement
+            const allBtns = optionsBox.querySelectorAll('.quiz-option');
+            allBtns.forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
 
+            if (isTimeAttack) {
+                // MODE DEFI : On passe à la suite automatiquement après un court délai
                 setTimeout(() => {
                     if (currentStep < quizData.length - 1) {
                         currentStep++;
                         renderQuizSlide(chapterNum);
                     } else {
+                        // Si c'est la toute dernière question du stock avant la fin du chrono
                         finishQuiz(chapterNum);
                     }
-                }, 150); // Petit délai pour voir le clic
-            } else {
-                // --- MODE NORMAL : Sélection manuelle ---
-                const allBtns = optionsBox.querySelectorAll('.quiz-option');
-                allBtns.forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
+                }, 150); 
             }
         };
         optionsBox.appendChild(btn);
     });
 
-    // Rendu MathJax avec gestion de l'opacité
+    // Rendu MathJax sécurisé avec gestion du clignotement
     if (window.MathJax) {
         setTimeout(() => {
             MathJax.typesetClear([container]);
