@@ -289,7 +289,7 @@ function toggleMultiSelectionMode() {
 }
 
 function startSurvivalMode(chapterNum) {
-    // 1. Créer l'overlay s'il n'existe pas encore
+    // 1. Créer ou récupérer l'overlay
     let overlay = document.getElementById('countdown-overlay');
     if (!overlay) {
         overlay = document.createElement('div');
@@ -310,23 +310,35 @@ function startSurvivalMode(chapterNum) {
         } else {
             clearInterval(interval);
             overlay.style.display = 'none';
-            launchSurvie(chapterNum);
+            // LANCEMENT RÉEL
+            launchSurvieLogic(chapterNum);
         }
     }, 1000);
 }
 
-function launchSurvie(chapterNum) {
+function launchSurvieLogic(chapterNum) {
     isTimeAttack = true;
     timeLeft = 60;
     currentStep = 0;
-    userAnswers = [];
+    userAnswers = {}; // On réinitialise les réponses
 
-    // QUESTIONS ILLIMITÉES : On prend TOUTES les questions au lieu de 10
-    // On les mélange pour l'aléatoire
+    // On prend TOUTES les questions stockées dans allQuestionsBackup
+    if (!allQuestionsBackup || allQuestionsBackup.length === 0) {
+        alert("Erreur: pas de questions en mémoire.");
+        return;
+    }
+
+    // Mélange total pour le mode illimité
     quizData = [...allQuestionsBackup].sort(() => Math.random() - 0.5);
 
-    document.getElementById('quiz-container').classList.add('survival-mode');
+    // On ajoute la classe visuelle de survie
+    const container = document.getElementById('quiz-container');
+    if (container) container.classList.add('survival-mode');
     
+    // NAVIGATION : On va sur la vue du quiz
+    navigateTo('view-quiz');
+    
+    // On lance le chrono et on affiche la première question
     startGlobalTimer(chapterNum);
     renderQuizSlide(chapterNum);
 }
@@ -526,53 +538,68 @@ function finishQuiz(chapterNum) {
         clearInterval(quizTimer);
         quizTimer = null;
     }
-    isTimeAttack = false; // Désactive le mode survie
-
-    // 2. NETTOYAGE VISUEL
+    
+    // 2. NETTOYAGE VISUEL ET RESET ETAT
+    isTimeAttack = false; 
     const container = document.getElementById('quiz-container');
     container.classList.remove('survival-mode'); // Retire la bordure rouge animée
     container.classList.add('rendering');
 
-    let finalScore = 0;
+    // On s'assure que le texte du timer ne reste pas en rouge/pulsation
+    const timerDisplay = document.getElementById('quiz-timer-display');
+    if (timerDisplay) {
+        timerDisplay.classList.remove('low-time');
+        timerDisplay.style.color = ""; 
+        timerDisplay.style.fontSize = "";
+    }
 
-    // Calcul du score
+    let finalScore = 0;
+    let questionsRepondues = 0;
+
+    // 3. CALCUL DU SCORE
     quizData.forEach((q, idx) => {
-        if (userAnswers[idx] === q.correct_index) finalScore++;
+        if (userAnswers[idx] !== undefined) {
+            questionsRepondues++;
+            if (userAnswers[idx] === q.correct_index) finalScore++;
+        }
     });
 
-    // 3. GÉNÉRATION DE LA CORRECTION
+    // 4. GÉNÉRATION DE LA CORRECTION
     container.innerHTML = '<h2 style="text-align:center; margin-bottom:20px; color:var(--brand-school);">Correction détaillée</h2>';
     
     quizData.forEach((q, idx) => {
-        const card = document.createElement('div');
-        card.className = 'quiz-question-card';
-        card.style.marginBottom = "20px";
-        card.innerHTML = `<div class="quiz-question-text">Question ${idx + 1} : ${q.question}</div>`;
-        
-        const optionsBox = document.createElement('div');
-        q.options.forEach((opt, optIdx) => {
-            const btn = document.createElement('div');
-            btn.className = 'quiz-option';
-            btn.innerHTML = opt;
+        // En mode survie, on n'affiche la correction que pour les questions traitées
+        if (userAnswers[idx] !== undefined || !isTimeAttack) {
+            const card = document.createElement('div');
+            card.className = 'quiz-question-card';
+            card.style.marginBottom = "20px";
+            card.innerHTML = `<div class="quiz-question-text">Question ${idx + 1} : ${q.question}</div>`;
+            
+            const optionsBox = document.createElement('div');
+            q.options.forEach((opt, optIdx) => {
+                const btn = document.createElement('div');
+                btn.className = 'quiz-option';
+                btn.innerHTML = opt;
 
-            // Révélation de la vérité
-            if (optIdx === q.correct_index) {
-                btn.classList.add('correct'); // La bonne réponse est en vert
-                if (userAnswers[idx] === optIdx) btn.innerHTML += " ✅";
-            } else if (userAnswers[idx] === optIdx) {
-                btn.classList.add('wrong'); // Si l'élève a cliqué ici et que c'est faux
-                btn.innerHTML += " ❌";
-            }
-            optionsBox.appendChild(btn);
-        });
-        
-        card.appendChild(optionsBox);
-        container.appendChild(card);
+                if (optIdx === q.correct_index) {
+                    btn.classList.add('correct'); 
+                    if (userAnswers[idx] === optIdx) btn.innerHTML += " ✅";
+                } else if (userAnswers[idx] === optIdx) {
+                    btn.classList.add('wrong'); 
+                    btn.innerHTML += " ❌";
+                }
+                optionsBox.appendChild(btn);
+            });
+            
+            card.appendChild(optionsBox);
+            container.appendChild(card);
+        }
     });
 
+    // On affiche le score basé sur le nombre de questions répondues
     showQuizResult(finalScore, quizData.length, container, chapterNum);
 
-    // 4. TRAITEMENT MATHJAX & SCROLL
+    // 5. TRAITEMENT MATHJAX & SCROLL
     if (window.MathJax) {
         setTimeout(() => {
             MathJax.typesetClear([container]);
