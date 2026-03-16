@@ -286,6 +286,20 @@ function toggleMultiSelectionMode() {
     validateArea.style.display = isMulti ? 'block' : 'none';
 }
 
+function startSurvivalMode(chapterNum) {
+    console.log("Mode survie lancé pour le chapitre:", chapterNum); // Pour vérifier dans la console
+    isTimeAttack = true; 
+    timeLeft = 60;       
+    
+    const container = document.getElementById('quiz-container');
+    container.classList.add('survival-mode'); 
+    
+    if(quizTimer) clearInterval(quizTimer);
+    startGlobalTimer(chapterNum);
+    
+    renderQuizSlide(chapterNum);
+}
+
 function openChaptersPage(list) {
     const grid = document.getElementById('chapters-grid');
     grid.innerHTML = '';
