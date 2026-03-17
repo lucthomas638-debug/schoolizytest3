@@ -236,7 +236,7 @@ async function prepareMultiQuiz() {
 
     // 2. Sécurité : Vérifier qu'il y a au moins DEUX chapitres
     if (selectedChapters.length < 2) {
-        return alert("Pour réviser un chapitre précis, veuillez désélectionner le choix multiple. (Sélectionne au moins 2 chapitres pour ce mode)");
+        return alert("Sélectionne au moins 2 chapitres pour ce mode.");
     }
 
     // 3. Appel Supabase
@@ -251,21 +251,24 @@ async function prepareMultiQuiz() {
         return alert("Aucune question trouvée pour ces chapitres.");
     }
 
-    // --- LOGIQUE DE LIMITATION ---
-    // 1. On mélange d'abord TOUTES les questions récupérées pour avoir du hasard
-    let shuffledData = data.sort(() => 0.5 - Math.random());
+    // --- LOGIQUE DE MÉMOIRE POUR LE MODE SURVIE ---
+    // On stocke TOUTES les questions récupérées dans le backup
+    allQuestionsBackup = data;
 
-    // 2. On définit la limite : 10 si plusieurs chapitres, 5 si un seul
-    const limit = (selectedChapters.length > 1) ? 10 : 5;
+    // --- LOGIQUE DE LIMITATION POUR LE MODE NORMAL ---
+    // 1. On mélange
+    let shuffledData = [...data].sort(() => 0.5 - Math.random());
 
-    // 3. On ne garde que les X premières questions du mélange
-    quizData = shuffledData.slice(0, limit);
+    // 2. On définit la limite à 10 pour le multi-chapitres
+    quizData = shuffledData.slice(0, 10);
     
-    // Initialisation habituelle
+    // Initialisation
     currentStep = 0;
     userAnswers = {};
+    isTimeAttack = false; // Sécurité : on s'assure que le mode survie est OFF au début
 
-    Slide(selectedChapters[0]); 
+    // CORRECTION ICI : Le nom de la fonction était coupé
+    renderQuizSlide(selectedChapters[0]); 
     navigateTo('view-quiz');
 }
 
