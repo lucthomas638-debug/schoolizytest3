@@ -1975,18 +1975,18 @@
     color: var(--brand-school);
 }
 
-/* Le bouton sablier "extensible" */
+/* --- LE BOUTON SABLIER DYNAMIQUE --- */
 .btn-sablier {
-    background: #fff;
-    border: 2px solid #e74c3c;
+    background: #ffffff; /* Fond blanc au repos */
+    border: 2px solid #eee; /* Bordure discrète au repos */
     width: 45px;
     height: 45px;
     display: flex;
     align-items: center;
-    justify-content: flex-start; /* Aligne l'émoji à gauche */
+    justify-content: flex-start;
     border-radius: 25px;
     cursor: pointer;
-    overflow: hidden; /* Cache le texte quand il est petit */
+    overflow: hidden;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     padding: 0 10px;
     white-space: nowrap;
@@ -1994,7 +1994,7 @@
     z-index: 999;
 }
 
-/* L'émoji tourne sur lui-même */
+/* L'émoji sablier */
 .btn-sablier span {
     font-size: 1.5rem;
     transition: transform 0.4s ease;
@@ -2002,31 +2002,33 @@
     min-width: 25px;
 }
 
-/* Le texte "Défi 1 minute" caché à droite de l'émoji */
+/* Le texte caché */
 .btn-sablier::after {
     content: "Défi 1 minute";
     margin-left: 10px;
     font-size: 0.9rem;
-    font-weight: bold;
-    color: #e74c3c;
+    font-weight: 800;
+    color: var(--brand-school); /* Texte en Violet */
     opacity: 0;
     transition: opacity 0.3s ease;
 }
 
-/* État au survol : on élargit et on montre le texte */
+/* --- ÉTAT AU SURVOL (HOVER) --- */
 .btn-sablier:hover {
-    width: 160px; /* S'adapte à la longueur du texte */
-    background: #fdf2f2;
+    width: 160px; /* S'étire pour montrer le texte */
+    border-color: var(--brand-school); /* Bordure devient VIOLETTE */
+    background: #fffcf5; /* Optionnel : léger fond crème comme tes autres cartes */
+    box-shadow: 0 4px 12px rgba(132, 89, 207, 0.2); /* Ombre violette diffuse */
 }
 
 .btn-sablier:hover span {
-    transform: rotate(180deg);
+    transform: rotate(180deg); /* Le sablier se retourne */
 }
 
 .btn-sablier:hover::after {
-    opacity: 1;
+    opacity: 1; /* Le texte apparaît */
 }
-
+    
 /* --- OVERLAY DU DÉCOMPTE 3-2-1 --- */
 #countdown-overlay {
     position: fixed;
