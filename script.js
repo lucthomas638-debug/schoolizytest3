@@ -447,8 +447,15 @@ function renderQuizSlide(chapterNum) {
 
     // On ajoute la classe 'rendering' pour cacher le flash de texte brut
     container.classList.add('rendering');
+    
+    // On s'assure que le style survie est maintenu si le mode est actif
+    if (isTimeAttack) {
+        container.classList.add('survival-mode');
+    } else {
+        container.classList.remove('survival-mode');
+    }
 
-container.innerHTML = `
+    container.innerHTML = `
          <div class="quiz-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:#f9f9f9; padding:10px; border-radius:12px;">
               <div style="display:flex; align-items:center; gap:12px;">
                   <span id="quiz-timer-display" style="display: ${isTimeAttack ? 'block' : 'none'}; font-weight:bold; font-size:1.1rem; color:var(--brand-school);">
@@ -461,7 +468,10 @@ container.innerHTML = `
                       </button>
                   ` : ''}
               </div>
-              <span style="color:#888; font-weight:600;">Question ${currentStep + 1} / ${quizData.length}</span>
+              
+              <span style="color:#888; font-weight:600;">
+                  ${isTimeAttack ? `Question ${currentStep + 1}` : `Question ${currentStep + 1} / ${quizData.length}`}
+              </span>
          </div>
 
          <div class="quiz-question-card">
@@ -488,18 +498,15 @@ container.innerHTML = `
         const btn = document.createElement('div');
         btn.className = 'quiz-option';
         
-        // On remet la sélection si l'élève revient en arrière
         if (userAnswers[currentStep] === idx) {
             btn.classList.add('selected');
         }
 
         btn.innerHTML = opt;
         btn.onclick = () => {
-            // 1. Enregistre la réponse
             userAnswers[currentStep] = idx;
 
             if (isTimeAttack) {
-                // --- MODE SURVIE : Passage automatique ---
                 const allBtns = optionsBox.querySelectorAll('.quiz-option');
                 allBtns.forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
@@ -511,9 +518,8 @@ container.innerHTML = `
                     } else {
                         finishQuiz(chapterNum);
                     }
-                }, 150); // Petit délai pour voir le clic
+                }, 150); 
             } else {
-                // --- MODE NORMAL : Sélection manuelle ---
                 const allBtns = optionsBox.querySelectorAll('.quiz-option');
                 allBtns.forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
@@ -522,7 +528,6 @@ container.innerHTML = `
         optionsBox.appendChild(btn);
     });
 
-    // Rendu MathJax avec gestion de l'opacité
     if (window.MathJax) {
         setTimeout(() => {
             MathJax.typesetClear([container]);
@@ -547,24 +552,25 @@ function finishQuiz(chapterNum) {
         quizTimer = null;
     }
     
-    // 2. NETTOYAGE VISUEL ET RESET ETAT
-    isTimeAttack = false; 
+    // 2. NETTOYAGE VISUEL
     const container = document.getElementById('quiz-container');
     container.classList.remove('survival-mode'); // Retire la bordure rouge animée
     container.classList.add('rendering');
 
-    // On s'assure que le texte du timer ne reste pas en rouge/pulsation
+    // Réinitialisation du style du timer
     const timerDisplay = document.getElementById('quiz-timer-display');
     if (timerDisplay) {
         timerDisplay.classList.remove('low-time');
         timerDisplay.style.color = ""; 
         timerDisplay.style.fontSize = "";
+        // On le cache systématiquement à la fin
+        timerDisplay.style.display = "none";
     }
 
     let finalScore = 0;
     let questionsRepondues = 0;
 
-    // 3. CALCUL DU SCORE
+    // 3. CALCUL DU SCORE RÉEL
     quizData.forEach((q, idx) => {
         if (userAnswers[idx] !== undefined) {
             questionsRepondues++;
@@ -576,7 +582,8 @@ function finishQuiz(chapterNum) {
     container.innerHTML = '<h2 style="text-align:center; margin-bottom:20px; color:var(--brand-school);">Correction détaillée</h2>';
     
     quizData.forEach((q, idx) => {
-        // En mode survie, on n'affiche la correction que pour les questions traitées
+        // On n'affiche la correction que pour les questions répondues (important en mode survie)
+        // ou pour toutes les questions si on est en mode normal
         if (userAnswers[idx] !== undefined || !isTimeAttack) {
             const card = document.createElement('div');
             card.className = 'quiz-question-card';
@@ -604,10 +611,17 @@ function finishQuiz(chapterNum) {
         }
     });
 
-    // On affiche le score basé sur le nombre de questions répondues
-    showQuizResult(finalScore, quizData.length, container, chapterNum);
+    // --- LOGIQUE DE SCORE DYNAMIQUE ---
+    // En mode survie, on note sur le nombre de questions traitées.
+    // En mode normal, on note sur le nombre total de questions du quiz.
+    const totalQuestionsComptees = isTimeAttack ? questionsRepondues : quizData.length;
 
-    // 5. TRAITEMENT MATHJAX & SCROLL
+    // On affiche le résultat (on passe isTimeAttack pour le label personnalisé)
+    showQuizResult(finalScore, totalQuestionsComptees, container, chapterNum);
+
+    // 5. RESET DE L'ÉTAT ET TRAITEMENT FINAL
+    isTimeAttack = false; 
+
     if (window.MathJax) {
         setTimeout(() => {
             MathJax.typesetClear([container]);
@@ -629,18 +643,34 @@ function showQuizResult(score, total, container, chapterNum) {
     const resultDiv = document.createElement('div');
     resultDiv.className = 'quiz-result-box';
     
+    // Détermination du titre et des messages selon le mode
+    // Note : On utilise l'état global isTimeAttack qui est encore à true au moment de l'appel dans finishQuiz
+    const isSurvie = isTimeAttack; 
+    const title = isSurvie ? "🔥 Score de Survie" : "Résultat du Quiz";
+    
     let message = "";
-    let percentage = (score / total) * 100;
-    if (percentage === 100) message = "🏆 Excellent ! Un sans faute !";
-    else if (percentage >= 80) message = "😎 Très bien joué !";
-    else if (percentage >= 50) message = "👍 Pas mal, continue comme ça !";
-    else message = "💪 Tu peux faire mieux, réessaie !";
+    let percentage = total > 0 ? (score / total) * 100 : 0;
 
-    // On utilise les variables de l'état global (state) pour les boutons
+    if (isSurvie) {
+        if (percentage === 100 && total >= 10) message = "🏆 INCROYABLE ! Vitesse et précision absolues !";
+        else if (percentage >= 80) message = "⚡ Quelle rapidité ! Tu maîtrises le sujet sous pression !";
+        else if (percentage >= 50) message = "👍 Bien joué ! Essaye d'aller encore plus vite la prochaine fois !";
+        else message = "💪 La survie c'est dur, mais tu progresses ! Continue !";
+    } else {
+        if (percentage === 100) message = "🏆 Excellent ! Un sans faute !";
+        else if (percentage >= 80) message = "😎 Très bien joué !";
+        else if (percentage >= 50) message = "👍 Pas mal, continue comme ça !";
+        else message = "💪 Tu peux faire mieux, réessaie !";
+    }
+
     resultDiv.innerHTML = `
-        <h3 style="margin-bottom:10px;">Résultat du Quiz</h3>
+        <h3 style="margin-bottom:10px;">${title}</h3>
         <div class="quiz-score">${score} / ${total}</div>
+        
+        ${isSurvie ? `<p style="font-size: 0.9rem; color: var(--brand-school); font-weight: bold; margin-bottom: 10px;">Questions répondues : ${total}</p>` : ''}
+        
         <p style="margin-bottom:20px;">${message}</p>
+        
         <button class="btn-restart" id="btn-restart-quiz">🔄 Recommencer</button>
         
         <div class="quick-nav-footer">
@@ -658,7 +688,12 @@ function showQuizResult(score, total, container, chapterNum) {
     // Bouton recommencer
     document.getElementById('btn-restart-quiz').onclick = function() {
         document.querySelector('main').scrollTop = 0;
-        openQuiz(chapterNum);
+        // On relance le quiz normal ou survie selon le dernier mode joué
+        if (isSurvie) {
+            startSurvivalMode(chapterNum);
+        } else {
+            openQuiz(chapterNum);
+        }
     };
 
     setTimeout(() => {
