@@ -1976,57 +1976,61 @@
 }
 
 /* --- LE BOUTON SABLIER DYNAMIQUE --- */
+/* --- LE BOUTON SABLIER CORRIGÉ --- */
 .btn-sablier {
-    background: #ffffff; /* Fond blanc au repos */
-    border: 2px solid #eee; /* Bordure discrète au repos */
+    background: #ffffff;
+    border: 2px solid #eee;
     width: 45px;
     height: 45px;
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: flex-start; /* Garde le départ à gauche pour l'extension */
     border-radius: 25px;
     cursor: pointer;
     overflow: hidden;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    padding: 0 10px;
+    padding: 0; /* On gère le padding via le span maintenant */
     white-space: nowrap;
     position: relative;
     z-index: 999;
 }
 
-/* L'émoji sablier */
+/* L'émoji sablier - C'est lui qu'on centre */
 .btn-sablier span {
     font-size: 1.5rem;
     transition: transform 0.4s ease;
-    display: inline-block;
-    min-width: 25px;
+    display: flex; /* Utilise flex pour centrer l'émoji dedans */
+    align-items: center;
+    justify-content: center;
+    min-width: 41px; /* Légèrement moins que la largeur du bouton (45px - les bords) */
+    height: 100%;
 }
 
-/* Le texte caché */
+/* Le texte "Défi 1 minute" */
 .btn-sablier::after {
     content: "Défi 1 minute";
-    margin-left: 10px;
+    margin-left: 5px; /* Un peu d'espace après le sablier */
     font-size: 0.9rem;
     font-weight: 800;
-    color: var(--brand-school); /* Texte en Violet */
+    color: var(--brand-school);
     opacity: 0;
     transition: opacity 0.3s ease;
 }
 
-/* --- ÉTAT AU SURVOL (HOVER) --- */
+/* --- ÉTAT AU SURVOL --- */
 .btn-sablier:hover {
-    width: 160px; /* S'étire pour montrer le texte */
-    border-color: var(--brand-school); /* Bordure devient VIOLETTE */
-    background: #fffcf5; /* Optionnel : léger fond crème comme tes autres cartes */
-    box-shadow: 0 4px 12px rgba(132, 89, 207, 0.2); /* Ombre violette diffuse */
+    width: 165px; 
+    border-color: var(--brand-school);
+    background: #fffcf5;
+    box-shadow: 0 4px 12px rgba(132, 89, 207, 0.2);
 }
 
 .btn-sablier:hover span {
-    transform: rotate(180deg); /* Le sablier se retourne */
+    transform: rotate(180deg);
 }
 
 .btn-sablier:hover::after {
-    opacity: 1; /* Le texte apparaît */
+    opacity: 1;
 }
     
 /* --- OVERLAY DU DÉCOMPTE 3-2-1 --- */
