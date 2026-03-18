@@ -2785,9 +2785,11 @@ input:checked + .slider:before { transform: translateX(21px); }
         <div id="view-quiz" class="view container">
             <div class="btn-back" onclick="navigateTo('view-chapters')">← Retour aux chapitres</div>
             <h2 id="quiz-page-title" class="view-title">Quiz</h2>
-            <div id="quiz-container" style="max-width: 800px; margin: 0 auto;">
-                <!-- Questions -->
-            </div>
+            
+            <div id="quiz-container" style="max-width: 800px; margin: 0 auto; position: relative;">
+                <div id="countdown-overlay"></div>
+                
+                </div>
         </div>
 
         <!-- EXERCICES -->
