@@ -2042,76 +2042,74 @@
 }
 
 #countdown-overlay {
-    position: absolute; /* Se fixe par rapport à #quiz-container */
+    position: absolute !important; /* Verrouille l'overlay au quiz-container */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.98); /* Fond quasi opaque pour masquer le contenu */
-    display: none; 
+    background: rgba(255, 255, 255, 0.98); /* Masque les boutons derrière */
+    display: none; /* Piloté par JS (flex) */
     align-items: center;
     justify-content: center;
     z-index: 1000;
     border-radius: 20px;
 }
 
-/* --- NOUVELLE ANIMATION 'FADE-IN POP' --- */
+/* Style des chiffres (3, 2, 1) */
 .countdown-animate {
-    font-size: 8rem; /* Taille adaptée au cadre */
+    font-size: 8rem;
     font-weight: 900;
     color: var(--brand-school);
     text-shadow: 2px 2px 0px rgba(132, 89, 207, 0.2);
-    
-    /* Animation simplifiée : 1 seconde par chiffre */
     animation: quickPop 1s ease-out infinite;
 }
 
-@keyframes quickPop {
-    0% {
-        opacity: 0;
-        transform: scale(0.5); /* Part de petit */
-    }
-    15% {
-        opacity: 1;
-        transform: scale(1.1); /* Petit rebond au-dessus de la taille normale */
-    }
-    25% {
-        transform: scale(1); /* Stabilise à taille normale */
-    }
-    80% {
-        opacity: 1; /* Reste bien visible */
-    }
-    100% {
-        opacity: 0; /* Disparaît vite pour le suivant */
-    }
-}
-
-/* Cas spécial pour le "GO !" */
+/* Style spécifique pour le "GO !" */
 .countdown-animate.go-text {
     color: #2ecc71 !important; /* Vert Schoolizy */
     font-size: 9rem;
     animation: quickPopGo 1s ease-out forwards;
 }
 
+/* --- ANIMATIONS DU DÉCOMPTE --- */
+
+@keyframes quickPop {
+    0% { opacity: 0; transform: scale(0.5); }
+    15% { opacity: 1; transform: scale(1.1); } /* Petit rebond */
+    25% { transform: scale(1); }
+    80% { opacity: 1; }
+    100% { opacity: 0; transform: scale(0.8); }
+}
+
 @keyframes quickPopGo {
     0% { opacity: 0; transform: scale(0.5); }
     20% { opacity: 1; transform: scale(1.2); }
     80% { opacity: 1; transform: scale(1.2); }
-    100% { opacity: 0; transform: scale(2); } /* Expulsion finale */
+    100% { opacity: 0; transform: scale(2); } /* Effet explosion vers l'avant */
 }
 
-/* --- ÉTAT SURVIE ACTIF --- */
+/* =============================================================================
+   MODES VISUELS DU QUIZ (SURVIE & URGENCE)
+   ============================================================================= */
+
+/* Bordure animée pendant le Défi 1 minute */
 .survival-mode {
     border: 4px solid #e74c3c !important;
     animation: flash-border 0.8s infinite alternate;
 }
 
 @keyframes flash-border {
-    from { border-color: #e74c3c; box-shadow: 0 0 10px rgba(231, 76, 60, 0.5); }
-    to { border-color: #f39c12; box-shadow: 0 0 25px rgba(243, 156, 18, 0.7); }
+    from { 
+        border-color: #e74c3c; 
+        box-shadow: 0 0 10px rgba(231, 76, 60, 0.4); 
+    }
+    to { 
+        border-color: #f39c12; 
+        box-shadow: 0 0 20px rgba(243, 156, 18, 0.6); 
+    }
 }
 
-/* --- TIMER FAIBLE (10s) --- */
+/* État du timer quand il reste moins de 10s */
 .low-time {
     color: #ff0000 !important;
     animation: pulse-red 0.5s infinite alternate;
@@ -2120,7 +2118,7 @@
 
 @keyframes pulse-red {
     from { transform: scale(1); }
-    to { transform: scale(1.25); }
+    to { transform: scale(1.15); }
 }
     
 /* --- 1. LE GROS SWITCH (Menu sélection multiple) --- */
@@ -2757,6 +2755,7 @@ input:checked + .slider:before { transform: translateX(21px); }
         </div>
 
         <!-- VUE 6 : LEÇON -->
+        
         <div id="view-lesson" class="view container">
             <div class="btn-back" onclick="navigateTo('view-chapters')">← Retour aux chapitres</div>
             <div id="lesson-container" class="lesson-container">
@@ -2765,11 +2764,12 @@ input:checked + .slider:before { transform: translateX(21px); }
         </div>
 
         <!-- VUE 7 : QUIZ -->
+        
         <div id="view-quiz" class="view container">
             <div class="btn-back" onclick="navigateTo('view-chapters')">← Retour aux chapitres</div>
             <h2 id="quiz-page-title" class="view-title">Quiz</h2>
             
-            <div id="quiz-container" style="max-width: 800px; margin: 0 auto; position: relative; min-height: 400px; background: white; border-radius: 20px;">
+            <div id="quiz-container" style="max-width: 800px; margin: 0 auto; position: relative; min-height: 400px; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
                 
                 <div id="countdown-overlay"></div>
                 
