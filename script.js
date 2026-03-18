@@ -292,37 +292,29 @@ function toggleMultiSelectionMode() {
 }
 
 function startSurvivalMode(chapterNum) {
-    // 1. On force d'abord l'affichage de la vue Quiz
+    // 1. On affiche la vue du quiz immédiatement
     navigateTo('view-quiz');
 
-    // 2. On attend un tout petit peu (10ms) pour que le DOM se mette à jour
+    // 2. On attend un court instant pour que le navigateur "dessine" le container
     setTimeout(() => {
         const container = document.getElementById('quiz-container');
-        
-        if (!container) {
-            console.error("Le container du quiz est introuvable !");
-            return;
-        }
-
-        // 3. RECHERCHE ou CRÉATION de l'overlay
         let overlay = document.getElementById('countdown-overlay');
-        
-        if (!overlay) {
-            // S'il n'existe pas, on le fabrique dynamiquement
+
+        // SÉCURITÉ : Si l'overlay n'est vraiment pas là, on le crée
+        if (!overlay && container) {
             overlay = document.createElement('div');
             overlay.id = 'countdown-overlay';
             container.appendChild(overlay);
-            console.log("Overlay créé dynamiquement dans le container");
         }
 
-        // 4. On cache les éléments du quiz pour le décompte
+        if (!overlay) return; // Si toujours rien, on arrête
+
+        // 3. On cache les éléments du quiz pour laisser la place au décompte
         Array.from(container.children).forEach(child => {
-            if (child.id !== 'countdown-overlay') {
-                child.style.display = 'none';
-            }
+            if (child.id !== 'countdown-overlay') child.style.display = 'none';
         });
 
-        // 5. On affiche l'overlay et on lance le chrono
+        // 4. Lancement de l'animation
         overlay.style.display = 'flex';
         let count = 3;
         overlay.innerHTML = `<div class="countdown-animate">${count}</div>`;
@@ -336,11 +328,13 @@ function startSurvivalMode(chapterNum) {
             } else {
                 clearInterval(interval);
                 overlay.style.display = 'none';
-                // Lancement de la logique de jeu
+                overlay.innerHTML = '';
+                
+                // 5. On appelle la logique de survie
                 launchSurvieLogic(chapterNum);
             }
         }, 1000);
-    }, 10); // Ce petit délai règle 99% des problèmes d'éléments "introuvables"
+    }, 100); // 100ms suffisent pour stabiliser le DOM
 }
 
 function launchSurvieLogic(chapterNum) {
