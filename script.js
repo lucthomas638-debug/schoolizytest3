@@ -292,43 +292,55 @@ function toggleMultiSelectionMode() {
 }
 
 function startSurvivalMode(chapterNum) {
-    // 1. On va sur la page du quiz
+    // 1. On force d'abord l'affichage de la vue Quiz
     navigateTo('view-quiz');
 
-    const container = document.getElementById('quiz-container');
-    if (!container) return;
-
-    // 2. On cherche l'overlay, sinon on le crée
-    let overlay = document.getElementById('countdown-overlay');
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'countdown-overlay';
-        container.appendChild(overlay); // On le met dans le cadre blanc
-    }
-
-    // 3. On cache les questions qui pourraient être déjà affichées derrière
-    Array.from(container.children).forEach(child => {
-        if (child.id !== 'countdown-overlay') child.style.display = 'none';
-    });
-
-    // 4. On lance l'animation
-    overlay.style.display = 'flex';
-    let count = 3;
-    overlay.innerHTML = `<div class="countdown-animate">${count}</div>`;
-
-    const interval = setInterval(() => {
-        count--;
-        if (count > 0) {
-            overlay.innerHTML = `<div class="countdown-animate">${count}</div>`;
-        } else if (count === 0) {
-            overlay.innerHTML = `<div class="countdown-animate go-text">GO !</div>`;
-        } else {
-            clearInterval(interval);
-            overlay.style.display = 'none';
-            // 5. Lancement de la logique de survie
-            launchSurvieLogic(chapterNum);
+    // 2. On attend un tout petit peu (10ms) pour que le DOM se mette à jour
+    setTimeout(() => {
+        const container = document.getElementById('quiz-container');
+        
+        if (!container) {
+            console.error("Le container du quiz est introuvable !");
+            return;
         }
-    }, 1000);
+
+        // 3. RECHERCHE ou CRÉATION de l'overlay
+        let overlay = document.getElementById('countdown-overlay');
+        
+        if (!overlay) {
+            // S'il n'existe pas, on le fabrique dynamiquement
+            overlay = document.createElement('div');
+            overlay.id = 'countdown-overlay';
+            container.appendChild(overlay);
+            console.log("Overlay créé dynamiquement dans le container");
+        }
+
+        // 4. On cache les éléments du quiz pour le décompte
+        Array.from(container.children).forEach(child => {
+            if (child.id !== 'countdown-overlay') {
+                child.style.display = 'none';
+            }
+        });
+
+        // 5. On affiche l'overlay et on lance le chrono
+        overlay.style.display = 'flex';
+        let count = 3;
+        overlay.innerHTML = `<div class="countdown-animate">${count}</div>`;
+
+        const interval = setInterval(() => {
+            count--;
+            if (count > 0) {
+                overlay.innerHTML = `<div class="countdown-animate">${count}</div>`;
+            } else if (count === 0) {
+                overlay.innerHTML = `<div class="countdown-animate go-text">GO !</div>`;
+            } else {
+                clearInterval(interval);
+                overlay.style.display = 'none';
+                // Lancement de la logique de jeu
+                launchSurvieLogic(chapterNum);
+            }
+        }, 1000);
+    }, 10); // Ce petit délai règle 99% des problèmes d'éléments "introuvables"
 }
 
 function launchSurvieLogic(chapterNum) {
