@@ -292,28 +292,47 @@ function toggleMultiSelectionMode() {
 }
 
 function startSurvivalMode(chapterNum) {
-    // 1. Créer ou récupérer l'overlay
-    let overlay = document.getElementById('countdown-overlay');
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'countdown-overlay';
-        document.body.appendChild(overlay);
+    const overlay = document.getElementById('countdown-overlay');
+    const container = document.getElementById('quiz-container');
+    
+    if (!overlay || !container) {
+        console.error("Éléments du quiz introuvables");
+        return;
     }
 
-    overlay.style.display = 'flex';
-    overlay.innerHTML = '<div class="countdown-animate">3</div>';
+    // 1. On bascule immédiatement sur la vue quiz pour que l'élève voie le décompte
+    navigateTo('view-quiz');
 
+    // 2. On vide le container du quiz (pour ne pas voir les anciennes questions derrière)
+    // mais on garde l'overlay intact
+    const questions = container.querySelectorAll('.quiz-header, .quiz-question-card');
+    questions.forEach(el => el.remove());
+
+    // 3. Configuration de l'affichage de l'overlay
+    overlay.style.display = 'flex';
+    
     let count = 3;
+    // Premier chiffre (3)
+    overlay.innerHTML = `<div class="countdown-animate">${count}</div>`;
+
     const interval = setInterval(() => {
         count--;
+        
         if (count > 0) {
+            // Chiffres 2 et 1
             overlay.innerHTML = `<div class="countdown-animate">${count}</div>`;
-        } else if (count === 0) {
-            overlay.innerHTML = `<div class="countdown-animate">GO !</div>`;
-        } else {
+        } 
+        else if (count === 0) {
+            // Le "GO !" avec sa classe spéciale pour l'animation verte et plus grosse
+            overlay.innerHTML = `<div class="countdown-animate go-text">GO !</div>`;
+        } 
+        else {
+            // Fin du décompte
             clearInterval(interval);
             overlay.style.display = 'none';
-            // ON APPELLE LA BONNE FONCTION ICI
+            overlay.innerHTML = ''; // On nettoie le texte
+            
+            // 4. Lancement réel de la logique de jeu
             launchSurvieLogic(chapterNum);
         }
     }, 1000);
