@@ -292,20 +292,21 @@ function toggleMultiSelectionMode() {
 }
 
 function startSurvivalMode(chapterNum) {
-    // 1. On force le passage à la vue quiz
+    // 1. On va sur la page du quiz
     navigateTo('view-quiz');
 
-    // 2. On récupère les éléments
-    const overlay = document.getElementById('countdown-overlay');
     const container = document.getElementById('quiz-container');
+    if (!container) return;
 
+    // 2. On cherche l'overlay, sinon on le crée
+    let overlay = document.getElementById('countdown-overlay');
     if (!overlay) {
-        console.error("L'élément countdown-overlay est introuvable !");
-        return;
+        overlay = document.createElement('div');
+        overlay.id = 'countdown-overlay';
+        container.appendChild(overlay); // On le met dans le cadre blanc
     }
 
-    // 3. On nettoie l'affichage du quiz pour ne pas voir les questions derrière
-    // On cache tout SAUF l'overlay
+    // 3. On cache les questions qui pourraient être déjà affichées derrière
     Array.from(container.children).forEach(child => {
         if (child.id !== 'countdown-overlay') child.style.display = 'none';
     });
@@ -324,7 +325,7 @@ function startSurvivalMode(chapterNum) {
         } else {
             clearInterval(interval);
             overlay.style.display = 'none';
-            // 5. On lance la logique de survie (vérifie bien que le nom correspond)
+            // 5. Lancement de la logique de survie
             launchSurvieLogic(chapterNum);
         }
     }, 1000);
