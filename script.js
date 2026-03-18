@@ -292,21 +292,26 @@ function toggleMultiSelectionMode() {
 }
 
 function startSurvivalMode(chapterNum) {
-    const overlay = document.getElementById('countdown-overlay');
-    const container = document.getElementById('quiz-container');
-    if (!overlay || !container) return;
-
-    // Affiche la vue du quiz
+    // 1. On force le passage à la vue quiz
     navigateTo('view-quiz');
 
-    // On force le nettoyage du container pour ne pas voir de boutons derrière
-    // Sauf l'overlay lui-même
+    // 2. On récupère les éléments
+    const overlay = document.getElementById('countdown-overlay');
+    const container = document.getElementById('quiz-container');
+
+    if (!overlay) {
+        console.error("L'élément countdown-overlay est introuvable !");
+        return;
+    }
+
+    // 3. On nettoie l'affichage du quiz pour ne pas voir les questions derrière
+    // On cache tout SAUF l'overlay
     Array.from(container.children).forEach(child => {
-        if(child.id !== 'countdown-overlay') child.style.display = 'none';
+        if (child.id !== 'countdown-overlay') child.style.display = 'none';
     });
 
+    // 4. On lance l'animation
     overlay.style.display = 'flex';
-    
     let count = 3;
     overlay.innerHTML = `<div class="countdown-animate">${count}</div>`;
 
@@ -319,7 +324,7 @@ function startSurvivalMode(chapterNum) {
         } else {
             clearInterval(interval);
             overlay.style.display = 'none';
-            // On relance la logique qui va ré-afficher les éléments du quiz
+            // 5. On lance la logique de survie (vérifie bien que le nom correspond)
             launchSurvieLogic(chapterNum);
         }
     }, 1000);
