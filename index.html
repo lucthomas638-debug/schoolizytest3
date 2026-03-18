@@ -2033,88 +2033,72 @@
     opacity: 1;
 }
     
-/* --- OVERLAY DU DÉCOMPTE (CIBLÉ) --- */
+/* --- OVERLAY DU DÉCOMPTE (LIMITÉ AU QUIZ) --- */
+#quiz-container {
+    position: relative; /* Indispensable pour emprisonner l'overlay */
+    min-height: 400px;
+    background: white;
+    border-radius: 20px;
+}
+
 #countdown-overlay {
-    position: absolute; /* Et non plus fixed */
+    position: absolute; /* Se fixe par rapport à #quiz-container */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.95); /* Fond blanc semi-transparent pour rester dans le thème */
+    background: rgba(255, 255, 255, 0.98); /* Fond quasi opaque pour masquer le contenu */
     display: none; 
     align-items: center;
     justify-content: center;
     z-index: 1000;
-    color: var(--brand-school); /* Chiffres en violet */
-    font-size: 8rem; /* Un peu plus petit car la zone est plus réduite */
-    font-weight: 900;
-    border-radius: 15px; /* Pour correspondre aux bords arrondis du quiz */
+    border-radius: 20px;
 }
 
-/* On s'assure que le parent du quiz permet le positionnement absolu */
-#quiz-container {
-    position: relative;
-    min-height: 400px; /* Évite que l'overlay soit écrasé si le quiz est vide au début */
-}
-
-/* --- ANIMATION DU DÉCOMPTE (3-2-1) --- */
-
-/* Le conteneur du chiffre/texte */
+/* --- NOUVELLE ANIMATION 'FADE-IN POP' --- */
 .countdown-animate {
-    /* Paramètres de l'animation : nom, durée, easing, répétition */
-    animation: zoomPop 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite;
-    
-    /* Ombre portée violette pour plus de profondeur */
-    text-shadow: 0 4px 15px rgba(132, 89, 207, 0.4);
-    
-    /* Couleur violette Schoolizy (var(--brand-school)) */
-    color: #8459cf; 
-    
-    /* Grosse police, gras, au centre */
-    font-size: 10rem;
+    font-size: 8rem; /* Taille adaptée au cadre */
     font-weight: 900;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    color: var(--brand-school);
+    text-shadow: 2px 2px 0px rgba(132, 89, 207, 0.2);
+    
+    /* Animation simplifiée : 1 seconde par chiffre */
+    animation: quickPop 1s ease-out infinite;
 }
 
-/* --- DÉFINITION DE L'ANIMATION 'zoomPop' --- */
-@keyframes zoomPop {
+@keyframes quickPop {
     0% {
-        /* Départ : invisible et très grand pour l'effet "pop" */
         opacity: 0;
-        transform: scale(2);
+        transform: scale(0.5); /* Part de petit */
     }
-    30% {
-        /* Arrivée : taille normale, pleine opacité */
+    15% {
         opacity: 1;
-        transform: scale(1);
+        transform: scale(1.1); /* Petit rebond au-dessus de la taille normale */
+    }
+    25% {
+        transform: scale(1); /* Stabilise à taille normale */
     }
     80% {
-        /* Maintien : reste visible */
-        opacity: 1;
-        transform: scale(1);
+        opacity: 1; /* Reste bien visible */
     }
     100% {
-        /* Fin : disparaît en rétrécissant un peu */
-        opacity: 0;
-        transform: scale(0.8);
+        opacity: 0; /* Disparaît vite pour le suivant */
     }
 }
 
-/* Cas spécial pour le "GO !" - Plus gros et clignotant */
+/* Cas spécial pour le "GO !" */
 .countdown-animate.go-text {
-    font-size: 12rem;
-    color: #2ecc71; /* Vert pour GO */
-    animation: zoomPopGo 1s ease-out; /* Animation unique pour le GO */
+    color: #2ecc71 !important; /* Vert Schoolizy */
+    font-size: 9rem;
+    animation: quickPopGo 1s ease-out forwards;
 }
 
-@keyframes zoomPopGo {
-    0% { opacity: 0; transform: scale(3); }
-    20% { opacity: 1; transform: scale(1); }
-    80% { opacity: 1; transform: scale(1.1); }
-    100% { opacity: 0; transform: scale(0.5); }
-} 
+@keyframes quickPopGo {
+    0% { opacity: 0; transform: scale(0.5); }
+    20% { opacity: 1; transform: scale(1.2); }
+    80% { opacity: 1; transform: scale(1.2); }
+    100% { opacity: 0; transform: scale(2); } /* Expulsion finale */
+}
 
 /* --- ÉTAT SURVIE ACTIF --- */
 .survival-mode {
@@ -2138,6 +2122,7 @@
     from { transform: scale(1); }
     to { transform: scale(1.25); }
 }
+    
 /* --- 1. LE GROS SWITCH (Menu sélection multiple) --- */
 .switch { 
     position: relative; 
