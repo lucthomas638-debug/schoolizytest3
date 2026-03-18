@@ -2033,35 +2033,88 @@
     opacity: 1;
 }
     
-/* --- OVERLAY DU DÉCOMPTE 3-2-1 --- */
+/* --- OVERLAY DU DÉCOMPTE (CIBLÉ) --- */
 #countdown-overlay {
-    position: fixed;
+    position: absolute; /* Et non plus fixed */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.9);
-    display: none; /* Changé en flex par le JS */
+    background: rgba(255, 255, 255, 0.95); /* Fond blanc semi-transparent pour rester dans le thème */
+    display: none; 
     align-items: center;
     justify-content: center;
-    z-index: 10000;
-    color: white;
-    font-size: 12rem;
+    z-index: 1000;
+    color: var(--brand-school); /* Chiffres en violet */
+    font-size: 8rem; /* Un peu plus petit car la zone est plus réduite */
     font-weight: 900;
-    font-family: 'Arial Black', sans-serif;
-    perspective: 1000px;
+    border-radius: 15px; /* Pour correspondre aux bords arrondis du quiz */
 }
 
-/* Animation sur le texte du décompte (3-2-1) */
+/* On s'assure que le parent du quiz permet le positionnement absolu */
+#quiz-container {
+    position: relative;
+    min-height: 400px; /* Évite que l'overlay soit écrasé si le quiz est vide au début */
+}
+
+/* --- ANIMATION DU DÉCOMPTE (3-2-1) --- */
+
+/* Le conteneur du chiffre/texte */
 .countdown-animate {
-    animation: zoomInBounce 0.8s forwards;
+    /* Paramètres de l'animation : nom, durée, easing, répétition */
+    animation: zoomPop 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite;
+    
+    /* Ombre portée violette pour plus de profondeur */
+    text-shadow: 0 4px 15px rgba(132, 89, 207, 0.4);
+    
+    /* Couleur violette Schoolizy (var(--brand-school)) */
+    color: #8459cf; 
+    
+    /* Grosse police, gras, au centre */
+    font-size: 10rem;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-@keyframes zoomInBounce {
-    0% { transform: scale(0.5); opacity: 0; }
-    50% { transform: scale(1.2); opacity: 1; }
-    100% { transform: scale(1); opacity: 1; }
+/* --- DÉFINITION DE L'ANIMATION 'zoomPop' --- */
+@keyframes zoomPop {
+    0% {
+        /* Départ : invisible et très grand pour l'effet "pop" */
+        opacity: 0;
+        transform: scale(2);
+    }
+    30% {
+        /* Arrivée : taille normale, pleine opacité */
+        opacity: 1;
+        transform: scale(1);
+    }
+    80% {
+        /* Maintien : reste visible */
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        /* Fin : disparaît en rétrécissant un peu */
+        opacity: 0;
+        transform: scale(0.8);
+    }
 }
+
+/* Cas spécial pour le "GO !" - Plus gros et clignotant */
+.countdown-animate.go-text {
+    font-size: 12rem;
+    color: #2ecc71; /* Vert pour GO */
+    animation: zoomPopGo 1s ease-out; /* Animation unique pour le GO */
+}
+
+@keyframes zoomPopGo {
+    0% { opacity: 0; transform: scale(3); }
+    20% { opacity: 1; transform: scale(1); }
+    80% { opacity: 1; transform: scale(1.1); }
+    100% { opacity: 0; transform: scale(0.5); }
+} 
 
 /* --- ÉTAT SURVIE ACTIF --- */
 .survival-mode {
