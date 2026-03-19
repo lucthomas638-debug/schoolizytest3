@@ -2257,6 +2257,24 @@ math-field:focus-within {
     border-bottom-color: var(--brand-izy) !important;
 }
 
+/* Couleurs du clavier MathLive */
+    {
+    --keyboard-background: #fdfdfd;
+    --keycap-background: #ffffff;
+    --keycap-text: var(--brand-school); /* Touches en violet */
+    --keycap-background-hover: #fffcf5; /* JauneSchoolizy au survol */
+    --keycap-border-bottom: #ddd;
+    
+    /* Couleur du curseur et de la sélection */
+    --caret-color: var(--brand-school);
+    --selection-background-color: rgba(132, 89, 207, 0.2);
+}
+
+/* Customisation de l'ombre des touches */
+math-field::part(virtual-keyboard) {
+    border-top: 3px solid var(--brand-school);
+}
+
 </style>
 
 <script defer src="https://unpkg.com/mathlive"></script>
