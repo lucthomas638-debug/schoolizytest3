@@ -220,6 +220,7 @@ chaptersList.forEach(l => {
                 else if (state.currentMode === 'exercise') openExercises(l.chapter_number);
                 else if (state.currentMode === 'flashcard') openFlashcards(l.chapter_number);
                 else if (state.currentMode === 'fiche') openFicheRecap(l.chapter_number);
+                else if (state.currentMode === 'recite') openRecitation(l.chapter_number);
                 else displayLesson(l.chapter_number);
             }
         };
@@ -2037,6 +2038,72 @@ function togglePomodoro() {
                 }
             }, {passive: false});
         }
+
+let currentReciteQuestion = null;
+let reciteChapterData = [];
+let reciteIndex = 0;
+
+// 1. Lancer le mode récitation
+async function openRecitation(chapterNum) {
+    const { data, error } = await sb
+        .from('flashcards') // On utilise les flashcards comme base de questions
+        .select('*')
+        .eq('class_id', state.currentClassCode)
+        .eq('subject_id', state.currentSubject.toLowerCase())
+        .eq('chapter_number', chapterNum);
+
+    if (error || !data || data.length === 0) {
+        return alert("Pas de questions de récitation pour ce chapitre.");
+    }
+
+    reciteChapterData = data.sort(() => 0.5 - Math.random());
+    reciteIndex = 0;
+    loadReciteQuestion();
+    navigateTo('view-recite');
+}
+
+// 2. Charger une question
+function loadReciteQuestion() {
+    const q = reciteChapterData[reciteIndex];
+    currentReciteQuestion = q;
+    document.getElementById('recite-question').innerText = q.front;
+    document.getElementById('math-input').value = ""; // Vide le champ
+    document.getElementById('math-input').focus();
+}
+
+// 3. Piloter le champ MathLive
+function writeMath(cmd) {
+    const mf = document.getElementById('math-input');
+    if (cmd === '^') {
+        mf.executeCommand(['insert', '^']);
+    } else if (cmd === '/') {
+        mf.executeCommand(['insert', '\\frac{#@}{#}']);
+    } else {
+        mf.insert(cmd);
+    }
+    mf.focus();
+}
+
+// 4. Vérifier la réponse
+function checkReciteAnswer() {
+    const mf = document.getElementById('math-input');
+    const userAns = mf.value.replace(/\s+/g, ''); // On enlève les espaces du LaTeX
+    const correctAns = currentReciteQuestion.back.replace(/\s+/g, ''); // La réponse attendue en LaTeX
+
+    if (userAns === correctAns) {
+        alert("Bravo ! C'est exactement ça. 🎉");
+        reciteIndex++;
+        if (reciteIndex < reciteChapterData.length) {
+            loadReciteQuestion();
+        } else {
+            alert("Félicitations, tu as terminé la récitation !");
+            navigateTo('view-chapters');
+        }
+    } else {
+        // Optionnel : afficher la réponse correcte
+        alert("Pas tout à fait. La réponse attendue était : " + currentReciteQuestion.back);
+    }
+}
 
 /* ==========================================
    OUTILS : ANNALES & PDF STORAGE
