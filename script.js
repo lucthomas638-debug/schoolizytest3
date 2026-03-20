@@ -2241,60 +2241,6 @@ function showReciteResults() {
     document.getElementById('final-score-big').innerText = currentScore;
 }
 
-// 4. Modification de la validation pour le score
-function checkReciteAnswer() {
-    const mf = document.getElementById('math-input');
-    const feedback = document.getElementById('recite-feedback');
-    const feedbackText = document.getElementById('feedback-text');
-    const correctionArea = document.getElementById('correction-area');
-    const btnCheck = document.getElementById('btn-check-recite');
-
-    // Nettoyage LaTeX
-    const userAns = mf.value.toLowerCase().replace(/\\\,/g, '').replace(/\s+/g, '').replace(/\\/g, '').trim();
-    const possibleAnswers = currentReciteQuestion.back.split('|');
-
-    const isCorrect = possibleAnswers.some(answer => {
-        const cleanPossible = answer.toLowerCase().replace(/\\\,/g, '').replace(/\s+/g, '').replace(/\\/g, '').trim();
-        return userAns === cleanPossible;
-    });
-
-    if (isCorrect) {
-        if (isSpeedRun) {
-            currentScore++;
-            document.getElementById('recite-score').innerText = currentScore;
-            mf.value = ""; // Vide le champ pour la suivante
-            goToNextQuestion(); // Enchaîne direct
-        } else {
-            btnCheck.style.display = 'none';
-            feedback.style.display = 'block';
-            feedback.style.backgroundColor = "#e8f8f0";
-            feedbackText.innerHTML = "Bravo ! C'est juste 🎉";
-            correctionArea.style.display = 'none';
-        }
-    } else {
-        if (isSpeedRun) {
-            // Optionnel : Petit flash rouge sur le bord si erreur en speedrun
-            mf.style.borderColor = "red";
-            setTimeout(() => mf.style.borderColor = "var(--brand-school)", 300);
-        } else {
-            btnCheck.style.display = 'none';
-            feedback.style.display = 'block';
-            feedback.style.backgroundColor = "#fce8e6";
-            feedbackText.innerHTML = "Pas tout à fait... 🤔";
-            correctionArea.style.display = 'block';
-            correctionArea.innerHTML = `Réponse attendue : <br><strong>${possibleAnswers[0].trim()}</strong>`;
-            if(window.MathJax) MathJax.typesetPromise([correctionArea]);
-        }
-    }
-}
-
-// 5. Touche Entrée pour valider plus vite
-document.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Enter' && ev.target.id === 'math-input') {
-        checkReciteAnswer();
-    }
-});
-
 /* ==========================================
    OUTILS : ANNALES & PDF STORAGE
    ========================================== */
