@@ -2907,17 +2907,17 @@ math-field::part(virtual-keyboard-toggle) {
     <div class="btn-back" onclick="navigateTo('view-chapters')">← Retour</div>
     <h2 class="view-title">Récitation</h2>
 
-    <div id="recite-game-zone" class="recite-main-box" style="max-width: 700px; margin: 0 auto; text-align: center;">
+    <div class="recite-main-box" style="max-width: 700px; margin: 0 auto; text-align: center;">
         
         <div id="recite-timer-bar" style="display:none; justify-content: space-between; align-items: center; background: #fff5f5; padding: 12px 25px; border-radius: 15px; margin-bottom: 25px; border: 2px solid var(--accent-red);">
-            <div style="font-size: 1.6rem; font-weight: 900; color: var(--accent-red); font-family: monospace;">⏱️ <span id="recite-time-left">60</span>s</div>
+            <div style="font-size: 1.6rem; font-weight: 900; color: var(--accent-red);">⏱️ <span id="recite-time-left">60</span>s</div>
             <div style="font-size: 1.2rem; font-weight: 800; color: var(--brand-school);">Score : <span id="recite-score">0</span></div>
         </div>
 
         <p id="recite-question" style="font-size: 1.4rem; font-weight: 800; color: var(--text-dark); margin-bottom: 15px;"></p>
 
-        <button id="btn-start-speedrun" class="btn-nav" style="background: var(--accent-red); color: white; border: none; width: 100%; margin-bottom: 20px; justify-content: center; height: 50px;" onclick="startSpeedRun()">
-            <span id="speedrun-text">⚡ Lancer le Défi 1 min</span>
+        <button id="btn-start-speedrun" style="background: var(--accent-red); color: white; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; margin-bottom: 20px; display: inline-flex; align-items: center; gap: 8px;" onclick="startSpeedRun()">
+            ⚡ Lancer le Défi 1 min
         </button>
 
         <math-field id="math-input" virtual-keyboard-mode="onfocus" style="width: 100%; border-radius: 15px; border: 2px solid var(--brand-school); font-size: 2rem; padding: 10px; background: white;"></math-field>
@@ -2934,17 +2934,6 @@ math-field::part(virtual-keyboard-toggle) {
                 <button id="btn-force-correct" class="btn-nav" style="flex: 1; background: #f0f0f0; color: #777; border: none; font-size: 0.8rem; justify-content: center;" onclick="forceValidAnswer()">C'était juste</button>
             </div>
         </div>
-    </div>
-
-    <div id="recite-results" style="display:none; text-align: center; max-width: 600px; margin: 40px auto; padding: 30px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-        <h2 style="color: var(--brand-school); font-size: 2rem; margin-bottom: 10px;">Temps écoulé ! ⏱️</h2>
-        <div style="margin: 20px 0;">
-            <span id="final-score-big" style="font-size: 5rem; font-weight: 900; color: var(--accent-green);">0</span>
-            <p style="font-size: 1.2rem; color: #666;">formules maîtrisées</p>
-        </div>
-        <button class="btn-nav" style="width: 100%; background: var(--brand-school); color: white; border: none; justify-content: center;" onclick="navigateTo('view-chapters')">
-            Retour aux chapitres
-        </button>
     </div>
 </div>
     
