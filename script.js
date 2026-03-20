@@ -2087,41 +2087,67 @@ function writeMath(cmd) {
 // 4. Vérifier la réponse
 function checkReciteAnswer() {
     const mf = document.getElementById('math-input');
-    
-    // 1. Nettoyage de la saisie utilisateur
-    // On enlève : les espaces normaux (\s), les espaces LaTeX (\,), et les backslashes techniques
-    const userAns = mf.value.toLowerCase()
-        .replace(/\\\,/g, '') // Enlève l'espace LaTeX spécial qu'on a créé
-        .replace(/\s+/g, '')  // Enlève les espaces normaux
-        .replace(/\\/g, '')   // Enlève les backslashes pour comparer le texte brut
-        .trim();
+    const feedback = document.getElementById('recite-feedback');
+    const feedbackText = document.getElementById('feedback-text');
+    const correctionArea = document.getElementById('correction-area');
+    const btnCheck = document.getElementById('btn-check-recite');
+    const btnForce = document.getElementById('btn-force-correct');
 
-    // 2. Découpage des réponses possibles stockées dans Supabase (séparées par |)
+    // 1. Nettoyage et comparaison
+    const userAns = mf.value.toLowerCase().replace(/\\\,/g, '').replace(/\s+/g, '').replace(/\\/g, '').trim();
     const possibleAnswers = currentReciteQuestion.back.split('|');
 
-    // 3. Vérification si au moins une réponse correspond
     const isCorrect = possibleAnswers.some(answer => {
-        const cleanPossible = answer.toLowerCase()
-            .replace(/\\\,/g, '')
-            .replace(/\s+/g, '')
-            .replace(/\\/g, '')
-            .trim();
+        const cleanPossible = answer.toLowerCase().replace(/\\\,/g, '').replace(/\s+/g, '').replace(/\\/g, '').trim();
         return userAns === cleanPossible;
     });
 
+    // 2. Affichage visuel du feedback
+    btnCheck.style.display = 'none'; // On cache le bouton vérifier
+    feedback.style.display = 'block';
+
     if (isCorrect) {
-        alert("Bravo ! C'est une bonne réponse. 🎉");
-        reciteIndex++;
-        
-        if (reciteIndex < reciteChapterData.length) {
-            loadReciteQuestion();
-        } else {
-            alert("Félicitations, tu as terminé la récitation !");
-            navigateTo('view-chapters');
-        }
+        feedback.style.backgroundColor = "#e8f8f0"; // Fond vert
+        feedback.style.border = "2px solid var(--accent-green)";
+        feedbackText.innerHTML = "Bravo ! C'est juste 🎉";
+        feedbackText.style.color = "#155724";
+        correctionArea.style.display = 'none';
+        btnForce.style.display = 'none';
     } else {
-        // En cas d'erreur, on affiche la première réponse de la liste (la plus standard)
-        alert("Pas tout à fait. La réponse attendue était par exemple : " + possibleAnswers[0].trim());
+        feedback.style.backgroundColor = "#fce8e6"; // Fond rouge
+        feedback.style.border = "2px solid var(--accent-red)";
+        feedbackText.innerHTML = "Pas tout à fait... 🤔";
+        feedbackText.style.color = "#721c24";
+        
+        // On affiche la première des réponses possibles en correction
+        correctionArea.style.display = 'block';
+        correctionArea.innerHTML = `Réponse attendue : <br><strong>${possibleAnswers[0].trim()}</strong>`;
+        btnForce.style.display = 'flex';
+        
+        // Rendu MathJax sur la correction si nécessaire
+        if(window.MathJax) MathJax.typesetPromise([correctionArea]);
+    }
+}
+
+// Fonction pour passer à la suite
+function goToNextQuestion() {
+    // Reset de l'interface
+    document.getElementById('recite-feedback').style.display = 'none';
+    document.getElementById('btn-check-recite').style.display = 'flex';
+    
+    reciteIndex++;
+    if (reciteIndex < reciteChapterData.length) {
+        loadReciteQuestion();
+    } else {
+        alert("Félicitations, récitation terminée !");
+        navigateTo('view-chapters');
+    }
+}
+
+// Fonction "C'était juste" (bouton de secours)
+function forceValidAnswer() {
+    if(confirm("Tu penses que ta réponse était correcte ?")) {
+        goToNextQuestion();
     }
 }
 
