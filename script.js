@@ -2146,9 +2146,8 @@ function goToNextQuestion() {
 
 // Fonction "C'était juste" (bouton de secours)
 function forceValidAnswer() {
-    if(confirm("Tu penses que ta réponse était correcte ?")) {
-        goToNextQuestion();
-    }
+    // On passe directement à la suite sans poser de question
+    goToNextQuestion();
 }
 
 /* ==========================================
