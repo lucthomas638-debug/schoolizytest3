@@ -2087,12 +2087,32 @@ function writeMath(cmd) {
 // 4. Vérifier la réponse
 function checkReciteAnswer() {
     const mf = document.getElementById('math-input');
-    const userAns = mf.value.replace(/\s+/g, ''); // On enlève les espaces du LaTeX
-    const correctAns = currentReciteQuestion.back.replace(/\s+/g, ''); // La réponse attendue en LaTeX
+    
+    // 1. Nettoyage de la saisie utilisateur
+    // On enlève : les espaces normaux (\s), les espaces LaTeX (\,), et les backslashes techniques
+    const userAns = mf.value.toLowerCase()
+        .replace(/\\\,/g, '') // Enlève l'espace LaTeX spécial qu'on a créé
+        .replace(/\s+/g, '')  // Enlève les espaces normaux
+        .replace(/\\/g, '')   // Enlève les backslashes pour comparer le texte brut
+        .trim();
 
-    if (userAns === correctAns) {
-        alert("Bravo ! C'est exactement ça. 🎉");
+    // 2. Découpage des réponses possibles stockées dans Supabase (séparées par |)
+    const possibleAnswers = currentReciteQuestion.back.split('|');
+
+    // 3. Vérification si au moins une réponse correspond
+    const isCorrect = possibleAnswers.some(answer => {
+        const cleanPossible = answer.toLowerCase()
+            .replace(/\\\,/g, '')
+            .replace(/\s+/g, '')
+            .replace(/\\/g, '')
+            .trim();
+        return userAns === cleanPossible;
+    });
+
+    if (isCorrect) {
+        alert("Bravo ! C'est une bonne réponse. 🎉");
         reciteIndex++;
+        
         if (reciteIndex < reciteChapterData.length) {
             loadReciteQuestion();
         } else {
@@ -2100,8 +2120,8 @@ function checkReciteAnswer() {
             navigateTo('view-chapters');
         }
     } else {
-        // Optionnel : afficher la réponse correcte
-        alert("Pas tout à fait. La réponse attendue était : " + currentReciteQuestion.back);
+        // En cas d'erreur, on affiche la première réponse de la liste (la plus standard)
+        alert("Pas tout à fait. La réponse attendue était par exemple : " + possibleAnswers[0].trim());
     }
 }
 
@@ -2229,6 +2249,24 @@ function closePdfModal() {
    6. INITIALISATION
    ============================================================================= */
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('site-search').addEventListener('input', performSearch);
+    // 1. Gestion de la recherche
+    const searchInput = document.getElementById('site-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', performSearch);
+    }
+
+    // 2. Gestion des ESPACES pour MathLive
+    const mf = document.getElementById('math-input');
+    if (mf) {
+        mf.addEventListener('keydown', (ev) => {
+            if (ev.code === 'Space') {
+                ev.preventDefault(); 
+                // mf.insert('\\,') insère un petit espace LaTeX
+                mf.insert('\\,');   
+            }
+        });
+    }
+
+    // 3. Update initial de la calculette
     updateFloatingCalcVisibility();
 });
