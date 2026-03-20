@@ -2130,23 +2130,45 @@ function checkReciteAnswer() {
 }
 
 // Fonction pour passer à la suite
+// Passer à la question suivante
 function goToNextQuestion() {
-    // Reset de l'interface
+    // 1. Reset de l'interface (Feedback et Bouton Vérifier)
     document.getElementById('recite-feedback').style.display = 'none';
     document.getElementById('btn-check-recite').style.display = 'flex';
     
     reciteIndex++;
+
+    // 2. Vérifier s'il reste des questions
     if (reciteIndex < reciteChapterData.length) {
         loadReciteQuestion();
     } else {
-        alert("Félicitations, récitation terminée !");
+        // FIN DU PARCOURS
+        if (isSpeedRun) {
+            // Si on était en mode Défi, on arrête le chrono
+            clearInterval(reciteTimer);
+            alert(`🏆 Record ! Tu as fini toutes les questions avec un score de ${currentScore} !`);
+            
+            // On réinitialise l'état du mode défi
+            isSpeedRun = false;
+            document.getElementById('recite-timer-bar').style.display = 'none';
+            document.getElementById('btn-start-speedrun').style.display = 'inline-flex';
+        } else {
+            alert("Félicitations, récitation terminée !");
+        }
+        
         navigateTo('view-chapters');
     }
 }
 
 // Fonction "C'était juste" (bouton de secours)
 function forceValidAnswer() {
-    // On passe directement à la suite sans poser de question
+    // Si l'élève force la validation en mode SpeedRun, on compte quand même le point
+    if (isSpeedRun) {
+        currentScore++;
+        document.getElementById('recite-score').innerText = currentScore;
+    }
+    
+    // On passe directement à la suite
     goToNextQuestion();
 }
 
@@ -2228,6 +2250,43 @@ function renderAnnales(data) {
         `;
         grid.appendChild(card);
     });
+}
+
+function startSpeedRun() {
+    isSpeedRun = true;
+    timeLeft = 60;
+    currentScore = 0;
+    
+    // UI
+    document.getElementById('btn-start-speedrun').style.display = 'none';
+    document.getElementById('recite-timer-bar').style.display = 'flex';
+    document.getElementById('recite-score').innerText = "0";
+    
+    // On mélange les questions restantes pour le défi si on veut
+    reciteChapterData = reciteChapterData.sort(() => 0.5 - Math.random());
+    reciteIndex = 0;
+    loadReciteQuestion();
+
+    // Chrono
+    if(reciteTimer) clearInterval(reciteTimer);
+    reciteTimer = setInterval(() => {
+        timeLeft--;
+        document.getElementById('recite-time-left').innerText = timeLeft;
+        
+        if (timeLeft <= 0) {
+            clearInterval(reciteTimer);
+            alert("⏱️ TEMPS ÉCOULÉ ! Score : " + currentScore);
+            stopSpeedRun();
+        }
+    }, 1000);
+}
+
+function stopSpeedRun() {
+    isSpeedRun = false;
+    clearInterval(reciteTimer);
+    document.getElementById('recite-timer-bar').style.display = 'none';
+    document.getElementById('btn-start-speedrun').style.display = 'inline-flex';
+    navigateTo('view-chapters'); // Ou reste sur la vue, selon ton choix
 }
 
 /* --- NAVIGATION DE RETOUR CORRIGÉE --- */
