@@ -2172,75 +2172,6 @@ function forceValidAnswer() {
     goToNextQuestion();
 }
 
-// Variables globales pour le défi
-let isSpeedRun = false;
-let reciteTimer = null;
-let timeLeft = 60;
-let currentScore = 0;
-
-// 1. Lancement avec décompte 3, 2, 1
-function startSpeedRun() {
-    const btnText = document.getElementById('speedrun-text');
-    const btn = document.getElementById('btn-start-speedrun');
-    let countdown = 3;
-
-    btn.onclick = null; // Empêche de recliquer pendant le décompte
-
-    const timer = setInterval(() => {
-        btnText.innerText = countdown;
-        if (countdown === 0) {
-            clearInterval(timer);
-            btnText.innerText = "C'EST PARTI !";
-            setTimeout(() => {
-                btn.style.display = 'none';
-                initActualSpeedRun();
-            }, 600);
-        }
-        countdown--;
-    }, 1000);
-}
-
-// 2. Initialisation du chrono et du score
-function initActualSpeedRun() {
-    isSpeedRun = true;
-    timeLeft = 60;
-    currentScore = 0;
-    
-    document.getElementById('recite-timer-bar').style.display = 'flex';
-    document.getElementById('recite-score').innerText = "0";
-    document.getElementById('recite-time-left').innerText = "60";
-    
-    // On remélange les questions pour le défi
-    reciteChapterData = [...reciteChapterData].sort(() => 0.5 - Math.random());
-    reciteIndex = 0;
-    loadReciteQuestion();
-
-    // Démarrage du chrono réel
-    if(reciteTimer) clearInterval(reciteTimer);
-    reciteTimer = setInterval(() => {
-        timeLeft--;
-        document.getElementById('recite-time-left').innerText = timeLeft;
-        
-        if (timeLeft <= 10) {
-            document.getElementById('recite-time-left').style.color = "red";
-        }
-
-        if (timeLeft <= 0) {
-            showReciteResults();
-        }
-    }, 1000);
-}
-
-// 3. Affichage des résultats finaux
-function showReciteResults() {
-    clearInterval(reciteTimer);
-    isSpeedRun = false;
-    
-    document.getElementById('recite-game-zone').style.display = 'none';
-    document.getElementById('recite-results').style.display = 'block';
-    document.getElementById('final-score-big').innerText = currentScore;
-}
-
 /* ==========================================
    OUTILS : ANNALES & PDF STORAGE
    ========================================== */
@@ -2319,6 +2250,43 @@ function renderAnnales(data) {
         `;
         grid.appendChild(card);
     });
+}
+
+function startSpeedRun() {
+    isSpeedRun = true;
+    timeLeft = 60;
+    currentScore = 0;
+    
+    // UI
+    document.getElementById('btn-start-speedrun').style.display = 'none';
+    document.getElementById('recite-timer-bar').style.display = 'flex';
+    document.getElementById('recite-score').innerText = "0";
+    
+    // On mélange les questions restantes pour le défi si on veut
+    reciteChapterData = reciteChapterData.sort(() => 0.5 - Math.random());
+    reciteIndex = 0;
+    loadReciteQuestion();
+
+    // Chrono
+    if(reciteTimer) clearInterval(reciteTimer);
+    reciteTimer = setInterval(() => {
+        timeLeft--;
+        document.getElementById('recite-time-left').innerText = timeLeft;
+        
+        if (timeLeft <= 0) {
+            clearInterval(reciteTimer);
+            alert("⏱️ TEMPS ÉCOULÉ ! Score : " + currentScore);
+            stopSpeedRun();
+        }
+    }, 1000);
+}
+
+function stopSpeedRun() {
+    isSpeedRun = false;
+    clearInterval(reciteTimer);
+    document.getElementById('recite-timer-bar').style.display = 'none';
+    document.getElementById('btn-start-speedrun').style.display = 'inline-flex';
+    navigateTo('view-chapters'); // Ou reste sur la vue, selon ton choix
 }
 
 /* --- NAVIGATION DE RETOUR CORRIGÉE --- */
