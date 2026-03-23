@@ -2057,7 +2057,7 @@ async function openRecitation(chapterNum) {
     document.getElementById('btn-start-speedrun').style.display = 'inline-flex';
     document.getElementById('recite-timer-bar').style.display = 'none';
     document.getElementById('btn-check-recite').style.display = 'flex';
-    document.getElementById('speedrun-text').innerText = "⚡ Lancer le Défi 1 min";
+    document.getElementById('speedrun-text').innerText = "Lancer le Défi 1 minute";
     
     const { data, error } = await sb
         .from('flashcards')
