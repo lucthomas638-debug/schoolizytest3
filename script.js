@@ -2054,8 +2054,6 @@ function togglePomodoro() {
    SECTION RÉCITATION & DÉFI 1 MINUTE
    ============================================================================= */
 
-let speedrunHistory = []; // Variable globale pour stocker les réponses
-
 // 1. Lancer le mode récitation (Normal ou via Bouton Défi)
 async function openRecitation(chapterNum) {
     // Reset complet de l'UI
