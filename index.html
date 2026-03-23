@@ -2227,15 +2227,21 @@ input:checked + .slider:before { transform: translateX(21px); }
     opacity: 1 !important;
 }
 
-/* On s'assure que le bouton est bien centré et réactif */
-#btn-start-speedrun {
-    border: 2px solid #eee;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+/* Au survol, on allonge le bouton suffisamment pour "Défi 1 minute" */
+#btn-start-speedrun:hover {
+    width: 200px !important; /* Largeur augmentée pour tout le texte */
+    border-color: var(--brand-school) !important;
 }
 
-#btn-start-speedrun:hover {
-    width: 180px; /* Ajuste la largeur si le texte "Défi 1 minute" déborde */
-    border-color: var(--brand-school);
+/* On force l'affichage du texte au survol */
+#btn-start-speedrun:hover #speedrun-text {
+    opacity: 1 !important;
+}
+
+/* On s'assure que le bouton de base a bien les transitions */
+#btn-start-speedrun {
+    width: 45px; /* Taille initiale (rond) */
+    transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s !important;
 }
 
 /* =============================================================================
@@ -2939,7 +2945,7 @@ math-field::part(virtual-keyboard-toggle) {
         <div style="display: flex; justify-content: center; margin-bottom: 25px;">
             <button id="btn-start-speedrun" class="btn-sablier" onclick="startSpeedRun()">
                 <span>⏳</span>
-                <div id="speedrun-text" style="display: inline; margin-left: 10px; font-weight: 800; color: var(--brand-school); opacity: 0; transition: opacity 0.3s;">
+                <div id="speedrun-text" style="display: inline; margin-left: 10px; font-weight: 800; color: var(--brand-school); opacity: 0; transition: opacity 0.3s; white-space: nowrap;">
                     Défi 1 minute
                 </div>
             </button>
