@@ -2134,46 +2134,58 @@ function startSpeedRun() {
     }, 1000);
 }
 
-// 4. Lancement du Chrono (SCORE MASQUÉ & TIMER CENTRÉ)
+// 4. Lancement du Chrono (SCORE TOTALEMENT MASQUÉ)
 function initActualSpeedRun() {
     isSpeedRun = true;
     timeLeft = 60;
     currentScore = 0;
     speedrunHistory = []; 
     
-    // UI : On affiche la barre, mais on centre le timer et on cache le score
+    // On récupère les éléments UI
     const timerBar = document.getElementById('recite-timer-bar');
-    timerBar.style.display = 'flex';
-    timerBar.style.justifyContent = 'center'; // Centre le contenu
-    
-    // On cache l'élément du score (on le garde en mémoire mais on ne l'affiche pas)
-    const scoreElement = document.getElementById('recite-score-container'); 
-    if(scoreElement) scoreElement.style.display = 'none'; 
-
+    const scoreContainer = document.getElementById('recite-score-container');
     const timeDisplay = document.getElementById('recite-time-left');
-    timeDisplay.innerText = "60";
-    timeDisplay.style.fontSize = "2rem"; // Plus gros pour être bien visible
-    timeDisplay.style.fontWeight = "bold";
-    timeDisplay.style.color = "var(--brand-school)";
 
+    // Configuration de la barre de temps : Centrée
+    timerBar.style.display = 'flex';
+    timerBar.style.justifyContent = 'center'; 
+    
+    // --- ACTION : ON CACHE LE SCORE ---
+    if (scoreContainer) {
+        scoreContainer.style.display = 'none'; 
+    }
+
+    // Style du Chrono central
+    timeDisplay.innerText = "60";
+    timeDisplay.style.fontSize = "2.5rem"; // Plus gros pour le confort
+    timeDisplay.style.fontWeight = "900";
+    timeDisplay.style.color = "var(--brand-school)";
+    timeDisplay.style.margin = "10px 0";
+
+    // Masquage des boutons inutiles pendant le défi
     document.getElementById('btn-start-speedrun').style.display = 'none';
     document.getElementById('btn-check-recite').style.display = 'none';
 
+    // Mélange et chargement
     reciteChapterData = [...reciteChapterData].sort(() => 0.5 - Math.random());
     reciteIndex = 0;
     loadReciteQuestion();
 
+    // Gestion du timer
     if(reciteTimer) clearInterval(reciteTimer);
     reciteTimer = setInterval(() => {
         timeLeft--;
         timeDisplay.innerText = timeLeft;
         
+        // Alerte visuelle fin de chrono
         if (timeLeft <= 10) {
-            timeDisplay.style.color = "red";
-            timeDisplay.style.transform = "scale(1.2)"; // Petit effet d'urgence
+            timeDisplay.style.color = "#e74c3c";
+            timeDisplay.style.transform = "scale(1.1)";
         }
         
-        if (timeLeft <= 0) showReciteResults();
+        if (timeLeft <= 0) {
+            showReciteResults();
+        }
     }, 1000);
 }
 
