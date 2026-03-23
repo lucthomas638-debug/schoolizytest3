@@ -2405,27 +2405,34 @@ function closePdfModal() {
 }
 
 /* =============================================================================
-   6. INITIALISATION
+   6. INITIALISATION (CORRIGÉE AVEC PROTECTION SYMBOLES)
    ============================================================================= */
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Gestion de la recherche
     const searchInput = document.getElementById('site-search');
-    if (searchInput) {
-        searchInput.addEventListener('input', performSearch);
-    }
+    if (searchInput) searchInput.addEventListener('input', performSearch);
 
-    // 2. Gestion des ESPACES pour MathLive
     const mf = document.getElementById('math-input');
     if (mf) {
+        // --- DÉSACTIVER LES SYMBOLES AUTOMATIQUES (ex: "in" -> appartient) ---
+        mf.inlineShortcuts = {}; // Vide tous les raccourcis automatiques par défaut
+        
+        // 1. Détecte la touche ENTRÉE sur le clavier physique
         mf.addEventListener('keydown', (ev) => {
+            if (ev.key === 'Enter') {
+                ev.preventDefault();
+                checkReciteAnswer();
+            }
             if (ev.code === 'Space') {
                 ev.preventDefault(); 
-                // mf.insert('\\,') insère un petit espace LaTeX
-                mf.insert('\\,');   
+                mf.insert('\\,'); 
             }
+        });
+
+        // 2. Détecte la validation sur le clavier virtuel
+        mf.addEventListener('change', () => {
+            checkReciteAnswer();
         });
     }
 
-    // 3. Update initial de la calculette
     updateFloatingCalcVisibility();
 });
