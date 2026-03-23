@@ -2090,28 +2090,6 @@ function loadReciteQuestion() {
     setTimeout(() => mf.focus(), 50);
 }
 
-// 3. Logique du Défi (3, 2, 1... GO)
-function startSpeedRun() {
-    const btnText = document.getElementById('speedrun-text');
-    const btn = document.getElementById('btn-start-speedrun');
-    let count = 3;
-
-    btn.onclick = null; // Empêche le spam pendant le décompte
-
-    const countdown = setInterval(() => {
-        btnText.innerText = count;
-        if (count === 0) {
-            clearInterval(countdown);
-            btnText.innerText = "C'EST PARTI !";
-            setTimeout(() => {
-                btn.style.display = 'none';
-                initActualSpeedRun();
-            }, 600);
-        }
-        count--;
-    }, 1000);
-}
-
 // 4. Lancement du Chrono et reset score
 function initActualSpeedRun() {
     isSpeedRun = true;
