@@ -2293,43 +2293,6 @@ function renderAnnales(data) {
     });
 }
 
-function startSpeedRun() {
-    isSpeedRun = true;
-    timeLeft = 60;
-    currentScore = 0;
-    
-    // UI
-    document.getElementById('btn-start-speedrun').style.display = 'none';
-    document.getElementById('recite-timer-bar').style.display = 'flex';
-    document.getElementById('recite-score').innerText = "0";
-    
-    // On mélange les questions restantes pour le défi si on veut
-    reciteChapterData = reciteChapterData.sort(() => 0.5 - Math.random());
-    reciteIndex = 0;
-    loadReciteQuestion();
-
-    // Chrono
-    if(reciteTimer) clearInterval(reciteTimer);
-    reciteTimer = setInterval(() => {
-        timeLeft--;
-        document.getElementById('recite-time-left').innerText = timeLeft;
-        
-        if (timeLeft <= 0) {
-            clearInterval(reciteTimer);
-            alert("⏱️ TEMPS ÉCOULÉ ! Score : " + currentScore);
-            stopSpeedRun();
-        }
-    }, 1000);
-}
-
-function stopSpeedRun() {
-    isSpeedRun = false;
-    clearInterval(reciteTimer);
-    document.getElementById('recite-timer-bar').style.display = 'none';
-    document.getElementById('btn-start-speedrun').style.display = 'inline-flex';
-    navigateTo('view-chapters'); // Ou reste sur la vue, selon ton choix
-}
-
 /* --- NAVIGATION DE RETOUR CORRIGÉE --- */
 
 // Cette fonction remplace "goBackToSubjects" pour être plus intelligente
