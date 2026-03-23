@@ -2229,21 +2229,19 @@ input:checked + .slider:before { transform: translateX(21px); }
 
 /* Au survol, on allonge le bouton suffisamment pour "Défi 1 minute" */
 #btn-start-speedrun:hover {
-    width: 200px !important; /* Largeur augmentée pour tout le texte */
+    width: 240px !important; /* On donne beaucoup plus de place */
     border-color: var(--brand-school) !important;
 }
 
-/* On force l'affichage du texte au survol */
 #btn-start-speedrun:hover #speedrun-text {
     opacity: 1 !important;
 }
 
-/* On s'assure que le bouton de base a bien les transitions */
 #btn-start-speedrun {
-    width: 45px; /* Taille initiale (rond) */
+    width: 45px;
     transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s !important;
 }
-
+    
 /* =============================================================================
    STYLE DE L'ÉDITEUR MATHÉMATIQUE (MATHLIVE)
    ============================================================================= */
