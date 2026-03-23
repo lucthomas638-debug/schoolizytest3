@@ -2085,31 +2085,37 @@ async function openRecitation(chapterNum) {
     navigateTo('view-recite');
 }
 
-// 2. Charger une question
+// 2. Charger une question (AJOUT CONFIG POLICE)
 function loadReciteQuestion() {
     const q = reciteChapterData[reciteIndex];
     currentReciteQuestion = q;
     document.getElementById('recite-question').innerText = q.front;
     const mf = document.getElementById('math-input');
+    
+    // --- CONFIGURATION POLICE SANS SERIF POUR LE CHAMP ---
     mf.value = ""; 
+    mf.style.fontFamily = "system-ui, -apple-system, sans-serif"; // Police standard
+    mf.style.fontSize = "1.2rem";
+    
     setTimeout(() => mf.focus(), 50);
 }
 
-// 3. Logique du Défi (3, 2, 1... GO au CENTRE)
+// 3. Logique du Défi (3, 2, 1... GO au CENTRE OPAQUE)
 function startSpeedRun() {
     const gameZone = document.getElementById('recite-game-zone');
     
-    // Création ou récupération de l'overlay central
     let overlay = document.getElementById('recite-countdown-overlay');
     if (!overlay) {
         overlay = document.createElement('div');
         overlay.id = 'recite-countdown-overlay';
-        overlay.style = "position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.95); display:flex; align-items:center; justify-content:center; z-index:1000; font-size:8rem; font-weight:900; color:var(--brand-school); border-radius:20px;";
+        // --- CORRECTION : OPACITÉ 1 (TOTALEMENT BLANC) ---
+        overlay.style = "position:absolute; top:0; left:0; width:100%; height:100%; background:rgb(255,255,255); display:flex; align-items:center; justify-content:center; z-index:1000; font-size:8rem; font-weight:900; color:var(--brand-school); border-radius:20px;";
         gameZone.style.position = "relative";
         gameZone.appendChild(overlay);
     }
 
     overlay.style.display = 'flex';
+    overlay.style.color = "var(--brand-school)"; // Reset couleur
     let count = 3;
     overlay.innerText = count;
 
@@ -2238,7 +2244,7 @@ function loadNextOrFinish() {
     }
 }
 
-// 7. RÉSULTATS + RÉCAPITULATIF + BOUTON RECOMMENCER
+// 7. RÉSULTATS + RÉCAPITULATIF REMONTÉ & POLICE HARMONISÉE
 function showReciteResults() {
     clearInterval(reciteTimer);
     isSpeedRun = false;
@@ -2252,36 +2258,48 @@ function showReciteResults() {
     if (!recapContainer) {
         recapContainer = document.createElement('div');
         recapContainer.id = 'speedrun-recap-list';
-        recapContainer.style = "text-align: left; margin: 20px 0 30px 0; max-height: 300px; overflow-y: auto; padding: 15px; border: 2px solid #eee; border-radius: 15px; background: #fafafa;";
+        // --- CORRECTION : STYLE SCROLL BOX REMONTÉE ---
+        recapContainer.style = "text-align: left; margin: 20px 0 20px 0; max-height: 280px; overflow-y: auto; padding: 15px; border: 2px solid #eee; border-radius: 15px; background: #fafafa; font-family: system-ui, sans-serif;";
         
         // Insérer avant le bouton de retour
         resDiv.insertBefore(recapContainer, resDiv.querySelector('button'));
     }
 
     if (speedrunHistory.length === 0) {
-        recapContainer.innerHTML = '<p>Aucune réponse enregistrée.</p>';
+        recapContainer.innerHTML = '<p style="text-align:center; color:#888;">Aucune réponse enregistrée.</p>';
     } else {
-        let html = '<h3 style="margin-bottom:15px; border-bottom:1px solid #ddd; padding-bottom:5px;">Ton Récapitulatif</h3>';
+        // --- CORRECTION : POLICE SANS SERIF DANS LE RÉCAP (via LaTeX) ---
+        // On utilise \text{} dans LaTeX pour forcer la police sans serif
+        let html = '<h3 style="margin-bottom:15px; border-bottom:1px solid #ddd; padding-bottom:5px; font-family:inherit;">Ton Récapitulatif</h3>';
         speedrunHistory.forEach((item, i) => {
             const color = item.isCorrect ? 'var(--accent-green)' : 'var(--accent-red)';
             const icon = item.isCorrect ? '✅' : '❌';
+            
+            // On encapsule la réponse utilisateur dans \text{} pour MathJax
+            const userAnsText = item.userAns.trim() !== '' ? `$\\text{${item.userAns}}$` : '$\\text{(vide)}$';
+            const expectedText = `$\\text{${item.expected}}$`;
+
             html += `
-                <div style="margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:8px;">
-                    <div style="font-weight:bold;">${i+1}. ${item.q}</div>
-                    <div style="color:${color}">${icon} Ta réponse : $${item.userAns || 'vide'}$</div>
-                    ${!item.isCorrect ? `<div style="color:gray; font-size:0.9rem;">Attendu : $${item.expected}$</div>` : ''}
+                <div style="margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:8px; font-family:inherit;">
+                    <div style="font-weight:bold; font-size:1rem;">${i+1}. ${item.q}</div>
+                    <div style="color:${color}; font-size:0.95rem;">${icon} Ta réponse : ${userAnsText}</div>
+                    ${!item.isCorrect ? `<div style="color:gray; font-size:0.9rem; margin-top:2px;">Attendu : ${expectedText}</div>` : ''}
                 </div>`;
         });
         
         // Ajout du bouton recommencer le défi
         html += `
-            <button class="btn-nav" style="width:100%; background:var(--accent-orange); color:white; border:none; margin-top:10px; justify-content:center;" onclick="openRecitation(currentChapterForReset)">
+            <button class="btn-nav" style="width:100%; background:var(--accent-orange); color:white; border:none; margin-top:10px; justify-content:center; font-family:inherit;" onclick="openRecitation(currentChapterForReset)">
                 🔄 Recommencer le défi
             </button>
         `;
         
         recapContainer.innerHTML = html;
-        if(window.MathJax) MathJax.typesetPromise([recapContainer]);
+        
+        // Rendu MathJax (qui respectera le \text{})
+        if(window.MathJax) {
+            MathJax.typesetPromise([recapContainer]).catch(err => console.log(err));
+        }
     }
 }
 /* ==========================================
@@ -2405,7 +2423,7 @@ function closePdfModal() {
 }
 
 /* =============================================================================
-   6. INITIALISATION (CORRIGÉE AVEC PROTECTION SYMBOLES)
+   6. INITIALISATION (CORRIGÉE POLICE & VALIDATION)
    ============================================================================= */
 document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('site-search');
@@ -2413,9 +2431,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const mf = document.getElementById('math-input');
     if (mf) {
-        // --- DÉSACTIVER LES SYMBOLES AUTOMATIQUES (ex: "in" -> appartient) ---
-        mf.inlineShortcuts = {}; // Vide tous les raccourcis automatiques par défaut
+        // --- DÉSACTIVER LES SYMBOLES AUTOMATIQUES ---
+        mf.inlineShortcuts = {}; 
         
+        // --- CORRECTION : FORCE POLICE SANS SERIF PAR DÉFAUT ---
+        mf.defaultMode = 'text'; // Force le mode texte par défaut
+        mf.style.fontFamily = "system-ui, -apple-system, sans-serif";
+
         // 1. Détecte la touche ENTRÉE sur le clavier physique
         mf.addEventListener('keydown', (ev) => {
             if (ev.key === 'Enter') {
