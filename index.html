@@ -1976,7 +1976,7 @@
 }
 
 /* --- LE BOUTON SABLIER DYNAMIQUE --- */
-/* --- LE BOUTON SABLIER CORRIGÉ --- */
+
 .btn-sablier {
     background: #ffffff;
     border: 2px solid #eee;
@@ -2220,6 +2220,22 @@ input:checked + .slider:before { transform: translateX(21px); }
 .chapter-card-interactive.selected {
     border-color: var(--brand-school) !important;
     background-color: #f9f7ff !important;
+}
+
+/* --- LE BOUTON SABLIER DYNAMIQUE (RÉCITATION) --- */
+.btn-sablier:hover #speedrun-text {
+    opacity: 1 !important;
+}
+
+/* On s'assure que le bouton est bien centré et réactif */
+#btn-start-speedrun {
+    border: 2px solid #eee;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#btn-start-speedrun:hover {
+    width: 180px; /* Ajuste la largeur si le texte "Défi 1 minute" déborde */
+    border-color: var(--brand-school);
 }
 
 /* =============================================================================
@@ -2909,40 +2925,58 @@ math-field::part(virtual-keyboard-toggle) {
 
     <div id="recite-game-zone" class="recite-main-box" style="max-width: 700px; margin: 0 auto; text-align: center;">
         
-        <div id="recite-timer-bar" style="display:none; justify-content: space-between; align-items: center; background: #fff5f5; padding: 12px 25px; border-radius: 15px; margin-bottom: 25px; border: 2px solid var(--accent-red);">
-            <div style="font-size: 1.6rem; font-weight: 900; color: var(--accent-red);">⏱️ <span id="recite-time-left">60</span>s</div>
-            <div style="font-size: 1.2rem; font-weight: 800; color: var(--brand-school);">Score : <span id="recite-score">0</span></div>
+        <div id="recite-timer-bar" style="display:none; justify-content: space-between; align-items: center; background: #fff5f5; padding: 12px 25px; border-radius: 15px; margin-bottom: 25px; border: 2px solid var(--accent-red); box-shadow: 0 4px 10px rgba(220, 53, 69, 0.1);">
+            <div style="font-size: 1.6rem; font-weight: 900; color: var(--accent-red); font-family: monospace;">
+                ⏱️ <span id="recite-time-left">60</span>s
+            </div>
+            <div style="font-size: 1.2rem; font-weight: 800; color: var(--brand-school); background: white; padding: 5px 15px; border-radius: 20px;">
+                Score : <span id="recite-score" style="color: var(--accent-green);">0</span>
+            </div>
         </div>
 
         <p id="recite-question" style="font-size: 1.4rem; font-weight: 800; color: var(--text-dark); margin-bottom: 15px;"></p>
 
-        <button id="btn-start-speedrun" class="btn-nav" style="background: var(--accent-red); color: white; border: none; width: 100%; margin-bottom: 20px; justify-content: center; height: 50px;" onclick="startSpeedRun()">
-            <span id="speedrun-text">⚡ Lancer le Défi 1 min</span>
-        </button>
+        <div style="display: flex; justify-content: center; margin-bottom: 25px;">
+            <button id="btn-start-speedrun" class="btn-sablier" onclick="startSpeedRun()">
+                <span>⏳</span>
+                <div id="speedrun-text" style="display: inline; margin-left: 10px; font-weight: 800; color: var(--brand-school); opacity: 0; transition: opacity 0.3s;">
+                    Défi 1 minute
+                </div>
+            </button>
+        </div>
 
-        <math-field id="math-input" virtual-keyboard-mode="onfocus" style="width: 100%; border-radius: 15px; border: 2px solid var(--brand-school); font-size: 2rem; padding: 10px; background: white;"></math-field>
+        <math-field id="math-input" virtual-keyboard-mode="onfocus" style="width: 100%; border-radius: 15px; border: 2px solid var(--brand-school); font-size: 2.2rem; padding: 15px; background: white; outline: none;"></math-field>
 
-        <button id="btn-check-recite" class="btn-nav" style="background: var(--brand-school); color: white; border:none; width: 100%; margin-top: 25px; height: 55px; justify-content: center;" onclick="checkReciteAnswer()">
+        <button id="btn-check-recite" class="btn-nav" style="background: var(--brand-school); color: white; border:none; width: 100%; margin-top: 25px; height: 55px; justify-content: center; font-size: 1.1rem;" onclick="checkReciteAnswer()">
             Vérifier la réponse
         </button>
 
-        <div id="recite-feedback" style="display:none; margin-top: 20px; padding: 20px; border-radius: 15px; animation: fadeIn 0.3s ease-out;">
-            <p id="feedback-text" style="font-weight: bold; font-size: 1.2rem; margin-bottom: 15px;"></p>
-            <div id="correction-area" style="margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.6); border-radius: 10px; font-size: 1.3rem;"></div>
+        <div id="recite-feedback" style="display:none; margin-top: 20px; padding: 25px; border-radius: 15px; animation: fadeIn 0.3s ease-out;">
+            <p id="feedback-text" style="font-weight: bold; font-size: 1.3rem; margin-bottom: 15px;"></p>
+            
+            <div id="correction-area" style="margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.7); border-radius: 12px; font-size: 1.4rem; border: 1px solid rgba(0,0,0,0.05);">
+                </div>
+            
             <div style="display: flex; gap: 10px; justify-content: center;">
-                <button id="btn-next-recite" class="btn-nav" style="flex: 2; background: var(--brand-school); color: white; border: none; justify-content: center;" onclick="goToNextQuestion()">Continuer ›</button>
-                <button id="btn-force-correct" class="btn-nav" style="flex: 1; background: #f0f0f0; color: #777; border: none; font-size: 0.8rem; justify-content: center;" onclick="forceValidAnswer()">C'était juste</button>
+                <button id="btn-next-recite" class="btn-nav" style="flex: 2; background: var(--brand-school); color: white; border: none; justify-content: center; height: 50px;" onclick="goToNextQuestion()">
+                    Continuer ›
+                </button>
+                <button id="btn-force-correct" class="btn-nav" style="flex: 1; background: #f0f0f0; color: #777; border: none; font-size: 0.85rem; justify-content: center; height: 50px;" onclick="forceValidAnswer()">
+                    C'était juste
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="recite-results" style="display:none; text-align: center; max-width: 600px; margin: 40px auto; padding: 30px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-        <h2 style="color: var(--brand-school); font-size: 2rem; margin-bottom: 10px;">Temps écoulé ! ⏱️</h2>
-        <div style="margin: 20px 0;">
-            <span id="final-score-big" style="font-size: 5rem; font-weight: 900; color: var(--accent-green);">0</span>
-            <p style="font-size: 1.2rem; color: #666;">formules maîtrisées</p>
+    <div id="recite-results" style="display:none; text-align: center; max-width: 600px; margin: 40px auto; padding: 40px; background: white; border-radius: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border: 2px solid var(--brand-school);">
+        <h2 style="color: var(--brand-school); font-size: 2.2rem; margin-bottom: 15px; -webkit-text-stroke: 0px;">Terminé ! ⏱️</h2>
+        
+        <div style="background: #fcfaff; padding: 20px; border-radius: 20px; margin-bottom: 30px; border: 1px dashed var(--brand-school);">
+            <span id="final-score-big" style="font-size: 5rem; font-weight: 900; color: var(--accent-green); display: block; line-height: 1;">0</span>
+            <p style="font-size: 1.2rem; color: #666; font-weight: 600; margin-top: 10px;">formules maîtrisées en 1 minute</p>
         </div>
-        <button class="btn-nav" style="width: 100%; background: var(--brand-school); color: white; border: none; justify-content: center;" onclick="navigateTo('view-chapters')">
+
+        <button class="btn-nav" style="width: 100%; background: var(--brand-school); color: white; border: none; justify-content: center; height: 55px; font-size: 1.1rem;" onclick="navigateTo('view-chapters')">
             Retour aux chapitres
         </button>
     </div>
