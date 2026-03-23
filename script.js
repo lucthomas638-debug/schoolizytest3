@@ -34,6 +34,7 @@ let reciteIndex = 0;
 let isSpeedRun = false;
 let reciteTimer = null;
 let currentScore = 0; // Ajoute celle-ci si elle manque
+let speedrunHistory = [];
 
 /* =============================================================================
    2. SYSTÈME DE NAVIGATION & VISIBILITÉ CALCULATRICE
@@ -2049,16 +2050,25 @@ function togglePomodoro() {
    SECTION RÉCITATION & DÉFI 1 MINUTE
    ============================================================================= */
 
+/* =============================================================================
+   SECTION RÉCITATION & DÉFI 1 MINUTE
+   ============================================================================= */
+
+let speedrunHistory = []; // Variable globale pour stocker les réponses
+
 // 1. Lancer le mode récitation (Normal ou via Bouton Défi)
 async function openRecitation(chapterNum) {
-    // Reset de l'UI pour éviter les restes d'une session précédente
+    // Reset complet de l'UI
     document.getElementById('recite-game-zone').style.display = 'block';
     document.getElementById('recite-results').style.display = 'none';
     document.getElementById('btn-start-speedrun').style.display = 'inline-flex';
     document.getElementById('recite-timer-bar').style.display = 'none';
     document.getElementById('btn-check-recite').style.display = 'flex';
-    document.getElementById('speedrun-text').innerText = "Lancer le Défi 1 minute";
     
+    const btnText = document.getElementById('speedrun-text');
+    if(btnText) btnText.innerText = "Défi 1 minute";
+    
+    // Récupération des données
     const { data, error } = await sb
         .from('flashcards')
         .select('*')
@@ -2072,8 +2082,11 @@ async function openRecitation(chapterNum) {
 
     reciteChapterData = data.sort(() => 0.5 - Math.random());
     reciteIndex = 0;
-    isSpeedRun = false; // Par défaut, on est en mode normal
+    isSpeedRun = false; 
     
+    // Raccroche le clic sur le bouton au cas où il a été désactivé
+    document.getElementById('btn-start-speedrun').onclick = startSpeedRun;
+
     loadReciteQuestion();
     navigateTo('view-recite');
 }
@@ -2086,8 +2099,29 @@ function loadReciteQuestion() {
     
     const mf = document.getElementById('math-input');
     mf.value = ""; 
-    // Petit délai pour assurer le focus après le rendu
     setTimeout(() => mf.focus(), 50);
+}
+
+// 3. Logique du Défi (3, 2, 1... GO)
+function startSpeedRun() {
+    const btnText = document.getElementById('speedrun-text');
+    const btn = document.getElementById('btn-start-speedrun');
+    let count = 3;
+
+    btn.onclick = null; // Empêche de spammer le bouton
+
+    const countdown = setInterval(() => {
+        btnText.innerText = count;
+        if (count === 0) {
+            clearInterval(countdown);
+            btnText.innerText = "C'EST PARTI !";
+            setTimeout(() => {
+                btn.style.display = 'none';
+                initActualSpeedRun();
+            }, 600);
+        }
+        count--;
+    }, 1000);
 }
 
 // 4. Lancement du Chrono et reset score
@@ -2095,13 +2129,17 @@ function initActualSpeedRun() {
     isSpeedRun = true;
     timeLeft = 60;
     currentScore = 0;
+    speedrunHistory = []; // On vide l'historique des réponses
     
     document.getElementById('recite-timer-bar').style.display = 'flex';
     document.getElementById('recite-score').innerText = "0";
     document.getElementById('recite-time-left').innerText = "60";
-    document.getElementById('recite-time-left').style.color = "";
     
-    // On remélange les questions pour le défi
+    // On cache le bouton "Vérifier" manuel (on valide avec Entrée)
+    document.getElementById('btn-check-recite').style.display = 'none';
+    document.getElementById('recite-feedback').style.display = 'none';
+
+    // On remélange pour le défi
     reciteChapterData = [...reciteChapterData].sort(() => 0.5 - Math.random());
     reciteIndex = 0;
     loadReciteQuestion();
@@ -2109,9 +2147,11 @@ function initActualSpeedRun() {
     if(reciteTimer) clearInterval(reciteTimer);
     reciteTimer = setInterval(() => {
         timeLeft--;
-        document.getElementById('recite-time-left').innerText = timeLeft;
+        const timeDisplay = document.getElementById('recite-time-left');
+        timeDisplay.innerText = timeLeft;
         
-        if (timeLeft <= 10) document.getElementById('recite-time-left').style.color = "#e74c3c";
+        if (timeLeft <= 10) timeDisplay.style.color = "red";
+        else timeDisplay.style.color = "var(--accent-red)"; // Rouge normal
 
         if (timeLeft <= 0) {
             showReciteResults();
@@ -2127,8 +2167,8 @@ function checkReciteAnswer() {
     const correctionArea = document.getElementById('correction-area');
     const btnCheck = document.getElementById('btn-check-recite');
 
-    // Nettoyage LaTeX
-    const userAns = mf.value.toLowerCase().replace(/\\\,/g, '').replace(/\s+/g, '').replace(/\\/g, '').trim();
+    const userAnsRaw = mf.value;
+    const userAns = userAnsRaw.toLowerCase().replace(/\\\,/g, '').replace(/\s+/g, '').replace(/\\/g, '').trim();
     const possibleAnswers = currentReciteQuestion.back.split('|');
 
     const isCorrect = possibleAnswers.some(answer => {
@@ -2136,14 +2176,33 @@ function checkReciteAnswer() {
         return userAns === cleanPossible;
     });
 
-    if (isCorrect) {
-        if (isSpeedRun) {
-            // Mode Défi : On incrémente et on enchaîne direct
+    if (isSpeedRun) {
+        // --- MODE DÉFI ---
+        // Sauvegarde dans l'historique
+        speedrunHistory.push({
+            q: currentReciteQuestion.front,
+            expected: possibleAnswers[0],
+            userAns: userAnsRaw,
+            isCorrect: isCorrect
+        });
+
+        if (isCorrect) {
             currentScore++;
             document.getElementById('recite-score').innerText = currentScore;
-            loadNextOrFinish();
+            mf.style.borderColor = "var(--accent-green)";
         } else {
-            // Mode Normal : On montre le feedback vert
+            mf.style.borderColor = "var(--accent-red)";
+        }
+        
+        // Remet la bordure violette après un flash
+        setTimeout(() => mf.style.borderColor = "var(--brand-school)", 300);
+        
+        // Enchaîne direct à la suivante
+        loadNextOrFinish();
+
+    } else {
+        // --- MODE NORMAL ---
+        if (isCorrect) {
             btnCheck.style.display = 'none';
             feedback.style.display = 'block';
             feedback.style.backgroundColor = "#e8f8f0";
@@ -2152,14 +2211,7 @@ function checkReciteAnswer() {
             feedbackText.style.color = "#155724";
             correctionArea.style.display = 'none';
             document.getElementById('btn-force-correct').style.display = 'none';
-        }
-    } else {
-        if (isSpeedRun) {
-            // Mode Défi : Flash rouge pour signaler l'erreur sans bloquer
-            mf.style.borderColor = "#e74c3c";
-            setTimeout(() => mf.style.borderColor = "var(--brand-school)", 300);
         } else {
-            // Mode Normal : Feedback rouge avec correction
             btnCheck.style.display = 'none';
             feedback.style.display = 'block';
             feedback.style.backgroundColor = "#fce8e6";
@@ -2167,14 +2219,14 @@ function checkReciteAnswer() {
             feedbackText.innerHTML = "Pas tout à fait... 🤔";
             feedbackText.style.color = "#721c24";
             correctionArea.style.display = 'block';
-            correctionArea.innerHTML = `Réponse attendue : <br><strong>${possibleAnswers[0].trim()}</strong>`;
+            correctionArea.innerHTML = `Réponse attendue : <br><strong>$${possibleAnswers[0].trim()}$</strong>`;
             document.getElementById('btn-force-correct').style.display = 'flex';
             if(window.MathJax) MathJax.typesetPromise([correctionArea]);
         }
     }
 }
 
-// 6. Navigation entre questions
+// 6. Navigation (Avec boucle infinie pour le Speedrun)
 function goToNextQuestion() {
     document.getElementById('recite-feedback').style.display = 'none';
     document.getElementById('btn-check-recite').style.display = 'flex';
@@ -2187,7 +2239,10 @@ function loadNextOrFinish() {
         loadReciteQuestion();
     } else {
         if (isSpeedRun) {
-            showReciteResults();
+            // Mode Défi : Si on arrive au bout de la liste, on remélange et on boucle !
+            reciteChapterData = [...reciteChapterData].sort(() => 0.5 - Math.random());
+            reciteIndex = 0;
+            loadReciteQuestion();
         } else {
             alert("Félicitations, récitation terminée !");
             navigateTo('view-chapters');
@@ -2195,14 +2250,55 @@ function loadNextOrFinish() {
     }
 }
 
-// 7. Écran de résultats final
+// 7. Écran de résultats final + RECAP
 function showReciteResults() {
     clearInterval(reciteTimer);
     isSpeedRun = false;
     document.getElementById('recite-game-zone').style.display = 'none';
+    
     const resDiv = document.getElementById('recite-results');
     resDiv.style.display = 'block';
     document.getElementById('final-score-big').innerText = currentScore;
+
+    // --- GÉNÉRATION DU RÉCAPITULATIF VRAI/FAUX ---
+    let recapContainer = document.getElementById('speedrun-recap-list');
+    
+    // Si on n'a pas encore créé la zone de récap, on la crée
+    if (!recapContainer) {
+        recapContainer = document.createElement('div');
+        recapContainer.id = 'speedrun-recap-list';
+        recapContainer.style = "text-align: left; margin: 20px 0 30px 0; max-height: 250px; overflow-y: auto; padding: 15px; border: 2px solid #eee; border-radius: 15px; background: #fafafa;";
+        
+        // On l'insère juste avant le bouton de retour aux chapitres
+        const backBtn = resDiv.querySelector('.btn-nav');
+        resDiv.insertBefore(recapContainer, backBtn);
+    }
+
+    // On peuple le récapitulatif
+    if (speedrunHistory.length === 0) {
+        recapContainer.innerHTML = '<p style="text-align:center; color:#888;">Tu n\'as répondu à aucune question ! 😴</p>';
+    } else {
+        let html = '';
+        speedrunHistory.forEach((item, i) => {
+            const color = item.isCorrect ? 'var(--accent-green)' : 'var(--accent-red)';
+            const icon = item.isCorrect ? '✅' : '❌';
+            const userText = item.userAns.trim() !== '' ? `$${item.userAns}$` : '<em>(Vide)</em>';
+            
+            html += `
+                <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #e0e0e0;">
+                    <div style="font-weight: 800; font-size: 1rem; color: var(--text-dark); margin-bottom: 4px;">${i+1}. ${item.q}</div>
+                    <div style="color: ${color}; font-size: 0.95rem;">${icon} Ta réponse : ${userText}</div>
+                    ${!item.isCorrect ? `<div style="color: #666; font-size: 0.85rem; margin-top: 4px;">Attendu : $${item.expected}$</div>` : ''}
+                </div>
+            `;
+        });
+        recapContainer.innerHTML = html;
+        
+        // Rendu des formules MathJax
+        if(window.MathJax) {
+            MathJax.typesetPromise([recapContainer]).catch(err => console.log(err));
+        }
+    }
 }
 
 function forceValidAnswer() {
@@ -2212,7 +2308,6 @@ function forceValidAnswer() {
     }
     goToNextQuestion();
 }
-
 /* ==========================================
    OUTILS : ANNALES & PDF STORAGE
    ========================================== */
