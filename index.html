@@ -2223,27 +2223,30 @@ input:checked + .slider:before { transform: translateX(21px); }
 }
 
 /* --- LE BOUTON SABLIER DYNAMIQUE (RÉCITATION) --- */
-.btn-sablier:hover #speedrun-text {
-    opacity: 1 !important;
+.btn-sablier:hover {
+    width: 200px !important; /* 👈 C'est ICI qu'on allonge vraiment le bouton */
+    border-color: var(--brand-school);
+    background: #fffcf5;
+    box-shadow: 0 4px 12px rgba(132, 89, 207, 0.2);
 }
 
-/* Au survol, on allonge le bouton suffisamment pour "Défi 1 minute" */
+.btn-sablier:hover span {
+    transform: rotate(180deg);
+}
+
+.btn-sablier:hover::after {
+    opacity: 1;
+}
+
+/* 👈 AJOUTE CES LIGNES POUR RÉGLER LE BOUTON RÉCITATION 👉 */
+/* 1. On supprime le faux texte en double qui s'affichait par-dessus */
 #btn-start-speedrun::after {
-    display: none !important; /* Désactive le texte en double du Quiz */
+    display: none !important;
 }
 
-.btn-sablier:hover #speedrun-text {
+/* 2. On fait apparaître le VRAI texte qui gère le 3, 2, 1 */
+#btn-start-speedrun:hover #speedrun-text {
     opacity: 1 !important;
-}
-
-#btn-start-speedrun:hover {
-    width: 180px !important; /* Ajusté pour "Défi 1 minute" */
-    border-color: var(--brand-school) !important;
-}
-
-#btn-start-speedrun {
-    width: 45px; 
-    transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s !important;
 }
     
 /* =============================================================================
