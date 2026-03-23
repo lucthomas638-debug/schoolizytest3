@@ -2228,17 +2228,21 @@ input:checked + .slider:before { transform: translateX(21px); }
 }
 
 /* Au survol, on allonge le bouton suffisamment pour "Défi 1 minute" */
-#btn-start-speedrun:hover {
-    width: 240px !important; /* On donne beaucoup plus de place */
-    border-color: var(--brand-school) !important;
+#btn-start-speedrun::after {
+    display: none !important; /* Désactive le texte en double du Quiz */
 }
 
-#btn-start-speedrun:hover #speedrun-text {
+.btn-sablier:hover #speedrun-text {
     opacity: 1 !important;
 }
 
+#btn-start-speedrun:hover {
+    width: 180px !important; /* Ajusté pour "Défi 1 minute" */
+    border-color: var(--brand-school) !important;
+}
+
 #btn-start-speedrun {
-    width: 45px;
+    width: 45px; 
     transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s !important;
 }
     
