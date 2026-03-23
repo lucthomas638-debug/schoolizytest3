@@ -2134,16 +2134,28 @@ function startSpeedRun() {
     }, 1000);
 }
 
-// 4. Lancement du Chrono
+// 4. Lancement du Chrono (SCORE MASQUÉ & TIMER CENTRÉ)
 function initActualSpeedRun() {
     isSpeedRun = true;
     timeLeft = 60;
     currentScore = 0;
     speedrunHistory = []; 
     
-    document.getElementById('recite-timer-bar').style.display = 'flex';
-    document.getElementById('recite-score').innerText = "0";
-    document.getElementById('recite-time-left').innerText = "60";
+    // UI : On affiche la barre, mais on centre le timer et on cache le score
+    const timerBar = document.getElementById('recite-timer-bar');
+    timerBar.style.display = 'flex';
+    timerBar.style.justifyContent = 'center'; // Centre le contenu
+    
+    // On cache l'élément du score (on le garde en mémoire mais on ne l'affiche pas)
+    const scoreElement = document.getElementById('recite-score-container'); 
+    if(scoreElement) scoreElement.style.display = 'none'; 
+
+    const timeDisplay = document.getElementById('recite-time-left');
+    timeDisplay.innerText = "60";
+    timeDisplay.style.fontSize = "2rem"; // Plus gros pour être bien visible
+    timeDisplay.style.fontWeight = "bold";
+    timeDisplay.style.color = "var(--brand-school)";
+
     document.getElementById('btn-start-speedrun').style.display = 'none';
     document.getElementById('btn-check-recite').style.display = 'none';
 
@@ -2154,9 +2166,13 @@ function initActualSpeedRun() {
     if(reciteTimer) clearInterval(reciteTimer);
     reciteTimer = setInterval(() => {
         timeLeft--;
-        const timeDisplay = document.getElementById('recite-time-left');
         timeDisplay.innerText = timeLeft;
-        if (timeLeft <= 10) timeDisplay.style.color = "red";
+        
+        if (timeLeft <= 10) {
+            timeDisplay.style.color = "red";
+            timeDisplay.style.transform = "scale(1.2)"; // Petit effet d'urgence
+        }
+        
         if (timeLeft <= 0) showReciteResults();
     }, 1000);
 }
@@ -2244,62 +2260,72 @@ function loadNextOrFinish() {
     }
 }
 
-// 7. RÉSULTATS + RÉCAPITULATIF REMONTÉ & POLICE HARMONISÉE
+// 7. RÉSULTATS : ERGONOMIE AMÉLIORÉE (ZONE DE SCROLL FIXE)
 function showReciteResults() {
     clearInterval(reciteTimer);
     isSpeedRun = false;
     document.getElementById('recite-game-zone').style.display = 'none';
     
     const resDiv = document.getElementById('recite-results');
+    resDiv.style.display = 'flex';
+    resDiv.style.flexDirection = 'column';
+    resDiv.style.alignItems = 'center';
+    resDiv.style.padding = '20px';
     resDiv.style.display = 'block';
+
     document.getElementById('final-score-big').innerText = currentScore;
 
     let recapContainer = document.getElementById('speedrun-recap-list');
     if (!recapContainer) {
         recapContainer = document.createElement('div');
         recapContainer.id = 'speedrun-recap-list';
-        // --- CORRECTION : STYLE SCROLL BOX REMONTÉE ---
-        recapContainer.style = "text-align: left; margin: 20px 0 20px 0; max-height: 280px; overflow-y: auto; padding: 15px; border: 2px solid #eee; border-radius: 15px; background: #fafafa; font-family: system-ui, sans-serif;";
         
-        // Insérer avant le bouton de retour
-        resDiv.insertBefore(recapContainer, resDiv.querySelector('button'));
+        // --- STYLE ERGONOMIQUE : Hauteur fixe, Ombre portée, Centré ---
+        recapContainer.style = `
+            text-align: left; 
+            margin: 20px auto; 
+            width: 100%;
+            max-width: 500px;
+            height: 350px; 
+            overflow-y: auto; 
+            padding: 20px; 
+            border: 1px solid #ddd; 
+            border-radius: 20px; 
+            background: white; 
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+            font-family: system-ui, sans-serif;
+        `;
+        
+        const backBtn = resDiv.querySelector('button');
+        resDiv.insertBefore(recapContainer, backBtn);
     }
 
     if (speedrunHistory.length === 0) {
-        recapContainer.innerHTML = '<p style="text-align:center; color:#888;">Aucune réponse enregistrée.</p>';
+        recapContainer.innerHTML = '<p style="text-align:center; padding-top:50px; color:#888;">Aucune réponse... ⏱️</p>';
     } else {
-        // --- CORRECTION : POLICE SANS SERIF DANS LE RÉCAP (via LaTeX) ---
-        // On utilise \text{} dans LaTeX pour forcer la police sans serif
-        let html = '<h3 style="margin-bottom:15px; border-bottom:1px solid #ddd; padding-bottom:5px; font-family:inherit;">Ton Récapitulatif</h3>';
+        let html = '<h3 style="text-align:center; margin-bottom:20px; color:var(--brand-school);">Détails de tes réponses</h3>';
+        
         speedrunHistory.forEach((item, i) => {
-            const color = item.isCorrect ? 'var(--accent-green)' : 'var(--accent-red)';
+            const color = item.isCorrect ? '#27ae60' : '#e74c3c';
             const icon = item.isCorrect ? '✅' : '❌';
-            
-            // On encapsule la réponse utilisateur dans \text{} pour MathJax
-            const userAnsText = item.userAns.trim() !== '' ? `$\\text{${item.userAns}}$` : '$\\text{(vide)}$';
-            const expectedText = `$\\text{${item.expected}}$`;
+            const bg = item.isCorrect ? '#f0fff4' : '#fff5f5';
 
             html += `
-                <div style="margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:8px; font-family:inherit;">
-                    <div style="font-weight:bold; font-size:1rem;">${i+1}. ${item.q}</div>
-                    <div style="color:${color}; font-size:0.95rem;">${icon} Ta réponse : ${userAnsText}</div>
-                    ${!item.isCorrect ? `<div style="color:gray; font-size:0.9rem; margin-top:2px;">Attendu : ${expectedText}</div>` : ''}
+                <div style="background:${bg}; margin-bottom:10px; padding:12px; border-radius:12px; border-left: 5px solid ${color};">
+                    <div style="font-weight:bold; color:#333; margin-bottom:4px;">Q${i+1}: ${item.q}</div>
+                    <div style="font-size:0.9rem; color:${color}; font-weight:600;">${icon} Ta réponse : ${item.userAns || '(vide)'}</div>
+                    ${!item.isCorrect ? `<div style="font-size:0.85rem; color:#666; margin-top:4px; font-style:italic;">Attendu : ${item.expected}</div>` : ''}
                 </div>`;
         });
         
-        // Ajout du bouton recommencer le défi
+        // Bouton Recommencer stylisé à l'intérieur de la zone ou juste en dessous
         html += `
-            <button class="btn-nav" style="width:100%; background:var(--accent-orange); color:white; border:none; margin-top:10px; justify-content:center; font-family:inherit;" onclick="openRecitation(currentChapterForReset)">
-                🔄 Recommencer le défi
+            <button class="btn-nav" style="width:100%; background:var(--brand-school); color:white; border:none; margin-top:15px; height:50px; border-radius:15px; cursor:pointer;" onclick="openRecitation(currentChapterForReset)">
+                🔄 Réessayer le défi
             </button>
         `;
         
         recapContainer.innerHTML = html;
-        
-        // Rendu MathJax (qui respectera le \text{})
-        if(window.MathJax) {
-            MathJax.typesetPromise([recapContainer]).catch(err => console.log(err));
-        }
     }
 }
 /* ==========================================
