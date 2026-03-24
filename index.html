@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -2314,38 +2313,29 @@ math-field::part(virtual-keyboard-toggle) {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Alignement global de la page */
+/* On aligne la vue à gauche pour le bouton, mais on centre le contenu interne */
 #view-recite.active {
     display: flex;
     flex-direction: column;
-    align-items: flex-start; /* Bouton Retour à gauche */
+    align-items: flex-start; /* Aligne le bouton Retour à gauche */
     justify-content: flex-start;
     min-height: 100vh;
-    padding-top: 10px; /* On réduit au maximum l'espace en haut */
+    width: 100%;
+    padding-top: 20px; /* Réduit l'espace en haut pour faire remonter le tout */
 }
 
-/* Centrage forcé des éléments principaux */
+/* Le titre "RÉCITATION" et le bloc de résultats doivent rester centrés */
 #view-recite .view-title, 
 #recite-results,
 #recite-game-zone,
 #recite-timer-bar {
-    align-self: center; 
+    align-self: center; /* Force ces éléments spécifiques à se centrer */
 }
 
-/* Réduction de l'espace du titre pour faire gagner 50px de hauteur */
-#view-recite .view-title {
-    margin-top: 0px !important;
-    margin-bottom: 15px !important;
-    padding-bottom: 5px !important;
-}
-
-/* LE BLOC DE RÉSULTATS REMONTÉ */
 #recite-results {
-    margin-top: 0px !important; /* On le colle quasiment au titre */
-    margin-bottom: 20px !important; /* On libère le bas */
+    margin-top: 10px !important; /* Colle le bloc au titre pour gagner de la place */
     width: 95%;
     max-width: 1000px;
-    padding: 20px !important; /* On resserre l'intérieur */
 }
     
 </style>
