@@ -2103,20 +2103,31 @@ function loadReciteQuestion() {
 
 // 3. Logique du Défi (3, 2, 1... GO au CENTRE OPAQUE)
 function startSpeedRun() {
-    const gameZone = document.getElementById('recite-game-zone');
+    // --- NOUVEAU : RESET DE SÉCURITÉ ---
+    // 1. On cache immédiatement les feedbacks du mode normal s'ils étaient affichés
+    document.getElementById('recite-feedback').style.display = 'none';
+    document.getElementById('btn-check-recite').style.display = 'none'; // Sera caché pendant le défi
     
+    // 2. On mélange et on charge une nouvelle question TOUT DE SUITE
+    // Comme ça, dès que le décompte finit, la question est déjà prête et "propre"
+    reciteChapterData = [...reciteChapterData].sort(() => 0.5 - Math.random());
+    reciteIndex = 0;
+    loadReciteQuestion();
+
+    // --- LOGIQUE DU DÉCOMPTE ---
+    const gameZone = document.getElementById('recite-game-zone');
     let overlay = document.getElementById('recite-countdown-overlay');
+    
     if (!overlay) {
         overlay = document.createElement('div');
         overlay.id = 'recite-countdown-overlay';
-        // --- CORRECTION : OPACITÉ 1 (TOTALEMENT BLANC) ---
         overlay.style = "position:absolute; top:0; left:0; width:100%; height:100%; background:rgb(255,255,255); display:flex; align-items:center; justify-content:center; z-index:1000; font-size:8rem; font-weight:900; color:var(--brand-school); border-radius:20px;";
         gameZone.style.position = "relative";
         gameZone.appendChild(overlay);
     }
 
     overlay.style.display = 'flex';
-    overlay.style.color = "var(--brand-school)"; // Reset couleur
+    overlay.style.color = "var(--brand-school)";
     let count = 3;
     overlay.innerText = count;
 
@@ -2130,7 +2141,7 @@ function startSpeedRun() {
         } else {
             clearInterval(timer);
             overlay.style.display = 'none';
-            initActualSpeedRun();
+            initActualSpeedRun(); // Lance le chrono de 60s
         }
     }, 1000);
 }
