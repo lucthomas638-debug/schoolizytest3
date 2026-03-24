@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -2382,9 +2383,6 @@ math-field::part(virtual-keyboard-toggle) {
                 <li onclick="navigateTo('view-home')">Accueil</li>
                 <li onclick="navigateTo('view-apropos')">À propos</li>
                 <li onclick="navigateTo('view-outils')">Outils</li>
-                <li id="nav-auth" onclick="navigateTo('view-auth')" style="color: var(--brand-school); font-weight: bold;">Connexion</li>
-                <li id="nav-user" style="display:none; color: var(--accent-green);">Salut, <span id="user-name"></span></li>
-                <li id="nav-logout" onclick="handleLogout()" style="display:none; color: var(--accent-red);">Déconnexion</li>
             </ul>
         </nav>
     
@@ -2392,31 +2390,6 @@ math-field::part(virtual-keyboard-toggle) {
 
     <!-- MAIN CONTAINER -->
     <main id="app-container">
-
-        <div id="view-auth" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-home')">← Retour</div>
-            <h2 class="view-title">Mon Compte</h2>
-            
-            <div class="info-page-content" style="max-width: 450px; margin: 0 auto;">
-                <div id="auth-form-box">
-                    <div id="signup-fields" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;">
-                        <div style="display: flex; gap: 10px;">
-                            <input type="text" id="reg-prenom" placeholder="Prénom" class="search-input" style="flex:1; border:1px solid #eee;">
-                            <input type="text" id="reg-nom" placeholder="Nom" class="search-input" style="flex:1; border:1px solid #eee;">
-                        </div>
-                        <input type="tel" id="auth-phone" placeholder="Numéro de téléphone" class="search-input" style="width:100%; border:1px solid #eee;">
-                    </div>
-        
-                    <input type="email" id="auth-email" placeholder="Email" class="search-input" style="width:100%; border:1px solid #eee; margin-bottom:10px;">
-                    <input type="password" id="auth-password" placeholder="Mot de passe" class="search-input" style="width:100%; border:1px solid #eee; margin-bottom:20px;">
-                    
-                    <button id="btn-auth-action" class="btn-nav primary" style="width:100%; justify-content:center; margin-bottom:15px;" onclick="handleAuth()">Créer mon compte</button>
-                    
-                    <p id="auth-switch" style="font-size: 0.85rem; cursor:pointer; color: var(--brand-school); text-align: center;" onclick="toggleAuthMode()">Déjà un compte ? Se connecter</p>
-                </div>
-                <p id="auth-msg" style="margin-top:15px; font-size:0.9rem; font-weight:bold; display:none; text-align: center;"></p>
-            </div>
-        </div>
         
         <!-- VUE 1 : ACCUEIL (FIXE, SANS SCROLL) -->
         <div id="view-home" class="view active">
