@@ -2158,38 +2158,34 @@ function initActualSpeedRun() {
     const scoreContainer = document.getElementById('recite-score-container');
     const timeDisplay = document.getElementById('recite-time-left');
 
-    // Configuration de la barre de temps : Centrée
     timerBar.style.display = 'flex';
     timerBar.style.justifyContent = 'center'; 
     
-    // --- ACTION : ON CACHE LE SCORE ---
     if (scoreContainer) {
         scoreContainer.style.display = 'none'; 
     }
 
-    // Style du Chrono central
     timeDisplay.innerText = "60";
-    timeDisplay.style.fontSize = "2.5rem"; // Plus gros pour le confort
+    timeDisplay.style.fontSize = "2.5rem"; 
     timeDisplay.style.fontWeight = "900";
     timeDisplay.style.color = "var(--brand-school)";
     timeDisplay.style.margin = "10px 0";
 
-    // Masquage des boutons inutiles pendant le défi
+    // On cache le bouton de lancement (sablier)
     document.getElementById('btn-start-speedrun').style.display = 'none';
-    document.getElementById('btn-check-recite').style.display = 'none';
+    
+    // 👇 ON FORCE L'AFFICHAGE DU BOUTON VALIDER ICI 👇
+    document.getElementById('btn-check-recite').style.display = 'flex';
 
-    // Mélange et chargement
     reciteChapterData = [...reciteChapterData].sort(() => 0.5 - Math.random());
     reciteIndex = 0;
     loadReciteQuestion();
 
-    // Gestion du timer
     if(reciteTimer) clearInterval(reciteTimer);
     reciteTimer = setInterval(() => {
         timeLeft--;
         timeDisplay.innerText = timeLeft;
         
-        // Alerte visuelle fin de chrono
         if (timeLeft <= 10) {
             timeDisplay.style.color = "#e74c3c";
             timeDisplay.style.transform = "scale(1.1)";
@@ -2458,28 +2454,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const mf = document.getElementById('math-input');
     if (mf) {
-        // --- DÉSACTIVER LES SYMBOLES AUTOMATIQUES ---
         mf.inlineShortcuts = {}; 
-        
-        // --- CORRECTION : FORCE POLICE SANS SERIF PAR DÉFAUT ---
-        mf.defaultMode = 'text'; // Force le mode texte par défaut
+        mf.defaultMode = 'text'; 
         mf.style.fontFamily = "system-ui, -apple-system, sans-serif";
 
-        // 1. Détecte la touche ENTRÉE sur le clavier physique
         mf.addEventListener('keydown', (ev) => {
+            // 👇 Si on appuie sur Entrée (Clavier physique ou bouton Retour virtuel)
             if (ev.key === 'Enter') {
-                ev.preventDefault();
-                checkReciteAnswer();
+                ev.preventDefault(); // On empêche le saut de ligne
+                
+                // On cache la calculatrice proprement
+                if (window.mathVirtualKeyboard) {
+                    window.mathVirtualKeyboard.hide();
+                }
             }
             if (ev.code === 'Space') {
                 ev.preventDefault(); 
                 mf.insert('\\,'); 
             }
-        });
-
-        // 2. Détecte la validation sur le clavier virtuel
-        mf.addEventListener('change', () => {
-            checkReciteAnswer();
         });
     }
 
