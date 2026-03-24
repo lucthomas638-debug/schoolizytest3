@@ -2254,26 +2254,31 @@ input:checked + .slider:before { transform: translateX(21px); }
    STYLE DE L'ÉDITEUR MATHÉMATIQUE (MATHLIVE)
    ============================================================================= */
 
+/* =============================================================================
+   STYLE DE L'ÉDITEUR MATHÉMATIQUE (MATHLIVE) - VERSION NETTOYÉE
+   ============================================================================= */
+
 :root {
-    /* Couleurs personnalisées pour le clavier virtuel MathLive */
+    /* Couleurs du clavier virtuel */
     --keyboard-background: #fdfdfd;
     --keycap-background: #ffffff;
-    --keycap-text: var(--brand-school);         /* Touches en violet */
-    --keycap-background-hover: #fffcf5;         /* Fond jaune clair au survol */
-    --keycap-border-bottom: #ddd;               /* Effet 3D léger sous les touches */
+    --keycap-text: var(--brand-school);
+    --keycap-background-hover: #fffcf5;
+    --keycap-border-bottom: #ddd;
     
-    /* Curseur et sélection dans le champ de saisie */
+    /* Curseur et sélection */
     --caret-color: var(--brand-school);
     --selection-background-color: rgba(132, 89, 207, 0.2);
-
-    /* On force aussi la couleur des 3 barres (menu) */
     --keyboard-toolbar-text: var(--brand-school);
+
+    /* --- TAILLE DU CLAVIER --- */
+    --keyboard-height: 220px !important; 
 }
 
-/* Personnalisation du champ de saisie MathLive */
+/* Le champ de saisie */
 math-field {
-    font-size: 2.2rem;
-    padding: 15px;
+    font-size: 1.5rem !important; /* Police maîtrisée */
+    padding: 12px;
     border: 2px solid var(--brand-school);
     border-radius: 15px;
     background: white;
@@ -2282,39 +2287,30 @@ math-field {
     transition: border-color 0.3s;
 }
 
-/* Changement de couleur quand on clique dans le champ */
+/* État focus */
 math-field:focus-within {
     border-color: var(--brand-izy) !important;
     box-shadow: 0 0 0 1px var(--brand-izy);
 }
 
-/* Bordure haute du clavier quand il apparaît */
+/* Le clavier virtuel (Bordure et Hauteur) */
 math-field::part(virtual-keyboard) {
+    max-height: 220px !important; /* Force la réduction de taille */
     border-top: 3px solid var(--brand-school);
     border-radius: 20px 20px 0 0;
-    box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.15);
+    background-color: var(--keyboard-background);
 }
 
-/* On cache les boutons d'aide par défaut s'ils apparaissent */
+/* Boutons interface clavier */
 math-field::part(virtual-keyboard-toggle) {
     color: var(--brand-school);
 }
 
+/* Animation */
 @keyframes fadeIn {
-        from { 
-            opacity: 0; 
-            transform: translateY(-10px); 
-        }
-        to { 
-            opacity: 1; 
-            transform: translateY(0); 
-        }
-    }
-math-field::part(virtual-keyboard) {
-    max-height: 250px !important; /* Force le clavier à être plus petit */
-    border-top: 3px solid var(--brand-school);
-    border-radius: 15px 15px 0 0;
-    box-shadow: 0 -5px 20px rgba(0,0,0,0.15);
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
     
 </style>
