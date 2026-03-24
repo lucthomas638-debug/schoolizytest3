@@ -2431,7 +2431,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     updateFloatingCalcVisibility();
-}
+});
 
 /* =============================================================================
    SYSTÈME D'AUTHENTIFICATION & PROFILS
