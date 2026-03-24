@@ -1,4 +1,3 @@
-
 /* =============================================================================
    1. CONFIGURATION & ÉTAT INITIAL
    ============================================================================= */
@@ -2217,30 +2216,26 @@ function showReciteResults() {
     if(reciteTimer) clearInterval(reciteTimer);
     isSpeedRun = false;
     
-    // 1. On cache tout ce qui précède pour ne pas laisser de place vide
+    // 1. Cacher les éléments de jeu
     document.getElementById('recite-game-zone').style.display = 'none';
     document.getElementById('recite-timer-bar').style.display = 'none';
     
-    // On force le conteneur à ne plus avoir de padding inutile
-    const viewRecite = document.getElementById('view-recite');
-    viewRecite.style.paddingBottom = "20px"; 
-
     // 2. Afficher les résultats
     const resDiv = document.getElementById('recite-results');
     resDiv.style.display = 'block';
 
-    // 3. Scroll instantané vers le haut
+    // 3. Remonter tout en haut de la page 🚀
     const mainContainer = document.querySelector('main');
     if (mainContainer) mainContainer.scrollTo({ top: 0, behavior: 'auto' });
 
     // 4. Mise à jour du score
     document.getElementById('speedrun-final-score').innerText = currentScore;
 
-    // 5. Remplir la liste (design compact)
+    // 5. Remplir la liste
     const recapList = document.getElementById('speedrun-recap-list');
     if (recapList) {
         if (speedrunHistory.length === 0) {
-            recapList.innerHTML = '<p style="text-align:center; color:#888; margin-top:30px;">Aucune réponse enregistrée.</p>';
+            recapList.innerHTML = '<p style="text-align:center; color:#888; margin-top:50px;">Aucune réponse enregistrée.</p>';
         } else {
             let html = '';
             speedrunHistory.forEach((item, i) => {
@@ -2251,10 +2246,10 @@ function showReciteResults() {
                 const cleanExp = item.expected.replace(/\\/g, '');
 
                 html += `
-                    <div style="background:${bg}; margin-bottom:8px; padding:10px; border-radius:10px; border-left: 4px solid ${color}; border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;">
-                        <div style="font-weight:700; font-size:0.85rem; color:#333;">${i+1}. ${item.q}</div>
-                        <div style="color:${color}; font-size:0.85rem; font-weight:600;">${icon} Toi : ${cleanAns}</div>
-                        ${!item.isCorrect ? `<div style="color:#666; font-size:0.75rem; font-style:italic;">Attendu : ${cleanExp}</div>` : ''}
+                    <div style="background:${bg}; margin-bottom:10px; padding:12px; border-radius:12px; border-left: 5px solid ${color}; border-top: 1px solid ${color}22; border-right: 1px solid ${color}22; border-bottom: 1px solid ${color}22;">
+                        <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px; color:#333;">${i+1}. ${item.q}</div>
+                        <div style="color:${color}; font-size:0.85rem; font-weight:600;">${icon} Ta réponse : ${cleanAns}</div>
+                        ${!item.isCorrect ? `<div style="color:#666; font-size:0.8rem; margin-top:2px; font-style:italic;">Attendu : ${cleanExp}</div>` : ''}
                     </div>`;
             });
             recapList.innerHTML = html;
