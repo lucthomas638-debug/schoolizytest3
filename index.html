@@ -2965,7 +2965,10 @@ math-field::part(virtual-keyboard-toggle) {
     <h2 class="view-title">Récitation</h2>
     
     <div id="recite-timer-bar" style="display:none; flex-direction:column; align-items:center; margin-bottom:20px;">
-        <div id="recite-time-left" style="font-size: 2.5rem; font-weight: 900; color: var(--brand-school);">60</div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 2rem;">⏱️</span>
+            <div id="recite-time-left" style="font-size: 2.5rem; font-weight: 900; color: var(--brand-school);">60</div>
+        </div>
         <div id="recite-score-container" style="font-weight: bold; color: var(--accent-green);">
             Score : <span id="recite-score">0</span>
         </div>
