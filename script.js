@@ -170,6 +170,13 @@ function chooseMode(mode) {
 
 // Étape 3 : Charger la liste des chapitres depuis Supabase
 async function loadChapters() {
+
+      if (!currentUser) {
+           alert("🔒 Connecte-toi pour accéder aux chapitres !");
+           navigateTo('view-auth');
+           return;
+       }
+   
     const { data, error } = await sb
         .from('lessons')
         .select('chapter_number, content')
@@ -2216,26 +2223,30 @@ function showReciteResults() {
     if(reciteTimer) clearInterval(reciteTimer);
     isSpeedRun = false;
     
-    // 1. Cacher les éléments de jeu
+    // 1. On cache tout ce qui précède pour ne pas laisser de place vide
     document.getElementById('recite-game-zone').style.display = 'none';
     document.getElementById('recite-timer-bar').style.display = 'none';
     
+    // On force le conteneur à ne plus avoir de padding inutile
+    const viewRecite = document.getElementById('view-recite');
+    viewRecite.style.paddingBottom = "20px"; 
+
     // 2. Afficher les résultats
     const resDiv = document.getElementById('recite-results');
     resDiv.style.display = 'block';
 
-    // 3. Remonter tout en haut de la page 🚀
+    // 3. Scroll instantané vers le haut
     const mainContainer = document.querySelector('main');
     if (mainContainer) mainContainer.scrollTo({ top: 0, behavior: 'auto' });
 
     // 4. Mise à jour du score
     document.getElementById('speedrun-final-score').innerText = currentScore;
 
-    // 5. Remplir la liste
+    // 5. Remplir la liste (design compact)
     const recapList = document.getElementById('speedrun-recap-list');
     if (recapList) {
         if (speedrunHistory.length === 0) {
-            recapList.innerHTML = '<p style="text-align:center; color:#888; margin-top:50px;">Aucune réponse enregistrée.</p>';
+            recapList.innerHTML = '<p style="text-align:center; color:#888; margin-top:30px;">Aucune réponse enregistrée.</p>';
         } else {
             let html = '';
             speedrunHistory.forEach((item, i) => {
@@ -2246,10 +2257,10 @@ function showReciteResults() {
                 const cleanExp = item.expected.replace(/\\/g, '');
 
                 html += `
-                    <div style="background:${bg}; margin-bottom:10px; padding:12px; border-radius:12px; border-left: 5px solid ${color}; border-top: 1px solid ${color}22; border-right: 1px solid ${color}22; border-bottom: 1px solid ${color}22;">
-                        <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px; color:#333;">${i+1}. ${item.q}</div>
-                        <div style="color:${color}; font-size:0.85rem; font-weight:600;">${icon} Ta réponse : ${cleanAns}</div>
-                        ${!item.isCorrect ? `<div style="color:#666; font-size:0.8rem; margin-top:2px; font-style:italic;">Attendu : ${cleanExp}</div>` : ''}
+                    <div style="background:${bg}; margin-bottom:8px; padding:10px; border-radius:10px; border-left: 4px solid ${color}; border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;">
+                        <div style="font-weight:700; font-size:0.85rem; color:#333;">${i+1}. ${item.q}</div>
+                        <div style="color:${color}; font-size:0.85rem; font-weight:600;">${icon} Toi : ${cleanAns}</div>
+                        ${!item.isCorrect ? `<div style="color:#666; font-size:0.75rem; font-style:italic;">Attendu : ${cleanExp}</div>` : ''}
                     </div>`;
             });
             recapList.innerHTML = html;
@@ -2420,4 +2431,125 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     updateFloatingCalcVisibility();
+}
+
+/* =============================================================================
+   SYSTÈME D'AUTHENTIFICATION & PROFILS
+   ============================================================================= */
+
+let authMode = 'signup'; 
+let currentUser = null;
+let userProfile = null;
+
+// 1. Basculer entre Inscription et Connexion
+function toggleAuthMode() {
+    authMode = (authMode === 'signup') ? 'login' : 'signup';
+    const btn = document.getElementById('btn-auth-action');
+    const switchTxt = document.getElementById('auth-switch');
+    const signupFields = document.getElementById('signup-fields');
+    
+    if (authMode === 'login') {
+        btn.innerText = "Se connecter";
+        switchTxt.innerText = "Pas de compte ? S'inscrire";
+        signupFields.style.display = 'none';
+    } else {
+        btn.innerText = "Créer mon compte";
+        switchTxt.innerText = "Déjà un compte ? Se connecter";
+        signupFields.style.display = 'flex';
+    }
+}
+
+// 2. Logique principale (SignUp / Login)
+async function handleAuth() {
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-password').value;
+    const msg = document.getElementById('auth-msg');
+
+    if (!email || !password) return showError("Remplit tous les champs !");
+
+    if (authMode === 'signup') {
+        const prenom = document.getElementById('reg-prenom').value;
+        const nom = document.getElementById('reg-nom').value;
+        const phone = document.getElementById('auth-phone').value;
+
+        if (!prenom || !nom || !phone) return showError("Toutes les infos sont requises.");
+
+        // A. Inscription dans le système Auth de Supabase
+        const { data: authData, error: authError } = await sb.auth.signUp({ email, password });
+        if (authError) return showError(authError.message);
+
+        // B. Création de la fiche dans ta table 'profiles'
+        const { error: profError } = await sb.from('profiles').insert([
+            { 
+                id: authData.user.id, 
+                nom: nom, 
+                prenom: prenom, 
+                phone: phone, 
+                selected_chapters: [] 
+            }
+        ]);
+
+        if (profError) {
+            console.error(profError);
+            return showError("Erreur profil ou téléphone déjà utilisé.");
+        }
+
+        msg.style.display = 'block';
+        msg.style.color = 'green';
+        msg.innerText = "Inscription réussie ! Bienvenue.";
+        setTimeout(() => navigateTo('view-home'), 1500);
+
+    } else {
+        // Mode Connexion
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) return showError("Email ou mot de passe incorrect.");
+        navigateTo('view-home');
+    }
+}
+
+function showError(text) {
+    const msg = document.getElementById('auth-msg');
+    msg.style.display = 'block';
+    msg.style.color = 'red';
+    msg.innerText = text;
+}
+
+// 3. Déconnexion
+async function handleLogout() {
+    await sb.auth.signOut();
+    window.location.reload();
+}
+
+// 4. Écouteur automatique d'état (Gère l'affichage du nom dans le Header)
+sb.auth.onAuthStateChange(async (event, session) => {
+    const navAuth = document.getElementById('nav-auth');
+    const navUser = document.getElementById('nav-user');
+    const navLogout = document.getElementById('nav-logout');
+    const userNameSpan = document.getElementById('user-name');
+
+    if (session) {
+        currentUser = session.user;
+        
+        // Récupérer les infos du profil
+        const { data: profile } = await sb
+            .from('profiles')
+            .select('*')
+            .eq('id', currentUser.id)
+            .single();
+
+        if (profile) {
+            userProfile = profile;
+            if(userNameSpan) userNameSpan.innerText = profile.prenom;
+        }
+
+        if(navAuth) navAuth.style.display = 'none';
+        if(navUser) navUser.style.display = 'block';
+        if(navLogout) navLogout.style.display = 'block';
+    } else {
+        currentUser = null;
+        userProfile = null;
+        if(navAuth) navAuth.style.display = 'block';
+        if(navUser) navUser.style.display = 'none';
+        if(navLogout) navLogout.style.display = 'none';
+    }
 });
