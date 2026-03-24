@@ -2055,16 +2055,18 @@ function togglePomodoro() {
 // 1. Initialisation de la vue Récitation
 async function openRecitation(chapterNum) {
     currentChapterForReset = chapterNum;
-    speedrunHistory = []; // Reset historique
-    currentScore = 0;
-
-    // Reset UI
+    
     document.getElementById('recite-game-zone').style.display = 'block';
     document.getElementById('recite-results').style.display = 'none';
     document.getElementById('btn-start-speedrun').style.display = 'inline-flex';
     document.getElementById('recite-timer-bar').style.display = 'none';
-    document.getElementById('btn-check-recite').style.display = 'flex';
+    
+    // ON FORCE LE BOUTON À APPARAÎTRE ICI
+    document.getElementById('btn-check-recite').style.display = 'flex'; 
     document.getElementById('recite-feedback').style.display = 'none';
+    
+    const btnText = document.getElementById('speedrun-text');
+    if(btnText) btnText.innerText = "Défi 1 minute";
     
     const { data, error } = await sb
         .from('flashcards')
@@ -2092,21 +2094,23 @@ function loadReciteQuestion() {
     document.getElementById('recite-question').innerText = q.front;
     
     const mf = document.getElementById('math-input');
-    if (mf) {
-        mf.value = ""; 
-        setTimeout(() => mf.focus(), 50);
-    }
+    mf.value = ""; 
+    mf.style.fontFamily = "system-ui, -apple-system, sans-serif";
+    mf.style.fontSize = "1.2rem";
+    
+    setTimeout(() => mf.focus(), 50);
 }
 
 // 3. Logique du Défi (3, 2, 1... GO)
 function startSpeedRun() {
+    // Reset de sécurité
     document.getElementById('recite-feedback').style.display = 'none';
+    
+    // On s'assure que le bouton "Vérifier" RESTE VISIBLE pendant le décompte
     document.getElementById('btn-check-recite').style.display = 'flex'; 
     
     reciteChapterData = [...reciteChapterData].sort(() => 0.5 - Math.random());
     reciteIndex = 0;
-    speedrunHistory = []; // On vide bien l'historique ici
-    currentScore = 0;
     loadReciteQuestion();
 
     const gameZone = document.getElementById('recite-game-zone');
@@ -2116,18 +2120,23 @@ function startSpeedRun() {
         overlay = document.createElement('div');
         overlay.id = 'recite-countdown-overlay';
         overlay.style = "position:absolute; top:0; left:0; width:100%; height:100%; background:rgb(255,255,255); display:flex; align-items:center; justify-content:center; z-index:1000; font-size:8rem; font-weight:900; color:var(--brand-school); border-radius:20px;";
+        gameZone.style.position = "relative";
         gameZone.appendChild(overlay);
     }
 
     overlay.style.display = 'flex';
+    overlay.style.color = "var(--brand-school)";
     let count = 3;
     overlay.innerText = count;
 
     const timer = setInterval(() => {
         count--;
-        if (count > 0) overlay.innerText = count;
-        else if (count === 0) { overlay.innerText = "GO !"; overlay.style.color = "var(--accent-green)"; }
-        else {
+        if (count > 0) {
+            overlay.innerText = count;
+        } else if (count === 0) {
+            overlay.innerText = "GO !";
+            overlay.style.color = "var(--accent-green)";
+        } else {
             clearInterval(timer);
             overlay.style.display = 'none';
             initActualSpeedRun();
@@ -2139,33 +2148,50 @@ function startSpeedRun() {
 function initActualSpeedRun() {
     isSpeedRun = true;
     timeLeft = 60;
+    currentScore = 0;
+    speedrunHistory = []; 
     
     const timerBar = document.getElementById('recite-timer-bar');
-    const timeDisplay = document.getElementById('recite-time-left');
     const scoreContainer = document.getElementById('recite-score-container');
+    const timeDisplay = document.getElementById('recite-time-left');
 
-    if(timerBar) timerBar.style.display = 'flex';
-    if(scoreContainer) scoreContainer.style.display = 'none'; 
-    if(timeDisplay) timeDisplay.innerText = "60";
+    timerBar.style.display = 'flex';
+    timerBar.style.justifyContent = 'center'; 
+    if (scoreContainer) scoreContainer.style.display = 'none'; 
+
+    timeDisplay.innerText = "60";
+    timeDisplay.style.fontSize = "2.5rem"; 
+    timeDisplay.style.fontWeight = "900";
+    timeDisplay.style.color = "var(--brand-school)";
+    timeDisplay.style.margin = "10px 0";
 
     document.getElementById('btn-start-speedrun').style.display = 'none';
+    
+    // ON FORCE ENCORE UNE FOIS LE BOUTON À ÊTRE VISIBLE
     document.getElementById('btn-check-recite').style.display = 'flex';
 
     if(reciteTimer) clearInterval(reciteTimer);
     reciteTimer = setInterval(() => {
         timeLeft--;
-        if(timeDisplay) timeDisplay.innerText = timeLeft;
-        if (timeLeft <= 0) { clearInterval(reciteTimer); showReciteResults(); }
+        timeDisplay.innerText = timeLeft;
+        
+        if (timeLeft <= 10) {
+            timeDisplay.style.color = "#e74c3c";
+            timeDisplay.style.transform = "scale(1.1)";
+        }
+        if (timeLeft <= 0) showReciteResults();
     }, 1000);
 }
 
-// 5. VÉRIFICATION (Correction Enregistrement Historique)
 function checkReciteAnswer() {
-    if (!currentReciteQuestion) return;
-
     const mf = document.getElementById('math-input');
-    const userAnsRaw = mf ? mf.value : "";
-    
+    const feedback = document.getElementById('recite-feedback');
+    const feedbackText = document.getElementById('feedback-text');
+    const correctionArea = document.getElementById('correction-area');
+    const btnCheck = document.getElementById('btn-check-recite');
+
+    const userAnsRaw = mf.value;
+    // Nettoyage de la réponse pour la comparaison
     const userAns = userAnsRaw.toLowerCase().replace(/\\\,/g, '').replace(/\s+/g, '').replace(/\\/g, '').trim();
     const possibleAnswers = currentReciteQuestion.back.split('|');
 
@@ -2174,42 +2200,52 @@ function checkReciteAnswer() {
         return userAns === cleanPossible;
     });
 
+    // --- LOGIQUE D'ENREGISTREMENT ---
     if (isSpeedRun) {
-        // ON ENREGISTRE AVANT TOUT
-        speedrunHistory.push({
+        // 1. On force l'ajout à l'historique AVANT toute autre action
+        const historyItem = {
             q: currentReciteQuestion.front,
             expected: possibleAnswers[0],
-            userAns: userAnsRaw || "(vide)",
+            userAns: userAnsRaw,
             isCorrect: isCorrect
-        });
+        };
+        speedrunHistory.push(historyItem);
 
+        // 2. Mise à jour du score si juste
         if (isCorrect) {
             currentScore++;
             const scoreEl = document.getElementById('recite-score');
             if (scoreEl) scoreEl.innerText = currentScore;
         }
         
+        // 3. On passe à la suite immédiatement
         loadNextOrFinish();
 
     } else {
-        const feedback = document.getElementById('recite-feedback');
-        const btnCheck = document.getElementById('btn-check-recite');
+        // --- MODE NORMAL (Hors défi) ---
         if (isCorrect) {
             btnCheck.style.display = 'none';
             feedback.style.display = 'block';
             feedback.style.backgroundColor = "#e8f8f0";
-            document.getElementById('feedback-text').innerHTML = "Bravo ! 🎉";
+            feedbackText.innerHTML = "Bravo ! C'est juste 🎉";
+            correctionArea.style.display = 'none';
         } else {
             btnCheck.style.display = 'none';
             feedback.style.display = 'block';
             feedback.style.backgroundColor = "#fce8e6";
-            document.getElementById('feedback-text').innerHTML = "Faux... 🤔";
-            const corrArea = document.getElementById('correction-area');
-            corrArea.style.display = 'block';
-            corrArea.innerHTML = `Attendu : $${possibleAnswers[0]}$`;
-            if(window.MathJax) MathJax.typesetPromise([corrArea]);
+            feedbackText.innerHTML = "Pas tout à fait... 🤔";
+            correctionArea.style.display = 'block';
+            correctionArea.innerHTML = `Réponse attendue : <br><strong>$${possibleAnswers[0].trim()}$</strong>`;
+            if(window.MathJax) MathJax.typesetPromise([correctionArea]);
         }
     }
+}
+
+// 6. Navigation
+function goToNextQuestion() {
+    document.getElementById('recite-feedback').style.display = 'none';
+    document.getElementById('btn-check-recite').style.display = 'flex';
+    loadNextOrFinish();
 }
 
 function loadNextOrFinish() {
@@ -2222,47 +2258,74 @@ function loadNextOrFinish() {
             reciteIndex = 0;
             loadReciteQuestion();
         } else {
+            alert("Récitation terminée !");
             navigateTo('view-chapters');
         }
     }
 }
 
-// 7. RÉSULTATS (Correction du bug de liste vide)
+// 7. RÉSULTATS (Side-by-side)
 function showReciteResults() {
     if(reciteTimer) clearInterval(reciteTimer);
     isSpeedRun = false;
     
+    // 1. On cache la zone de jeu ET le chronomètre
     document.getElementById('recite-game-zone').style.display = 'none';
-    document.getElementById('recite-timer-bar').style.display = 'none';
+    document.getElementById('recite-timer-bar').style.display = 'none'; // 👈 C'est ici !
     
+    // 2. On affiche la vue résultats
     const resDiv = document.getElementById('recite-results');
+    const recapContainer = document.getElementById('speedrun-recap-container');
     resDiv.style.display = 'block';
 
-    document.getElementById('speedrun-final-score').innerText = currentScore;
+    // 3. On prépare le HTML (Score + Récap)
+    let html = `
+        <div style="background: #fcfaff; padding: 20px; border-radius: 20px; margin-bottom: 25px; border: 1px dashed var(--brand-school);">
+            <span style="font-size: 5rem; font-weight: 900; color: var(--accent-green); display: block; line-height: 1;">${currentScore}</span>
+            <p style="font-size: 1.2rem; color: #666; font-weight: 600; margin-top: 10px;">formules maîtrisées</p>
+        </div>
+    `;
 
-    const recapList = document.getElementById('speedrun-recap-list');
-    if (recapList) {
-        if (speedrunHistory.length === 0) {
-            recapList.innerHTML = '<p style="text-align:center; color:#888; margin-top:50px;">Aucune réponse enregistrée.</p>';
-        } else {
-            let html = '';
-            speedrunHistory.forEach((item, i) => {
-                const color = item.isCorrect ? '#27ae60' : '#e74c3c';
-                const icon = item.isCorrect ? '✅' : '❌';
-                const bg = item.isCorrect ? '#f9fffb' : '#fff9f9';
-                
-                html += `
-                    <div style="background:${bg}; margin-bottom:10px; padding:12px; border-radius:12px; border: 1px solid ${color}44;">
-                        <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px; color:#333;">${i+1}. ${item.q}</div>
-                        <div style="color:${color}; font-size:0.85rem; font-weight:600;">${icon} Toi : ${item.userAns}</div>
-                        ${!item.isCorrect ? `<div style="color:#666; font-size:0.8rem; margin-top:2px; font-style:italic;">Attendu : ${item.expected}</div>` : ''}
-                    </div>`;
-            });
-            recapList.innerHTML = html;
-        }
+    if (speedrunHistory.length > 0) {
+        html += `<h3 style="margin-bottom:15px; font-size:1.1rem; color:var(--brand-school);">Analyse de tes réponses</h3>`;
+        html += `<div style="text-align: left; max-height: 350px; overflow-y: auto; padding: 15px; border: 1px solid #eee; border-radius: 15px; background: #fafafa; margin-bottom: 20px;">`;
+        
+        speedrunHistory.forEach((item, i) => {
+            const color = item.isCorrect ? '#27ae60' : '#e74c3c';
+            const icon = item.isCorrect ? '✅' : '❌';
+            const bg = item.isCorrect ? '#f9fffb' : '#fff9f9';
+            
+            html += `
+                <div style="background:${bg}; margin-bottom:10px; padding:12px; border-radius:12px; border-left: 5px solid ${color};">
+                    <div style="font-weight:700; font-size:0.95rem; color:#333; margin-bottom:4px;">${i+1}. ${item.q}</div>
+                    <div style="color:${color}; font-size:0.9rem; font-weight:600;">${icon} Toi : ${item.userAns || '---'}</div>
+                    ${!item.isCorrect ? `<div style="color:#666; font-size:0.85rem; margin-top:4px; font-style:italic;">Attendu : ${item.expected}</div>` : ''}
+                </div>`;
+        });
+        html += `</div>`;
     }
 
-    if(window.MathJax) MathJax.typesetPromise([recapList]);
+    // 4. On ajoute le bouton Retenter
+    html += `
+        <button class="btn-nav" style="width:100%; background:var(--accent-orange); color:white; border:none; margin-bottom:10px; justify-content:center; height:50px;" onclick="openRecitation(currentChapterForReset)">
+            🔄 Retenter le défi
+        </button>
+    `;
+
+    recapContainer.innerHTML = html;
+
+    // 5. Relance MathJax si nécessaire
+    if(window.MathJax) {
+        MathJax.typesetPromise([recapContainer]).catch(err => console.log("MathJax Error:", err));
+    }
+}
+
+function forceValidAnswer() {
+    if (isSpeedRun) {
+        currentScore++;
+        document.getElementById('recite-score').innerText = currentScore;
+    }
+    goToNextQuestion();
 }
 
 /* ==========================================
@@ -2397,18 +2460,25 @@ document.addEventListener('DOMContentLoaded', () => {
         mf.inlineShortcuts = {}; 
         mf.defaultMode = 'text'; 
         mf.style.fontFamily = "system-ui, -apple-system, sans-serif";
+        mf.virtualKeyboardMode = "onfocus"; // Ouvre le clavier au clic
 
+        // Écoute des touches
         mf.addEventListener('keydown', (ev) => {
             if (ev.key === 'Enter') {
-                ev.preventDefault();
-                // DANS LE DÉFI, ENTRÉE VALIDE LA RÉPONSE !
-                checkReciteAnswer();
+                ev.preventDefault(); // Empêche toute action par défaut
+                // FERME LE CLAVIER VIRTUEL SI OUVERT (Ne valide PLUS la réponse)
+                if (window.mathVirtualKeyboard) {
+                    window.mathVirtualKeyboard.hide();
+                }
             }
             if (ev.code === 'Space') {
                 ev.preventDefault(); 
                 mf.insert('\\,'); 
             }
         });
+        
+        // ATTENTION: On a bien retiré le mf.addEventListener('change'...)
+        // L'unique façon de valider est maintenant de cliquer sur "Vérifier la réponse"
     }
 
     updateFloatingCalcVisibility();
