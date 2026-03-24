@@ -2420,7 +2420,6 @@ document.addEventListener('DOMContentLoaded', () => {
         mf.addEventListener('keydown', (ev) => {
             if (ev.key === 'Enter') {
                 ev.preventDefault();
-                // DANS LE DÉFI, ENTRÉE VALIDE LA RÉPONSE !
                 checkReciteAnswer();
             }
             if (ev.code === 'Space') {
@@ -2520,7 +2519,7 @@ async function handleLogout() {
     window.location.reload();
 }
 
-// 4. Écouteur automatique d'état (Gère l'affichage du nom dans le Header)
+// 4. Écouteur automatique d'état (Version Sécurisée)
 sb.auth.onAuthStateChange(async (event, session) => {
     const navAuth = document.getElementById('nav-auth');
     const navUser = document.getElementById('nav-user');
@@ -2530,22 +2529,25 @@ sb.auth.onAuthStateChange(async (event, session) => {
     if (session) {
         currentUser = session.user;
         
-        // Récupérer les infos du profil
-        const { data: profile } = await sb
+        // On récupère les infos du profil de manière sécurisée
+        const { data: profile, error } = await sb
             .from('profiles')
             .select('*')
             .eq('id', currentUser.id)
-            .single();
+            .maybeSingle(); // maybeSingle est plus robuste que single()
 
         if (profile) {
             userProfile = profile;
             if(userNameSpan) userNameSpan.innerText = profile.prenom;
         }
 
+        // Mise à jour de l'interface
         if(navAuth) navAuth.style.display = 'none';
         if(navUser) navUser.style.display = 'block';
         if(navLogout) navLogout.style.display = 'block';
+        
     } else {
+        // Mode Déconnecté
         currentUser = null;
         userProfile = null;
         if(navAuth) navAuth.style.display = 'block';
