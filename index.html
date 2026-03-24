@@ -2958,6 +2958,47 @@ math-field::part(virtual-keyboard-toggle) {
 
     </div>
 </div>
+<div id="view-recite" class="view container">
+    <div class="btn-back" onclick="navigateTo('view-chapters')">← Retour</div>
+    
+    <div id="recite-timer-bar" style="display:none; flex-direction:column; align-items:center; margin-bottom:20px;">
+        <div id="recite-time-left" style="font-size: 2.5rem; font-weight: 900; color: var(--brand-school);">60</div>
+        <div id="recite-score-container" style="font-weight: bold; color: var(--accent-green);">
+            Score : <span id="recite-score">0</span>
+        </div>
+    </div>
+
+    <div id="recite-game-zone" style="position: relative; background: white; padding: 30px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center; min-height: 400px; display: flex; flex-direction: column; justify-content: center;">
+        
+        <div style="display: flex; justify-content: center; margin-bottom: 25px;">
+            <button id="btn-start-speedrun" class="btn-sablier" onclick="startSpeedRun()">
+                <span>⏳</span>
+                <div id="speedrun-text" style="flex: 1; text-align: center; padding-right: 15px; font-weight: 800; color: var(--brand-school); opacity: 0; transition: opacity 0.3s; white-space: nowrap;">
+                    Défi 1 minute
+                </div>
+            </button>
+        </div>
+
+        <h3 id="recite-question" style="font-size: 1.5rem; margin-bottom: 2rem; color: var(--text-dark);">Chargement...</h3>
+
+        <div style="max-width: 500px; margin: 0 auto; width: 100%;">
+            <math-field id="math-input"></math-field>
+            
+            <button id="btn-check-recite" class="btn-nav" style="width: 100%; margin-top: 20px; justify-content: center;" onclick="checkReciteAnswer()">
+                Vérifier la réponse
+            </button>
+        </div>
+
+        <div id="recite-feedback" style="display:none; margin-top: 20px; padding: 15px; border-radius: 15px;">
+            <p id="feedback-text" style="font-weight: bold;"></p>
+            <div id="correction-area" style="margin-top: 10px; font-size: 1.1rem;"></div>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn-nav" style="flex: 1; justify-content: center;" onclick="goToNextQuestion()">Question suivante</button>
+                <button id="btn-force-correct" class="btn-nav" style="display:none; background: #eee; border:none; color: #666;" onclick="forceValidAnswer()">J'avais raison</button>
+            </div>
+        </div>
+    </div>
+</div>
     
 </body>
 </html>
