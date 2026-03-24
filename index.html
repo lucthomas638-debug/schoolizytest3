@@ -2346,6 +2346,20 @@ math-field::part(virtual-keyboard-toggle) {
     max-width: 1000px;
     padding: 20px !important; /* On resserre l'intérieur */
 }
+
+.view {
+    display: none; /* Cache tout par défaut */
+}
+
+.view.active {
+    display: block; /* Affiche uniquement la vue active */
+}
+
+/* Optionnel : si tu veux que la vue auth soit centrée proprement */
+#view-auth.active {
+    display: flex;
+    flex-direction: column;
+}
     
 </style>
 
