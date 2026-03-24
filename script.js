@@ -2164,50 +2164,61 @@ function checkReciteAnswer() {
     if (!currentReciteQuestion) return;
 
     const mf = document.getElementById('math-input');
-    const userAnsRaw = mf ? mf.value : "";
+    // On récupère la valeur brute (LaTeX/Texte)
+    const userAnsRaw = mf ? mf.getValue() : "";
     
-    const userAns = userAnsRaw.toLowerCase().replace(/\\\,/g, '').replace(/\s+/g, '').replace(/\\/g, '').trim();
+    // Nettoyage pour la comparaison (minuscules, retrait des espaces et antislashs)
+    const userAnsClean = userAnsRaw.toLowerCase().replace(/\\\,/g, '').replace(/\s+/g, '').replace(/\\/g, '').trim();
     const possibleAnswers = currentReciteQuestion.back.split('|');
 
     const isCorrect = possibleAnswers.some(answer => {
         const cleanPossible = answer.toLowerCase().replace(/\\\,/g, '').replace(/\s+/g, '').replace(/\\/g, '').trim();
-        return userAns === cleanPossible;
+        return userAnsClean === cleanPossible;
     });
 
     if (isSpeedRun) {
-        // ON ENREGISTRE AVANT TOUT
-        speedrunHistory.push({
+        // --- ENREGISTREMENT DANS L'HISTORIQUE ---
+        const historyItem = {
             q: currentReciteQuestion.front,
             expected: possibleAnswers[0],
-            userAns: userAnsRaw || "(vide)",
+            userAns: userAnsRaw.trim() === "" ? "(vide)" : userAnsRaw,
             isCorrect: isCorrect
-        });
+        };
+        
+        speedrunHistory.push(historyItem);
 
+        // Mise à jour du score si juste
         if (isCorrect) {
             currentScore++;
             const scoreEl = document.getElementById('recite-score');
             if (scoreEl) scoreEl.innerText = currentScore;
         }
         
+        // On enchaîne immédiatement
         loadNextOrFinish();
 
     } else {
+        // --- MODE NORMAL ---
         const feedback = document.getElementById('recite-feedback');
         const btnCheck = document.getElementById('btn-check-recite');
         if (isCorrect) {
-            btnCheck.style.display = 'none';
-            feedback.style.display = 'block';
-            feedback.style.backgroundColor = "#e8f8f0";
-            document.getElementById('feedback-text').innerHTML = "Bravo ! 🎉";
+            if(btnCheck) btnCheck.style.display = 'none';
+            if(feedback) {
+                feedback.style.display = 'block';
+                feedback.style.backgroundColor = "#e8f8f0";
+                document.getElementById('feedback-text').innerHTML = "Bravo ! 🎉";
+            }
         } else {
-            btnCheck.style.display = 'none';
-            feedback.style.display = 'block';
-            feedback.style.backgroundColor = "#fce8e6";
-            document.getElementById('feedback-text').innerHTML = "Faux... 🤔";
-            const corrArea = document.getElementById('correction-area');
-            corrArea.style.display = 'block';
-            corrArea.innerHTML = `Attendu : $${possibleAnswers[0]}$`;
-            if(window.MathJax) MathJax.typesetPromise([corrArea]);
+            if(btnCheck) btnCheck.style.display = 'none';
+            if(feedback) {
+                feedback.style.display = 'block';
+                feedback.style.backgroundColor = "#fce8e6";
+                document.getElementById('feedback-text').innerHTML = "Faux... 🤔";
+                const corrArea = document.getElementById('correction-area');
+                corrArea.style.display = 'block';
+                corrArea.innerHTML = `Attendu : $${possibleAnswers[0]}$`;
+                if(window.MathJax) MathJax.typesetPromise([corrArea]);
+            }
         }
     }
 }
@@ -2232,14 +2243,19 @@ function showReciteResults() {
     if(reciteTimer) clearInterval(reciteTimer);
     isSpeedRun = false;
     
+    // 1. Cacher les éléments de jeu
     document.getElementById('recite-game-zone').style.display = 'none';
     document.getElementById('recite-timer-bar').style.display = 'none';
     
+    // 2. Afficher la vue résultats
     const resDiv = document.getElementById('recite-results');
     resDiv.style.display = 'block';
 
-    document.getElementById('speedrun-final-score').innerText = currentScore;
+    // 3. Mettre à jour le gros score (colonne de gauche)
+    const finalScoreDisplay = document.getElementById('speedrun-final-score');
+    if(finalScoreDisplay) finalScoreDisplay.innerText = currentScore;
 
+    // 4. Peupler le récapitulatif (colonne de droite)
     const recapList = document.getElementById('speedrun-recap-list');
     if (recapList) {
         if (speedrunHistory.length === 0) {
@@ -2251,18 +2267,25 @@ function showReciteResults() {
                 const icon = item.isCorrect ? '✅' : '❌';
                 const bg = item.isCorrect ? '#f9fffb' : '#fff9f9';
                 
+                // On nettoie les backslashs pour l'affichage texte
+                const cleanAns = item.userAns.replace(/\\/g, '');
+                const cleanExpected = item.expected.replace(/\\/g, '');
+
                 html += `
                     <div style="background:${bg}; margin-bottom:10px; padding:12px; border-radius:12px; border: 1px solid ${color}44;">
                         <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px; color:#333;">${i+1}. ${item.q}</div>
-                        <div style="color:${color}; font-size:0.85rem; font-weight:600;">${icon} Toi : ${item.userAns}</div>
-                        ${!item.isCorrect ? `<div style="color:#666; font-size:0.8rem; margin-top:2px; font-style:italic;">Attendu : ${item.expected}</div>` : ''}
+                        <div style="color:${color}; font-size:0.85rem; font-weight:600;">${icon} Ta réponse : ${cleanAns}</div>
+                        ${!item.isCorrect ? `<div style="color:#666; font-size:0.8rem; margin-top:2px; font-style:italic;">Attendu : ${cleanExpected}</div>` : ''}
                     </div>`;
             });
             recapList.innerHTML = html;
         }
     }
 
-    if(window.MathJax) MathJax.typesetPromise([recapList]);
+    // 5. Rendu MathJax pour les formules dans le récap si nécessaire
+    if(window.MathJax) {
+        MathJax.typesetPromise([recapList]).catch(err => console.log(err));
+    }
 }
 
 /* ==========================================
