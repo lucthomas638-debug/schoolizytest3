@@ -2056,12 +2056,13 @@ function togglePomodoro() {
 async function openRecitation(chapterNum) {
     currentChapterForReset = chapterNum;
     
-    // Reset de l'UI
     document.getElementById('recite-game-zone').style.display = 'block';
     document.getElementById('recite-results').style.display = 'none';
     document.getElementById('btn-start-speedrun').style.display = 'inline-flex';
     document.getElementById('recite-timer-bar').style.display = 'none';
-    document.getElementById('btn-check-recite').style.display = 'flex';
+    
+    // ON FORCE LE BOUTON À APPARAÎTRE ICI
+    document.getElementById('btn-check-recite').style.display = 'flex'; 
     document.getElementById('recite-feedback').style.display = 'none';
     
     const btnText = document.getElementById('speedrun-text');
@@ -2086,35 +2087,32 @@ async function openRecitation(chapterNum) {
     navigateTo('view-recite');
 }
 
-// 2. Charger une question (AJOUT CONFIG POLICE)
+// 2. Charger une question
 function loadReciteQuestion() {
     const q = reciteChapterData[reciteIndex];
     currentReciteQuestion = q;
     document.getElementById('recite-question').innerText = q.front;
-    const mf = document.getElementById('math-input');
     
-    // --- CONFIGURATION POLICE SANS SERIF POUR LE CHAMP ---
+    const mf = document.getElementById('math-input');
     mf.value = ""; 
-    mf.style.fontFamily = "system-ui, -apple-system, sans-serif"; // Police standard
+    mf.style.fontFamily = "system-ui, -apple-system, sans-serif";
     mf.style.fontSize = "1.2rem";
     
     setTimeout(() => mf.focus(), 50);
 }
 
-// 3. Logique du Défi (3, 2, 1... GO au CENTRE OPAQUE)
+// 3. Logique du Défi (3, 2, 1... GO)
 function startSpeedRun() {
-    // --- NOUVEAU : RESET DE SÉCURITÉ ---
-    // 1. On cache immédiatement les feedbacks du mode normal s'ils étaient affichés
+    // Reset de sécurité
     document.getElementById('recite-feedback').style.display = 'none';
-    document.getElementById('btn-check-recite').style.display = 'none'; // Sera caché pendant le défi
     
-    // 2. On mélange et on charge une nouvelle question TOUT DE SUITE
-    // Comme ça, dès que le décompte finit, la question est déjà prête et "propre"
+    // On s'assure que le bouton "Vérifier" RESTE VISIBLE pendant le décompte
+    document.getElementById('btn-check-recite').style.display = 'flex'; 
+    
     reciteChapterData = [...reciteChapterData].sort(() => 0.5 - Math.random());
     reciteIndex = 0;
     loadReciteQuestion();
 
-    // --- LOGIQUE DU DÉCOMPTE ---
     const gameZone = document.getElementById('recite-game-zone');
     let overlay = document.getElementById('recite-countdown-overlay');
     
@@ -2141,29 +2139,25 @@ function startSpeedRun() {
         } else {
             clearInterval(timer);
             overlay.style.display = 'none';
-            initActualSpeedRun(); // Lance le chrono de 60s
+            initActualSpeedRun();
         }
     }, 1000);
 }
 
-// 4. Lancement du Chrono (SCORE TOTALEMENT MASQUÉ)
+// 4. Lancement du Chrono
 function initActualSpeedRun() {
     isSpeedRun = true;
     timeLeft = 60;
     currentScore = 0;
     speedrunHistory = []; 
     
-    // On récupère les éléments UI
     const timerBar = document.getElementById('recite-timer-bar');
     const scoreContainer = document.getElementById('recite-score-container');
     const timeDisplay = document.getElementById('recite-time-left');
 
     timerBar.style.display = 'flex';
     timerBar.style.justifyContent = 'center'; 
-    
-    if (scoreContainer) {
-        scoreContainer.style.display = 'none'; 
-    }
+    if (scoreContainer) scoreContainer.style.display = 'none'; 
 
     timeDisplay.innerText = "60";
     timeDisplay.style.fontSize = "2.5rem"; 
@@ -2171,15 +2165,10 @@ function initActualSpeedRun() {
     timeDisplay.style.color = "var(--brand-school)";
     timeDisplay.style.margin = "10px 0";
 
-    // On cache le bouton de lancement (sablier)
     document.getElementById('btn-start-speedrun').style.display = 'none';
     
-    // 👇 ON FORCE L'AFFICHAGE DU BOUTON VALIDER ICI 👇
+    // ON FORCE ENCORE UNE FOIS LE BOUTON À ÊTRE VISIBLE
     document.getElementById('btn-check-recite').style.display = 'flex';
-
-    reciteChapterData = [...reciteChapterData].sort(() => 0.5 - Math.random());
-    reciteIndex = 0;
-    loadReciteQuestion();
 
     if(reciteTimer) clearInterval(reciteTimer);
     reciteTimer = setInterval(() => {
@@ -2190,14 +2179,11 @@ function initActualSpeedRun() {
             timeDisplay.style.color = "#e74c3c";
             timeDisplay.style.transform = "scale(1.1)";
         }
-        
-        if (timeLeft <= 0) {
-            showReciteResults();
-        }
+        if (timeLeft <= 0) showReciteResults();
     }, 1000);
 }
 
-// 5. Vérification de la réponse (VALIDATION SYSTÉMATIQUE)
+// 5. Vérification de la réponse
 function checkReciteAnswer() {
     const mf = document.getElementById('math-input');
     const feedback = document.getElementById('recite-feedback');
@@ -2215,7 +2201,6 @@ function checkReciteAnswer() {
     });
 
     if (isSpeedRun) {
-        // --- MODE DÉFI : On enregistre tout et on enchaîne ---
         speedrunHistory.push({
             q: currentReciteQuestion.front,
             expected: possibleAnswers[0],
@@ -2237,7 +2222,6 @@ function checkReciteAnswer() {
         }, 150);
 
     } else {
-        // --- MODE NORMAL ---
         if (isCorrect) {
             btnCheck.style.display = 'none';
             feedback.style.display = 'block';
@@ -2256,7 +2240,7 @@ function checkReciteAnswer() {
     }
 }
 
-// 6. Navigation (Boucle infinie en Speedrun)
+// 6. Navigation
 function goToNextQuestion() {
     document.getElementById('recite-feedback').style.display = 'none';
     document.getElementById('btn-check-recite').style.display = 'flex';
@@ -2269,7 +2253,6 @@ function loadNextOrFinish() {
         loadReciteQuestion();
     } else {
         if (isSpeedRun) {
-            // Recommencer la liste pour un défi illimité
             reciteChapterData = [...reciteChapterData].sort(() => 0.5 - Math.random());
             reciteIndex = 0;
             loadReciteQuestion();
@@ -2280,22 +2263,20 @@ function loadNextOrFinish() {
     }
 }
 
+// 7. RÉSULTATS (Side-by-side)
 function showReciteResults() {
     if(reciteTimer) clearInterval(reciteTimer);
     isSpeedRun = false;
     
-    // 1. Cacher la zone de jeu et afficher les résultats
     document.getElementById('view-recite').classList.remove('active');
     document.getElementById('recite-game-zone').style.display = 'none';
     
     const resDiv = document.getElementById('recite-results');
     resDiv.style.display = 'block';
 
-    // 2. Mettre à jour le score à gauche
     const finalScoreDisplay = document.getElementById('speedrun-final-score');
     if(finalScoreDisplay) finalScoreDisplay.innerText = currentScore;
 
-    // 3. Peupler le récapitulatif à droite
     const recapList = document.getElementById('speedrun-recap-list');
     if (recapList) {
         if (speedrunHistory.length === 0) {
@@ -2307,7 +2288,6 @@ function showReciteResults() {
                 const icon = item.isCorrect ? '✅' : '❌';
                 const bg = item.isCorrect ? '#f9fffb' : '#fff9f9';
                 
-                // On utilise une structure propre pour chaque ligne de réponse
                 html += `
                     <div style="background:${bg}; margin-bottom:10px; padding:12px; border-radius:12px; border: 1px solid ${color}44;">
                         <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px; color:#333;">${i+1}. ${item.q}</div>
@@ -2319,10 +2299,17 @@ function showReciteResults() {
         }
     }
 
-    // 4. Rendu MathJax pour les formules dans le récap
     if(window.MathJax) {
         MathJax.typesetPromise([recapList]).catch(err => console.log(err));
     }
+}
+
+function forceValidAnswer() {
+    if (isSpeedRun) {
+        currentScore++;
+        document.getElementById('recite-score').innerText = currentScore;
+    }
+    goToNextQuestion();
 }
 
 /* ==========================================
@@ -2457,13 +2444,13 @@ document.addEventListener('DOMContentLoaded', () => {
         mf.inlineShortcuts = {}; 
         mf.defaultMode = 'text'; 
         mf.style.fontFamily = "system-ui, -apple-system, sans-serif";
+        mf.virtualKeyboardMode = "onfocus"; // Ouvre le clavier au clic
 
+        // Écoute des touches
         mf.addEventListener('keydown', (ev) => {
-            // 👇 Si on appuie sur Entrée (Clavier physique ou bouton Retour virtuel)
             if (ev.key === 'Enter') {
-                ev.preventDefault(); // On empêche le saut de ligne
-                
-                // On cache la calculatrice proprement
+                ev.preventDefault(); // Empêche toute action par défaut
+                // FERME LE CLAVIER VIRTUEL SI OUVERT (Ne valide PLUS la réponse)
                 if (window.mathVirtualKeyboard) {
                     window.mathVirtualKeyboard.hide();
                 }
@@ -2473,6 +2460,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 mf.insert('\\,'); 
             }
         });
+        
+        // ATTENTION: On a bien retiré le mf.addEventListener('change'...)
+        // L'unique façon de valider est maintenant de cliquer sur "Vérifier la réponse"
     }
 
     updateFloatingCalcVisibility();
