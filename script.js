@@ -1,3 +1,4 @@
+
 /* =============================================================================
    1. CONFIGURATION & ÉTAT INITIAL
    ============================================================================= */
@@ -170,13 +171,6 @@ function chooseMode(mode) {
 
 // Étape 3 : Charger la liste des chapitres depuis Supabase
 async function loadChapters() {
-
-      if (!currentUser) {
-           alert("🔒 Connecte-toi pour accéder aux chapitres !");
-           navigateTo('view-auth');
-           return;
-       }
-   
     const { data, error } = await sb
         .from('lessons')
         .select('chapter_number, content')
@@ -2431,125 +2425,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     updateFloatingCalcVisibility();
-}
-
-/* =============================================================================
-   SYSTÈME D'AUTHENTIFICATION & PROFILS
-   ============================================================================= */
-
-let authMode = 'signup'; 
-let currentUser = null;
-let userProfile = null;
-
-// 1. Basculer entre Inscription et Connexion
-function toggleAuthMode() {
-    authMode = (authMode === 'signup') ? 'login' : 'signup';
-    const btn = document.getElementById('btn-auth-action');
-    const switchTxt = document.getElementById('auth-switch');
-    const signupFields = document.getElementById('signup-fields');
-    
-    if (authMode === 'login') {
-        btn.innerText = "Se connecter";
-        switchTxt.innerText = "Pas de compte ? S'inscrire";
-        signupFields.style.display = 'none';
-    } else {
-        btn.innerText = "Créer mon compte";
-        switchTxt.innerText = "Déjà un compte ? Se connecter";
-        signupFields.style.display = 'flex';
-    }
-}
-
-// 2. Logique principale (SignUp / Login)
-async function handleAuth() {
-    const email = document.getElementById('auth-email').value;
-    const password = document.getElementById('auth-password').value;
-    const msg = document.getElementById('auth-msg');
-
-    if (!email || !password) return showError("Remplit tous les champs !");
-
-    if (authMode === 'signup') {
-        const prenom = document.getElementById('reg-prenom').value;
-        const nom = document.getElementById('reg-nom').value;
-        const phone = document.getElementById('auth-phone').value;
-
-        if (!prenom || !nom || !phone) return showError("Toutes les infos sont requises.");
-
-        // A. Inscription dans le système Auth de Supabase
-        const { data: authData, error: authError } = await sb.auth.signUp({ email, password });
-        if (authError) return showError(authError.message);
-
-        // B. Création de la fiche dans ta table 'profiles'
-        const { error: profError } = await sb.from('profiles').insert([
-            { 
-                id: authData.user.id, 
-                nom: nom, 
-                prenom: prenom, 
-                phone: phone, 
-                selected_chapters: [] 
-            }
-        ]);
-
-        if (profError) {
-            console.error(profError);
-            return showError("Erreur profil ou téléphone déjà utilisé.");
-        }
-
-        msg.style.display = 'block';
-        msg.style.color = 'green';
-        msg.innerText = "Inscription réussie ! Bienvenue.";
-        setTimeout(() => navigateTo('view-home'), 1500);
-
-    } else {
-        // Mode Connexion
-        const { error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) return showError("Email ou mot de passe incorrect.");
-        navigateTo('view-home');
-    }
-}
-
-function showError(text) {
-    const msg = document.getElementById('auth-msg');
-    msg.style.display = 'block';
-    msg.style.color = 'red';
-    msg.innerText = text;
-}
-
-// 3. Déconnexion
-async function handleLogout() {
-    await sb.auth.signOut();
-    window.location.reload();
-}
-
-// 4. Écouteur automatique d'état (Gère l'affichage du nom dans le Header)
-sb.auth.onAuthStateChange(async (event, session) => {
-    const navAuth = document.getElementById('nav-auth');
-    const navUser = document.getElementById('nav-user');
-    const navLogout = document.getElementById('nav-logout');
-    const userNameSpan = document.getElementById('user-name');
-
-    if (session) {
-        currentUser = session.user;
-        
-        // Récupérer les infos du profil
-        const { data: profile } = await sb
-            .from('profiles')
-            .select('*')
-            .eq('id', currentUser.id)
-            .single();
-
-        if (profile) {
-            userProfile = profile;
-            if(userNameSpan) userNameSpan.innerText = profile.prenom;
-        }
-
-        if(navAuth) navAuth.style.display = 'none';
-        if(navUser) navUser.style.display = 'block';
-        if(navLogout) navLogout.style.display = 'block';
-    } else {
-        currentUser = null;
-        userProfile = null;
-        if(navAuth) navAuth.style.display = 'block';
-        if(navUser) navUser.style.display = 'none';
-        if(navLogout) navLogout.style.display = 'none';
-    }
 });
