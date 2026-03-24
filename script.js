@@ -2164,34 +2164,34 @@ function checkReciteAnswer() {
     if (!currentReciteQuestion) return;
 
     const mf = document.getElementById('math-input');
-    const userAnsRaw = mf ? mf.value : "";
+    // ON RÉCUPÈRE LE TEXTE AVANT TOUTE AUTRE CHOSE
+    const userAnsRaw = mf ? mf.getValue() : ""; 
     
-    const userAns = userAnsRaw.toLowerCase().replace(/\\\,/g, '').replace(/\s+/g, '').replace(/\\/g, '').trim();
+    const userAnsClean = userAnsRaw.toLowerCase().replace(/\\\,/g, '').replace(/\s+/g, '').replace(/\\/g, '').trim();
     const possibleAnswers = currentReciteQuestion.back.split('|');
 
     const isCorrect = possibleAnswers.some(answer => {
         const cleanPossible = answer.toLowerCase().replace(/\\\,/g, '').replace(/\s+/g, '').replace(/\\/g, '').trim();
-        return userAns === cleanPossible;
+        return userAnsClean === cleanPossible;
     });
 
     if (isSpeedRun) {
-        // ON ENREGISTRE AVANT TOUT
+        // ON POUSSE DANS L'HISTORIQUE IMMÉDIATEMENT
         speedrunHistory.push({
             q: currentReciteQuestion.front,
             expected: possibleAnswers[0],
-            userAns: userAnsRaw || "(vide)",
+            userAns: userAnsRaw.trim() === "" ? "(vide)" : userAnsRaw,
             isCorrect: isCorrect
         });
 
         if (isCorrect) {
             currentScore++;
-            const scoreEl = document.getElementById('recite-score');
-            if (scoreEl) scoreEl.innerText = currentScore;
+            document.getElementById('recite-score').innerText = currentScore;
         }
         
         loadNextOrFinish();
-
     } else {
+        // Mode Normal
         const feedback = document.getElementById('recite-feedback');
         const btnCheck = document.getElementById('btn-check-recite');
         if (isCorrect) {
@@ -2212,31 +2212,14 @@ function checkReciteAnswer() {
     }
 }
 
-function loadNextOrFinish() {
-    reciteIndex++;
-    if (reciteIndex < reciteChapterData.length) {
-        loadReciteQuestion();
-    } else {
-        if (isSpeedRun) {
-            reciteChapterData = [...reciteChapterData].sort(() => 0.5 - Math.random());
-            reciteIndex = 0;
-            loadReciteQuestion();
-        } else {
-            navigateTo('view-chapters');
-        }
-    }
-}
-
-// 7. RÉSULTATS (Correction du bug de liste vide)
+// MODIFICATION DANS showReciteResults
 function showReciteResults() {
     if(reciteTimer) clearInterval(reciteTimer);
     isSpeedRun = false;
     
     document.getElementById('recite-game-zone').style.display = 'none';
     document.getElementById('recite-timer-bar').style.display = 'none';
-    
-    const resDiv = document.getElementById('recite-results');
-    resDiv.style.display = 'block';
+    document.getElementById('recite-results').style.display = 'block';
 
     document.getElementById('speedrun-final-score').innerText = currentScore;
 
@@ -2251,18 +2234,36 @@ function showReciteResults() {
                 const icon = item.isCorrect ? '✅' : '❌';
                 const bg = item.isCorrect ? '#f9fffb' : '#fff9f9';
                 
+                // Nettoyage visuel pour le récap
+                const cleanAns = item.userAns.replace(/\\/g, '');
+                const cleanExp = item.expected.replace(/\\/g, '');
+
                 html += `
                     <div style="background:${bg}; margin-bottom:10px; padding:12px; border-radius:12px; border: 1px solid ${color}44;">
                         <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px; color:#333;">${i+1}. ${item.q}</div>
-                        <div style="color:${color}; font-size:0.85rem; font-weight:600;">${icon} Toi : ${item.userAns}</div>
-                        ${!item.isCorrect ? `<div style="color:#666; font-size:0.8rem; margin-top:2px; font-style:italic;">Attendu : ${item.expected}</div>` : ''}
+                        <div style="color:${color}; font-size:0.85rem; font-weight:600;">${icon} Ta réponse : ${cleanAns}</div>
+                        ${!item.isCorrect ? `<div style="color:#666; font-size:0.8rem; margin-top:2px; font-style:italic;">Attendu : ${cleanExp}</div>` : ''}
                     </div>`;
             });
             recapList.innerHTML = html;
         }
     }
-
     if(window.MathJax) MathJax.typesetPromise([recapList]);
+}
+
+function loadNextOrFinish() {
+    reciteIndex++;
+    if (reciteIndex < reciteChapterData.length) {
+        loadReciteQuestion();
+    } else {
+        if (isSpeedRun) {
+            reciteChapterData = [...reciteChapterData].sort(() => 0.5 - Math.random());
+            reciteIndex = 0;
+            loadReciteQuestion();
+        } else {
+            navigateTo('view-chapters');
+        }
+    }
 }
 
 /* ==========================================
