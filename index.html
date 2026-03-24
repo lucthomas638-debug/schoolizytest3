@@ -2931,35 +2931,7 @@ math-field::part(virtual-keyboard-toggle) {
     </div>
 </div>
 
-<div id="recite-results" class="container" style="display:none; max-width: 1000px; margin: 20px auto; padding: 30px; background: white; border-radius: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border: 2px solid var(--brand-school);">
-    <h2 style="color: var(--brand-school); font-size: 2.2rem; margin-bottom: 25px; text-align: center;">Résultats du Défi ⏱️</h2>
-    
-    <div id="speedrun-layout" style="display: flex; gap: 30px; align-items: flex-start; flex-wrap: wrap;">
-        
-        <div id="speedrun-score-side" style="flex: 1; min-width: 250px;">
-            <div style="background: #fcfaff; padding: 30px; border-radius: 20px; border: 1px dashed var(--brand-school); text-align: center; margin-bottom: 20px;">
-                <span id="speedrun-final-score" style="font-size: 6rem; font-weight: 900; color: var(--accent-green); display: block; line-height: 1;">0</span>
-                <p style="font-size: 1.2rem; color: #666; font-weight: 600;">formules maîtrisées</p>
-            </div>
-            
-            <button class="btn-nav" style="width:100%; background:var(--accent-orange); color:white; border:none; margin-bottom:12px; justify-content:center; height: 50px;" onclick="openRecitation(currentChapterForReset)">
-                🔄 Retenter le défi
-            </button>
-            <button class="btn-nav" style="width: 100%; background: var(--brand-school); color: white; border: none; justify-content: center; height: 50px;" onclick="navigateTo('view-chapters')">
-                Retour aux chapitres
-            </button>
-        </div>
-
-        <div id="speedrun-recap-side" style="flex: 1.5; min-width: 300px; background: #fafafa; border-radius: 20px; border: 1px solid #eee; padding: 20px;">
-            <h3 style="text-align:center; margin-bottom:15px; font-size:1.1rem; color:var(--brand-school);">Analyse des réponses</h3>
-            <div id="speedrun-recap-list" style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
-                </div>
-        </div>
-
-    </div>
-</div>
-    
-<div id="view-recite" class="view container">
+<div id="view-recite" class="view container" style="padding-bottom: 300px;">
     <div class="btn-back" onclick="navigateTo('view-chapters')">← Retour</div>
     
     <h2 class="view-title">Récitation</h2>
@@ -3001,6 +2973,32 @@ math-field::part(virtual-keyboard-toggle) {
             <div style="display: flex; gap: 10px; margin-top: 15px;">
                 <button class="btn-nav" style="flex: 1; justify-content: center;" onclick="goToNextQuestion()">Question suivante</button>
                 <button id="btn-force-correct" class="btn-nav" style="display:none; background: #eee; border:none; color: #666;" onclick="forceValidAnswer()">J'avais raison</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="recite-results" style="display:none; max-width: 1000px; margin: 20px auto; padding: 30px; background: white; border-radius: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border: 2px solid var(--brand-school);">
+        <h2 style="color: var(--brand-school); font-size: 2.2rem; margin-bottom: 25px; text-align: center;">Résultats du Défi ⏱️</h2>
+        
+        <div id="speedrun-layout" style="display: flex; gap: 30px; align-items: flex-start; flex-wrap: wrap;">
+            <div id="speedrun-score-side" style="flex: 1; min-width: 250px;">
+                <div style="background: #fcfaff; padding: 30px; border-radius: 20px; border: 1px dashed var(--brand-school); text-align: center; margin-bottom: 20px;">
+                    <span id="speedrun-final-score" style="font-size: 6rem; font-weight: 900; color: var(--accent-green); display: block; line-height: 1;">0</span>
+                    <p style="font-size: 1.2rem; color: #666; font-weight: 600;">formules maîtrisées</p>
+                </div>
+                
+                <button class="btn-nav" style="width:100%; background:var(--accent-orange); color:white; border:none; margin-bottom:12px; justify-content:center; height: 50px;" onclick="openRecitation(currentChapterForReset)">
+                    🔄 Retenter le défi
+                </button>
+                <button class="btn-nav" style="width: 100%; background: var(--brand-school); color: white; border: none; justify-content: center; height: 50px;" onclick="navigateTo('view-chapters')">
+                    Retour aux chapitres
+                </button>
+            </div>
+
+            <div id="speedrun-recap-side" style="flex: 1.5; min-width: 300px; background: #fafafa; border-radius: 20px; border: 1px solid #eee; padding: 20px;">
+                <h3 style="text-align:center; margin-bottom:15px; font-size:1.1rem; color:var(--brand-school);">Analyse des réponses</h3>
+                <div id="speedrun-recap-list" style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
+                    </div>
             </div>
         </div>
     </div>
