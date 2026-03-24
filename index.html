@@ -2310,6 +2310,12 @@ math-field::part(virtual-keyboard-toggle) {
             transform: translateY(0); 
         }
     }
+math-field::part(virtual-keyboard) {
+    max-height: 250px !important; /* Force le clavier à être plus petit */
+    border-top: 3px solid var(--brand-school);
+    border-radius: 15px 15px 0 0;
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.15);
+}
     
 </style>
 
