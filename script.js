@@ -194,18 +194,18 @@ function renderChaptersGrid(chaptersList) {
     
     if (quizBar) {
         quizBar.style.display = (state.currentMode === 'quiz') ? 'block' : 'none';
-        document.getElementById('toggle-multi-mode').checked = false;
-        document.getElementById('multi-validate-area').style.display = 'none';
+        const toggleMulti = document.getElementById('toggle-multi-mode');
+        if(toggleMulti) toggleMulti.checked = false;
     }
 
-chaptersList.forEach(l => {
+    chaptersList.forEach(l => {
         const temp = document.createElement('div'); 
         temp.innerHTML = l.content;
         const title = temp.querySelector('h1')?.innerText || "Chapitre " + l.chapter_number;
         
         const card = document.createElement('div');
         card.className = 'card chapter-card-interactive';
-        card.dataset.chapterId = l.chapter_number; // Important pour la sélection multiple
+        card.dataset.chapterId = l.chapter_number;
 
         card.innerHTML = `
             <div class="chapter-badge-selection"></div>
@@ -218,17 +218,18 @@ chaptersList.forEach(l => {
         `;
         
         card.onclick = () => {
-            const multiActive = document.getElementById('toggle-multi-mode').checked;
-            if (multiActive) {
-                // On allume/éteint la carte
+            const toggleBtn = document.getElementById('toggle-multi-mode');
+            const multiActive = toggleBtn ? toggleBtn.checked : false;
+
+            if (multiActive && state.currentMode === 'quiz') {
                 card.classList.toggle('selected');
             } else {
-                // Mode normal : lancement direct
+                // Lancement selon le mode
                 if (state.currentMode === 'quiz') openQuiz(l.chapter_number);
                 else if (state.currentMode === 'exercise') openExercises(l.chapter_number);
                 else if (state.currentMode === 'flashcard') openFlashcards(l.chapter_number);
                 else if (state.currentMode === 'fiche') openFicheRecap(l.chapter_number);
-                else if (state.currentMode === 'recite') openRecitation(l.chapter_number);
+                else if (state.currentMode === 'recite') openRecitation(l.chapter_number); // <--- Appel de la fonction Speedrun
                 else displayLesson(l.chapter_number);
             }
         };
