@@ -2272,74 +2272,61 @@ function loadNextOrFinish() {
     }
 }
 
-// 7. RÉSULTATS : ERGONOMIE AMÉLIORÉE (ZONE DE SCROLL FIXE)
 function showReciteResults() {
-    clearInterval(reciteTimer);
+    if(reciteTimer) clearInterval(reciteTimer);
     isSpeedRun = false;
+    
+    // Cache la zone de question
     document.getElementById('recite-game-zone').style.display = 'none';
     
     const resDiv = document.getElementById('recite-results');
-    resDiv.style.display = 'flex';
-    resDiv.style.flexDirection = 'column';
-    resDiv.style.alignItems = 'center';
-    resDiv.style.padding = '20px';
+    const recapContainer = document.getElementById('speedrun-recap-container');
     resDiv.style.display = 'block';
 
-    document.getElementById('final-score-big').innerText = currentScore;
+    // Préparation du contenu du score
+    let html = `
+        <div style="background: #fcfaff; padding: 20px; border-radius: 20px; margin-bottom: 25px; border: 1px dashed var(--brand-school);">
+            <span style="font-size: 5rem; font-weight: 900; color: var(--accent-green); display: block; line-height: 1;">${currentScore}</span>
+            <p style="font-size: 1.2rem; color: #666; font-weight: 600; margin-top: 10px;">formules maîtrisées</p>
+        </div>
+    `;
 
-    let recapContainer = document.getElementById('speedrun-recap-list');
-    if (!recapContainer) {
-        recapContainer = document.createElement('div');
-        recapContainer.id = 'speedrun-recap-list';
-        
-        // --- STYLE ERGONOMIQUE : Hauteur fixe, Ombre portée, Centré ---
-        recapContainer.style = `
-            text-align: left; 
-            margin: 20px auto; 
-            width: 100%;
-            max-width: 500px;
-            height: 350px; 
-            overflow-y: auto; 
-            padding: 20px; 
-            border: 1px solid #ddd; 
-            border-radius: 20px; 
-            background: white; 
-            box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
-            font-family: system-ui, sans-serif;
-        `;
-        
-        const backBtn = resDiv.querySelector('button');
-        resDiv.insertBefore(recapContainer, backBtn);
-    }
-
-    if (speedrunHistory.length === 0) {
-        recapContainer.innerHTML = '<p style="text-align:center; padding-top:50px; color:#888;">Aucune réponse... ⏱️</p>';
-    } else {
-        let html = '<h3 style="text-align:center; margin-bottom:20px; color:var(--brand-school);">Détails de tes réponses</h3>';
+    // Ajout du récapitulatif des réponses
+    if (speedrunHistory.length > 0) {
+        html += `<div style="text-align: left; margin: 20px auto; max-height: 300px; overflow-y: auto; padding: 15px; border: 1px solid #eee; border-radius: 15px; background: #fafafa; font-family: system-ui, sans-serif;">`;
+        html += `<h3 style="text-align:center; margin-bottom:15px; font-size:1.1rem; color:var(--brand-school);">Détail de tes réponses</h3>`;
         
         speedrunHistory.forEach((item, i) => {
             const color = item.isCorrect ? '#27ae60' : '#e74c3c';
             const icon = item.isCorrect ? '✅' : '❌';
-            const bg = item.isCorrect ? '#f0fff4' : '#fff5f5';
-
+            const bg = item.isCorrect ? '#f9fffb' : '#fff9f9';
             html += `
-                <div style="background:${bg}; margin-bottom:10px; padding:12px; border-radius:12px; border-left: 5px solid ${color};">
-                    <div style="font-weight:bold; color:#333; margin-bottom:4px;">Q${i+1}: ${item.q}</div>
-                    <div style="font-size:0.9rem; color:${color}; font-weight:600;">${icon} Ta réponse : ${item.userAns || '(vide)'}</div>
-                    ${!item.isCorrect ? `<div style="font-size:0.85rem; color:#666; margin-top:4px; font-style:italic;">Attendu : ${item.expected}</div>` : ''}
+                <div style="background:${bg}; margin-bottom:8px; padding:10px; border-radius:10px; border: 1px solid ${color}44;">
+                    <div style="font-weight:700; font-size:0.9rem;">${i+1}. ${item.q}</div>
+                    <div style="color:${color}; font-size:0.85rem; font-weight:600;">${icon} Toi : ${item.userAns || '---'}</div>
+                    ${!item.isCorrect ? `<div style="color:#666; font-size:0.8rem; margin-top:2px; font-style:italic;">Attendu : ${item.expected}</div>` : ''}
                 </div>`;
         });
-        
-        // Bouton Recommencer stylisé à l'intérieur de la zone ou juste en dessous
-        html += `
-            <button class="btn-nav" style="width:100%; background:var(--brand-school); color:white; border:none; margin-top:15px; height:50px; border-radius:15px; cursor:pointer;" onclick="openRecitation(currentChapterForReset)">
-                🔄 Réessayer le défi
-            </button>
-        `;
-        
-        recapContainer.innerHTML = html;
+        html += `</div>`;
+    } else {
+        html += `<p style="color:#888; margin: 20px 0;">Aucune réponse enregistrée ⏱️</p>`;
+    }
+
+    // Bouton Retenter intégré
+    html += `
+        <button class="btn-nav" style="width:100%; background:var(--accent-orange); color:white; border:none; margin-bottom:10px; justify-content:center;" onclick="openRecitation(currentChapterForReset)">
+            🔄 Retenter le défi
+        </button>
+    `;
+
+    recapContainer.innerHTML = html;
+
+    // Rendu MathJax pour les formules dans le récap
+    if(window.MathJax) {
+        MathJax.typesetPromise([recapContainer]);
     }
 }
+
 /* ==========================================
    OUTILS : ANNALES & PDF STORAGE
    ========================================== */
