@@ -2212,37 +2212,26 @@ function checkReciteAnswer() {
     }
 }
 
-// MODIFICATION DANS showReciteResults
 function showReciteResults() {
-    // 1. Arrêt définitif du chrono
     if(reciteTimer) clearInterval(reciteTimer);
     isSpeedRun = false;
     
-    // 2. Nettoyage de l'interface de jeu
+    // 1. Cacher les éléments de jeu
     document.getElementById('recite-game-zone').style.display = 'none';
     document.getElementById('recite-timer-bar').style.display = 'none';
     
-    // On retire le padding de sécurité qui servait au clavier pour recentrer le bloc
-    document.getElementById('view-recite').style.paddingBottom = "0";
-
-    // 3. Affichage du bloc de résultats
+    // 2. Afficher les résultats
     const resDiv = document.getElementById('recite-results');
     resDiv.style.display = 'block';
 
-    // 4. Remontée automatique en haut de la page 🚀
-    // On cible le container principal (main) ou la fenêtre
+    // 3. Remonter tout en haut de la page 🚀
     const mainContainer = document.querySelector('main');
-    if (mainContainer) {
-        mainContainer.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    if (mainContainer) mainContainer.scrollTo({ top: 0, behavior: 'auto' });
 
-    // 5. Mise à jour du score (Colonne de gauche)
-    const scoreDisplay = document.getElementById('speedrun-final-score');
-    if(scoreDisplay) scoreDisplay.innerText = currentScore;
+    // 4. Mise à jour du score
+    document.getElementById('speedrun-final-score').innerText = currentScore;
 
-    // 6. Génération de la liste (Colonne de droite)
+    // 5. Remplir la liste
     const recapList = document.getElementById('speedrun-recap-list');
     if (recapList) {
         if (speedrunHistory.length === 0) {
@@ -2253,27 +2242,22 @@ function showReciteResults() {
                 const color = item.isCorrect ? '#27ae60' : '#e74c3c';
                 const icon = item.isCorrect ? '✅' : '❌';
                 const bg = item.isCorrect ? '#f9fffb' : '#fff9f9';
-                
-                // Nettoyage visuel pour la lecture (retrait des \ de LaTeX)
                 const cleanAns = item.userAns.replace(/\\/g, '');
                 const cleanExp = item.expected.replace(/\\/g, '');
 
                 html += `
-                    <div style="background:${bg}; margin-bottom:12px; padding:12px; border-radius:12px; border: 1px solid ${color}44; border-left: 5px solid ${color};">
-                        <div style="font-weight:700; font-size:0.95rem; margin-bottom:4px; color:#333;">${i+1}. ${item.q}</div>
-                        <div style="color:${color}; font-size:0.9rem; font-weight:600;">${icon} Ta réponse : ${cleanAns}</div>
-                        ${!item.isCorrect ? `<div style="color:#666; font-size:0.85rem; margin-top:4px; font-style:italic;">Attendu : ${cleanExp}</div>` : ''}
+                    <div style="background:${bg}; margin-bottom:10px; padding:12px; border-radius:12px; border-left: 5px solid ${color}; border-top: 1px solid ${color}22; border-right: 1px solid ${color}22; border-bottom: 1px solid ${color}22;">
+                        <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px; color:#333;">${i+1}. ${item.q}</div>
+                        <div style="color:${color}; font-size:0.85rem; font-weight:600;">${icon} Ta réponse : ${cleanAns}</div>
+                        ${!item.isCorrect ? `<div style="color:#666; font-size:0.8rem; margin-top:2px; font-style:italic;">Attendu : ${cleanExp}</div>` : ''}
                     </div>`;
             });
             recapList.innerHTML = html;
         }
     }
-
-    // 7. Relance du rendu MathJax si des formules sont présentes dans le récap
-    if(window.MathJax) {
-        MathJax.typesetPromise([recapList]).catch(err => console.log("Erreur MathJax Recap:", err));
-    }
+    if(window.MathJax) MathJax.typesetPromise([recapList]);
 }
+
 function loadNextOrFinish() {
     reciteIndex++;
     if (reciteIndex < reciteChapterData.length) {
