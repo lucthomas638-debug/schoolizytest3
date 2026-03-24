@@ -2183,7 +2183,6 @@ function initActualSpeedRun() {
     }, 1000);
 }
 
-// 5. Vérification de la réponse
 function checkReciteAnswer() {
     const mf = document.getElementById('math-input');
     const feedback = document.getElementById('recite-feedback');
@@ -2201,6 +2200,7 @@ function checkReciteAnswer() {
     });
 
     if (isSpeedRun) {
+        // --- MODE DÉFI : On enregistre tout et on enchaîne instantanément ---
         speedrunHistory.push({
             q: currentReciteQuestion.front,
             expected: possibleAnswers[0],
@@ -2210,18 +2210,15 @@ function checkReciteAnswer() {
 
         if (isCorrect) {
             currentScore++;
-            document.getElementById('recite-score').innerText = currentScore;
-            mf.style.borderColor = "var(--accent-green)";
-        } else {
-            mf.style.borderColor = "var(--accent-red)";
+            const scoreEl = document.getElementById('recite-score');
+            if (scoreEl) scoreEl.innerText = currentScore;
         }
         
-        setTimeout(() => {
-            mf.style.borderColor = "var(--brand-school)";
-            loadNextOrFinish();
-        }, 150);
+        // On enchaîne direct à la question suivante (zéro délai, zéro couleur)
+        loadNextOrFinish();
 
     } else {
+        // --- MODE NORMAL (Garde les couleurs) ---
         if (isCorrect) {
             btnCheck.style.display = 'none';
             feedback.style.display = 'block';
@@ -2239,7 +2236,6 @@ function checkReciteAnswer() {
         }
     }
 }
-
 // 6. Navigation
 function goToNextQuestion() {
     document.getElementById('recite-feedback').style.display = 'none';
@@ -2268,38 +2264,54 @@ function showReciteResults() {
     if(reciteTimer) clearInterval(reciteTimer);
     isSpeedRun = false;
     
-    // On cache SEULEMENT la zone de question (pas le titre "Récitation" !)
+    // 1. On cache la zone de jeu ET le chronomètre
     document.getElementById('recite-game-zone').style.display = 'none';
+    document.getElementById('recite-timer-bar').style.display = 'none'; // 👈 C'est ici !
     
-    // On affiche la vue résultats
+    // 2. On affiche la vue résultats
     const resDiv = document.getElementById('recite-results');
+    const recapContainer = document.getElementById('speedrun-recap-container');
     resDiv.style.display = 'block';
 
-    document.getElementById('speedrun-final-score').innerText = currentScore;
+    // 3. On prépare le HTML (Score + Récap)
+    let html = `
+        <div style="background: #fcfaff; padding: 20px; border-radius: 20px; margin-bottom: 25px; border: 1px dashed var(--brand-school);">
+            <span style="font-size: 5rem; font-weight: 900; color: var(--accent-green); display: block; line-height: 1;">${currentScore}</span>
+            <p style="font-size: 1.2rem; color: #666; font-weight: 600; margin-top: 10px;">formules maîtrisées</p>
+        </div>
+    `;
 
-    const recapList = document.getElementById('speedrun-recap-list');
-    
-    if (speedrunHistory.length === 0) {
-        recapList.innerHTML = '<p style="text-align:center; color:#888; margin-top:50px;">Aucune réponse enregistrée.</p>';
-    } else {
-        let html = '';
+    if (speedrunHistory.length > 0) {
+        html += `<h3 style="margin-bottom:15px; font-size:1.1rem; color:var(--brand-school);">Analyse de tes réponses</h3>`;
+        html += `<div style="text-align: left; max-height: 350px; overflow-y: auto; padding: 15px; border: 1px solid #eee; border-radius: 15px; background: #fafafa; margin-bottom: 20px;">`;
+        
         speedrunHistory.forEach((item, i) => {
             const color = item.isCorrect ? '#27ae60' : '#e74c3c';
             const icon = item.isCorrect ? '✅' : '❌';
             const bg = item.isCorrect ? '#f9fffb' : '#fff9f9';
             
             html += `
-                <div style="background:${bg}; margin-bottom:10px; padding:12px; border-radius:12px; border: 1px solid ${color}44;">
-                    <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px; color:#333;">${i+1}. ${item.q}</div>
-                    <div style="color:${color}; font-size:0.85rem; font-weight:600;">${icon} Toi : ${item.userAns || '---'}</div>
-                    ${!item.isCorrect ? `<div style="color:#666; font-size:0.8rem; margin-top:2px; font-style:italic;">Attendu : ${item.expected}</div>` : ''}
+                <div style="background:${bg}; margin-bottom:10px; padding:12px; border-radius:12px; border-left: 5px solid ${color};">
+                    <div style="font-weight:700; font-size:0.95rem; color:#333; margin-bottom:4px;">${i+1}. ${item.q}</div>
+                    <div style="color:${color}; font-size:0.9rem; font-weight:600;">${icon} Toi : ${item.userAns || '---'}</div>
+                    ${!item.isCorrect ? `<div style="color:#666; font-size:0.85rem; margin-top:4px; font-style:italic;">Attendu : ${item.expected}</div>` : ''}
                 </div>`;
         });
-        recapList.innerHTML = html;
+        html += `</div>`;
     }
 
+    // 4. On ajoute le bouton Retenter
+    html += `
+        <button class="btn-nav" style="width:100%; background:var(--accent-orange); color:white; border:none; margin-bottom:10px; justify-content:center; height:50px;" onclick="openRecitation(currentChapterForReset)">
+            🔄 Retenter le défi
+        </button>
+    `;
+
+    recapContainer.innerHTML = html;
+
+    // 5. Relance MathJax si nécessaire
     if(window.MathJax) {
-        MathJax.typesetPromise([recapList]);
+        MathJax.typesetPromise([recapContainer]).catch(err => console.log("MathJax Error:", err));
     }
 }
 
