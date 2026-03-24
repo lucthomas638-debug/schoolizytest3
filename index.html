@@ -2980,15 +2980,12 @@ math-field::part(virtual-keyboard-toggle) {
         </div>
     </div>
 
-    <div id="recite-results" style="display:none; text-align: center; max-width: 600px; margin: 40px auto; padding: 40px; background: white; border-radius: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border: 2px solid var(--brand-school);">
-        <h2 style="color: var(--brand-school); font-size: 2.2rem; margin-bottom: 15px; -webkit-text-stroke: 0px;">Terminé ! ⏱️</h2>
+    <div id="recite-results" style="display:none; text-align: center; max-width: 600px; margin: 40px auto; padding: 30px; background: white; border-radius: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border: 2px solid var(--brand-school);">
+        <h2 style="color: var(--brand-school); font-size: 2.2rem; margin-bottom: 15px;">Terminé ! ⏱️</h2>
         
-        <div style="background: #fcfaff; padding: 20px; border-radius: 20px; margin-bottom: 30px; border: 1px dashed var(--brand-school);">
-            <span id="final-score-big" style="font-size: 5rem; font-weight: 900; color: var(--accent-green); display: block; line-height: 1;">0</span>
-            <p style="font-size: 1.2rem; color: #666; font-weight: 600; margin-top: 10px;">formules maîtrisées en 1 minute</p>
-        </div>
-
-        <button class="btn-nav" style="width: 100%; background: var(--brand-school); color: white; border: none; justify-content: center; height: 55px; font-size: 1.1rem;" onclick="navigateTo('view-chapters')">
+        <div id="speedrun-recap-container"></div>
+    
+        <button class="btn-nav" style="width: 100%; background: var(--brand-school); color: white; border: none; justify-content: center; height: 55px; margin-top: 20px;" onclick="navigateTo('view-chapters')">
             Retour aux chapitres
         </button>
     </div>
