@@ -2191,6 +2191,7 @@ function checkReciteAnswer() {
     const btnCheck = document.getElementById('btn-check-recite');
 
     const userAnsRaw = mf.value;
+    // Nettoyage de la réponse pour la comparaison
     const userAns = userAnsRaw.toLowerCase().replace(/\\\,/g, '').replace(/\s+/g, '').replace(/\\/g, '').trim();
     const possibleAnswers = currentReciteQuestion.back.split('|');
 
@@ -2199,26 +2200,29 @@ function checkReciteAnswer() {
         return userAns === cleanPossible;
     });
 
+    // --- LOGIQUE D'ENREGISTREMENT ---
     if (isSpeedRun) {
-        // --- MODE DÉFI : On enregistre tout et on enchaîne instantanément ---
-        speedrunHistory.push({
+        // 1. On force l'ajout à l'historique AVANT toute autre action
+        const historyItem = {
             q: currentReciteQuestion.front,
             expected: possibleAnswers[0],
             userAns: userAnsRaw,
             isCorrect: isCorrect
-        });
+        };
+        speedrunHistory.push(historyItem);
 
+        // 2. Mise à jour du score si juste
         if (isCorrect) {
             currentScore++;
             const scoreEl = document.getElementById('recite-score');
             if (scoreEl) scoreEl.innerText = currentScore;
         }
         
-        // On enchaîne direct à la question suivante (zéro délai, zéro couleur)
+        // 3. On passe à la suite immédiatement
         loadNextOrFinish();
 
     } else {
-        // --- MODE NORMAL (Garde les couleurs) ---
+        // --- MODE NORMAL (Hors défi) ---
         if (isCorrect) {
             btnCheck.style.display = 'none';
             feedback.style.display = 'block';
@@ -2236,6 +2240,7 @@ function checkReciteAnswer() {
         }
     }
 }
+
 // 6. Navigation
 function goToNextQuestion() {
     document.getElementById('recite-feedback').style.display = 'none';
