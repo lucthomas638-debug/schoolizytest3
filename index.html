@@ -2312,6 +2312,37 @@ math-field::part(virtual-keyboard-toggle) {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* On s'assure que la vue récitation occupe tout l'écran proprement */
+#view-recite.active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; /* Permet au titre de rester en haut */
+    min-height: 100vh;
+    width: 100%;
+    padding-bottom: 50px; /* Espace de sécurité en bas */
+}
+
+/* Le bloc de résultats doit se comporter comme un bloc central flexible */
+#recite-results {
+    margin-top: 20px !important; /* Petit espace sous le titre */
+    margin-bottom: auto !important; /* Pousse tout ce qu'il y a en dessous si nécessaire */
+    width: 95%;
+    max-width: 1000px;
+    /* On s'assure qu'il n'est pas caché par le bas */
+    display: none; 
+    flex-direction: column;
+}
+
+/* On ajuste le layout intérieur pour qu'il soit bien proportionné */
+#speedrun-layout {
+    display: flex;
+    gap: 30px;
+    align-items: stretch; /* Les deux colonnes auront la même hauteur */
+    justify-content: center;
+    flex-wrap: wrap;
+}
     
 </style>
 
