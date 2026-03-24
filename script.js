@@ -2277,54 +2277,44 @@ function showReciteResults() {
     if(reciteTimer) clearInterval(reciteTimer);
     isSpeedRun = false;
     
-    // Cache la zone de question
+    // 1. Cacher la zone de jeu et afficher les résultats
+    document.getElementById('view-recite').classList.remove('active');
     document.getElementById('recite-game-zone').style.display = 'none';
     
     const resDiv = document.getElementById('recite-results');
-    const recapContainer = document.getElementById('speedrun-recap-container');
     resDiv.style.display = 'block';
 
-    // Préparation du contenu du score
-    let html = `
-        <div style="background: #fcfaff; padding: 20px; border-radius: 20px; margin-bottom: 25px; border: 1px dashed var(--brand-school);">
-            <span style="font-size: 5rem; font-weight: 900; color: var(--accent-green); display: block; line-height: 1;">${currentScore}</span>
-            <p style="font-size: 1.2rem; color: #666; font-weight: 600; margin-top: 10px;">formules maîtrisées</p>
-        </div>
-    `;
+    // 2. Mettre à jour le score à gauche
+    const finalScoreDisplay = document.getElementById('speedrun-final-score');
+    if(finalScoreDisplay) finalScoreDisplay.innerText = currentScore;
 
-    // Ajout du récapitulatif des réponses
-    if (speedrunHistory.length > 0) {
-        html += `<div style="text-align: left; margin: 20px auto; max-height: 300px; overflow-y: auto; padding: 15px; border: 1px solid #eee; border-radius: 15px; background: #fafafa; font-family: system-ui, sans-serif;">`;
-        html += `<h3 style="text-align:center; margin-bottom:15px; font-size:1.1rem; color:var(--brand-school);">Détail de tes réponses</h3>`;
-        
-        speedrunHistory.forEach((item, i) => {
-            const color = item.isCorrect ? '#27ae60' : '#e74c3c';
-            const icon = item.isCorrect ? '✅' : '❌';
-            const bg = item.isCorrect ? '#f9fffb' : '#fff9f9';
-            html += `
-                <div style="background:${bg}; margin-bottom:8px; padding:10px; border-radius:10px; border: 1px solid ${color}44;">
-                    <div style="font-weight:700; font-size:0.9rem;">${i+1}. ${item.q}</div>
-                    <div style="color:${color}; font-size:0.85rem; font-weight:600;">${icon} Toi : ${item.userAns || '---'}</div>
-                    ${!item.isCorrect ? `<div style="color:#666; font-size:0.8rem; margin-top:2px; font-style:italic;">Attendu : ${item.expected}</div>` : ''}
-                </div>`;
-        });
-        html += `</div>`;
-    } else {
-        html += `<p style="color:#888; margin: 20px 0;">Aucune réponse enregistrée ⏱️</p>`;
+    // 3. Peupler le récapitulatif à droite
+    const recapList = document.getElementById('speedrun-recap-list');
+    if (recapList) {
+        if (speedrunHistory.length === 0) {
+            recapList.innerHTML = '<p style="text-align:center; color:#888; margin-top:50px;">Aucune réponse enregistrée.</p>';
+        } else {
+            let html = '';
+            speedrunHistory.forEach((item, i) => {
+                const color = item.isCorrect ? '#27ae60' : '#e74c3c';
+                const icon = item.isCorrect ? '✅' : '❌';
+                const bg = item.isCorrect ? '#f9fffb' : '#fff9f9';
+                
+                // On utilise une structure propre pour chaque ligne de réponse
+                html += `
+                    <div style="background:${bg}; margin-bottom:10px; padding:12px; border-radius:12px; border: 1px solid ${color}44;">
+                        <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px; color:#333;">${i+1}. ${item.q}</div>
+                        <div style="color:${color}; font-size:0.85rem; font-weight:600;">${icon} Ta réponse : ${item.userAns || '---'}</div>
+                        ${!item.isCorrect ? `<div style="color:#666; font-size:0.8rem; margin-top:2px; font-style:italic;">Attendu : ${item.expected}</div>` : ''}
+                    </div>`;
+            });
+            recapList.innerHTML = html;
+        }
     }
 
-    // Bouton Retenter intégré
-    html += `
-        <button class="btn-nav" style="width:100%; background:var(--accent-orange); color:white; border:none; margin-bottom:10px; justify-content:center;" onclick="openRecitation(currentChapterForReset)">
-            🔄 Retenter le défi
-        </button>
-    `;
-
-    recapContainer.innerHTML = html;
-
-    // Rendu MathJax pour les formules dans le récap
+    // 4. Rendu MathJax pour les formules dans le récap
     if(window.MathJax) {
-        MathJax.typesetPromise([recapContainer]);
+        MathJax.typesetPromise([recapList]).catch(err => console.log(err));
     }
 }
 
