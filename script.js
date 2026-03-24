@@ -2268,39 +2268,38 @@ function showReciteResults() {
     if(reciteTimer) clearInterval(reciteTimer);
     isSpeedRun = false;
     
-    document.getElementById('view-recite').classList.remove('active');
+    // On cache SEULEMENT la zone de question (pas le titre "Récitation" !)
     document.getElementById('recite-game-zone').style.display = 'none';
     
+    // On affiche la vue résultats
     const resDiv = document.getElementById('recite-results');
     resDiv.style.display = 'block';
 
-    const finalScoreDisplay = document.getElementById('speedrun-final-score');
-    if(finalScoreDisplay) finalScoreDisplay.innerText = currentScore;
+    document.getElementById('speedrun-final-score').innerText = currentScore;
 
     const recapList = document.getElementById('speedrun-recap-list');
-    if (recapList) {
-        if (speedrunHistory.length === 0) {
-            recapList.innerHTML = '<p style="text-align:center; color:#888; margin-top:50px;">Aucune réponse enregistrée.</p>';
-        } else {
-            let html = '';
-            speedrunHistory.forEach((item, i) => {
-                const color = item.isCorrect ? '#27ae60' : '#e74c3c';
-                const icon = item.isCorrect ? '✅' : '❌';
-                const bg = item.isCorrect ? '#f9fffb' : '#fff9f9';
-                
-                html += `
-                    <div style="background:${bg}; margin-bottom:10px; padding:12px; border-radius:12px; border: 1px solid ${color}44;">
-                        <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px; color:#333;">${i+1}. ${item.q}</div>
-                        <div style="color:${color}; font-size:0.85rem; font-weight:600;">${icon} Ta réponse : ${item.userAns || '---'}</div>
-                        ${!item.isCorrect ? `<div style="color:#666; font-size:0.8rem; margin-top:2px; font-style:italic;">Attendu : ${item.expected}</div>` : ''}
-                    </div>`;
-            });
-            recapList.innerHTML = html;
-        }
+    
+    if (speedrunHistory.length === 0) {
+        recapList.innerHTML = '<p style="text-align:center; color:#888; margin-top:50px;">Aucune réponse enregistrée.</p>';
+    } else {
+        let html = '';
+        speedrunHistory.forEach((item, i) => {
+            const color = item.isCorrect ? '#27ae60' : '#e74c3c';
+            const icon = item.isCorrect ? '✅' : '❌';
+            const bg = item.isCorrect ? '#f9fffb' : '#fff9f9';
+            
+            html += `
+                <div style="background:${bg}; margin-bottom:10px; padding:12px; border-radius:12px; border: 1px solid ${color}44;">
+                    <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px; color:#333;">${i+1}. ${item.q}</div>
+                    <div style="color:${color}; font-size:0.85rem; font-weight:600;">${icon} Toi : ${item.userAns || '---'}</div>
+                    ${!item.isCorrect ? `<div style="color:#666; font-size:0.8rem; margin-top:2px; font-style:italic;">Attendu : ${item.expected}</div>` : ''}
+                </div>`;
+        });
+        recapList.innerHTML = html;
     }
 
     if(window.MathJax) {
-        MathJax.typesetPromise([recapList]).catch(err => console.log(err));
+        MathJax.typesetPromise([recapList]);
     }
 }
 
