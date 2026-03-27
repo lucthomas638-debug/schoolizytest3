@@ -2419,11 +2419,13 @@ math-field::part(virtual-keyboard-toggle) {
     transform: scale(0.98);
 }
 
-/* Agrandissement spécifique de la case téléphone */
-#auth-phone {
-    height: 75px !important; /* Environ 1,5x la hauteur standard de 50px */
-    font-size: 1.2rem; /* On augmente un peu la police pour que ce soit proportionnel */
-    margin-bottom: 15px;
+/* CORRECTION : Agrandissement de la case elle-même (le champ remplissable) */
+#auth-phone.search-input {
+    height: 75px !important; /* Définit la hauteur de la case remplissable */
+    line-height: 75px !important; /* Centre le texte verticalement à l'intérieur */
+    font-size: 1.3rem !important; /* Augmente la taille du texte pour qu'il ne paraisse pas perdu */
+    padding: 0 20px !important; /* Ajuste un peu le padding intérieur */
+    border-radius: 15px !important; /* Un arrondi légèrement plus prononcé pour le style massif */
 }
     
 </style>
