@@ -34,21 +34,6 @@ let reciteIndex = 0;
 let isSpeedRun = false;
 let reciteTimer = null;
 let currentScore = 0; // Ajoute celle-ci si elle manque
-let speedrunHistory = [];
-let currentChapterForReset = null;
-
-// Tout en haut de ton script.js
-async function checkInitialSession() {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-        currentUser = session.user;
-        // On laisse onAuthStateChange gérer l'affichage du nom
-    } else {
-        // Optionnel : forcer le retour à l'accueil si non connecté
-        // navigateTo('view-home'); 
-    }
-}
-checkInitialSession();
 
 /* =============================================================================
    2. SYSTÈME DE NAVIGATION & VISIBILITÉ CALCULATRICE
@@ -183,13 +168,6 @@ function chooseMode(mode) {
 
 // Étape 3 : Charger la liste des chapitres depuis Supabase
 async function loadChapters() {
-
-      if (!currentUser) {
-           alert("🔒 Connecte-toi pour accéder aux chapitres !");
-           navigateTo('view-auth');
-           return;
-       }
-   
     const { data, error } = await sb
         .from('lessons')
         .select('chapter_number, content')
@@ -214,18 +192,18 @@ function renderChaptersGrid(chaptersList) {
     
     if (quizBar) {
         quizBar.style.display = (state.currentMode === 'quiz') ? 'block' : 'none';
-        const toggleMulti = document.getElementById('toggle-multi-mode');
-        if(toggleMulti) toggleMulti.checked = false;
+        document.getElementById('toggle-multi-mode').checked = false;
+        document.getElementById('multi-validate-area').style.display = 'none';
     }
 
-    chaptersList.forEach(l => {
+chaptersList.forEach(l => {
         const temp = document.createElement('div'); 
         temp.innerHTML = l.content;
         const title = temp.querySelector('h1')?.innerText || "Chapitre " + l.chapter_number;
         
         const card = document.createElement('div');
         card.className = 'card chapter-card-interactive';
-        card.dataset.chapterId = l.chapter_number;
+        card.dataset.chapterId = l.chapter_number; // Important pour la sélection multiple
 
         card.innerHTML = `
             <div class="chapter-badge-selection"></div>
@@ -238,18 +216,17 @@ function renderChaptersGrid(chaptersList) {
         `;
         
         card.onclick = () => {
-            const toggleBtn = document.getElementById('toggle-multi-mode');
-            const multiActive = toggleBtn ? toggleBtn.checked : false;
-
-            if (multiActive && state.currentMode === 'quiz') {
+            const multiActive = document.getElementById('toggle-multi-mode').checked;
+            if (multiActive) {
+                // On allume/éteint la carte
                 card.classList.toggle('selected');
             } else {
-                // Lancement selon le mode
+                // Mode normal : lancement direct
                 if (state.currentMode === 'quiz') openQuiz(l.chapter_number);
                 else if (state.currentMode === 'exercise') openExercises(l.chapter_number);
                 else if (state.currentMode === 'flashcard') openFlashcards(l.chapter_number);
                 else if (state.currentMode === 'fiche') openFicheRecap(l.chapter_number);
-                else if (state.currentMode === 'recite') openRecitation(l.chapter_number); // <--- Appel de la fonction Speedrun
+                else if (state.currentMode === 'recite') openRecitation(l.chapter_number);
                 else displayLesson(l.chapter_number);
             }
         };
@@ -2072,19 +2049,15 @@ function togglePomodoro() {
    SECTION RÉCITATION & DÉFI 1 MINUTE
    ============================================================================= */
 
-// 1. Initialisation de la vue Récitation
+// 1. Lancer le mode récitation (Normal ou via Bouton Défi)
 async function openRecitation(chapterNum) {
-    currentChapterForReset = chapterNum;
-    speedrunHistory = []; // Reset historique
-    currentScore = 0;
-
-    // Reset UI
+    // Reset de l'UI pour éviter les restes d'une session précédente
     document.getElementById('recite-game-zone').style.display = 'block';
     document.getElementById('recite-results').style.display = 'none';
     document.getElementById('btn-start-speedrun').style.display = 'inline-flex';
     document.getElementById('recite-timer-bar').style.display = 'none';
     document.getElementById('btn-check-recite').style.display = 'flex';
-    document.getElementById('recite-feedback').style.display = 'none';
+    document.getElementById('speedrun-text').innerText = "Lancer le Défi 1 minute";
     
     const { data, error } = await sb
         .from('flashcards')
@@ -2093,193 +2066,119 @@ async function openRecitation(chapterNum) {
         .eq('subject_id', state.currentSubject.toLowerCase())
         .eq('chapter_number', chapterNum);
 
-    if (error || !data || data.length === 0) return alert("Pas de questions.");
+    if (error || !data || data.length === 0) {
+        return alert("Pas de questions de récitation pour ce chapitre.");
+    }
 
     reciteChapterData = data.sort(() => 0.5 - Math.random());
     reciteIndex = 0;
-    isSpeedRun = false; 
+    isSpeedRun = false; // Par défaut, on est en mode normal
     
-    document.getElementById('btn-start-speedrun').onclick = startSpeedRun;
-
     loadReciteQuestion();
     navigateTo('view-recite');
 }
 
-// 2. Charger une question
+// 2. Charger une question et focus le champ
 function loadReciteQuestion() {
     const q = reciteChapterData[reciteIndex];
     currentReciteQuestion = q;
     document.getElementById('recite-question').innerText = q.front;
     
     const mf = document.getElementById('math-input');
-    if (mf) {
-        mf.value = ""; 
-        setTimeout(() => mf.focus(), 50);
-    }
+    mf.value = ""; 
+    // Petit délai pour assurer le focus après le rendu
+    setTimeout(() => mf.focus(), 50);
 }
 
-// 3. Logique du Défi (3, 2, 1... GO)
-function startSpeedRun() {
-    document.getElementById('recite-feedback').style.display = 'none';
-    document.getElementById('btn-check-recite').style.display = 'flex'; 
-    
-    reciteChapterData = [...reciteChapterData].sort(() => 0.5 - Math.random());
-    reciteIndex = 0;
-    speedrunHistory = []; // On vide bien l'historique ici
-    currentScore = 0;
-    loadReciteQuestion();
-
-    const gameZone = document.getElementById('recite-game-zone');
-    let overlay = document.getElementById('recite-countdown-overlay');
-    
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'recite-countdown-overlay';
-        overlay.style = "position:absolute; top:0; left:0; width:100%; height:100%; background:rgb(255,255,255); display:flex; align-items:center; justify-content:center; z-index:1000; font-size:8rem; font-weight:900; color:var(--brand-school); border-radius:20px;";
-        gameZone.appendChild(overlay);
-    }
-
-    overlay.style.display = 'flex';
-    let count = 3;
-    overlay.innerText = count;
-
-    const timer = setInterval(() => {
-        count--;
-        if (count > 0) overlay.innerText = count;
-        else if (count === 0) { overlay.innerText = "GO !"; overlay.style.color = "var(--accent-green)"; }
-        else {
-            clearInterval(timer);
-            overlay.style.display = 'none';
-            initActualSpeedRun();
-        }
-    }, 1000);
-}
-
-// 4. Lancement du Chrono
+// 4. Lancement du Chrono et reset score
 function initActualSpeedRun() {
     isSpeedRun = true;
     timeLeft = 60;
+    currentScore = 0;
     
-    const timerBar = document.getElementById('recite-timer-bar');
-    const timeDisplay = document.getElementById('recite-time-left');
-    const scoreContainer = document.getElementById('recite-score-container');
-
-    if(timerBar) timerBar.style.display = 'flex';
-    if(scoreContainer) scoreContainer.style.display = 'none'; 
-    if(timeDisplay) timeDisplay.innerText = "60";
-
-    document.getElementById('btn-start-speedrun').style.display = 'none';
-    document.getElementById('btn-check-recite').style.display = 'flex';
+    document.getElementById('recite-timer-bar').style.display = 'flex';
+    document.getElementById('recite-score').innerText = "0";
+    document.getElementById('recite-time-left').innerText = "60";
+    document.getElementById('recite-time-left').style.color = "";
+    
+    // On remélange les questions pour le défi
+    reciteChapterData = [...reciteChapterData].sort(() => 0.5 - Math.random());
+    reciteIndex = 0;
+    loadReciteQuestion();
 
     if(reciteTimer) clearInterval(reciteTimer);
     reciteTimer = setInterval(() => {
         timeLeft--;
-        if(timeDisplay) timeDisplay.innerText = timeLeft;
-        if (timeLeft <= 0) { clearInterval(reciteTimer); showReciteResults(); }
+        document.getElementById('recite-time-left').innerText = timeLeft;
+        
+        if (timeLeft <= 10) document.getElementById('recite-time-left').style.color = "#e74c3c";
+
+        if (timeLeft <= 0) {
+            showReciteResults();
+        }
     }, 1000);
 }
 
-// 5. VÉRIFICATION (Correction Enregistrement Historique)
+// 5. Vérification de la réponse
 function checkReciteAnswer() {
-    if (!currentReciteQuestion) return;
-
     const mf = document.getElementById('math-input');
-    // ON RÉCUPÈRE LE TEXTE AVANT TOUTE AUTRE CHOSE
-    const userAnsRaw = mf ? mf.getValue() : ""; 
-    
-    const userAnsClean = userAnsRaw.toLowerCase().replace(/\\\,/g, '').replace(/\s+/g, '').replace(/\\/g, '').trim();
+    const feedback = document.getElementById('recite-feedback');
+    const feedbackText = document.getElementById('feedback-text');
+    const correctionArea = document.getElementById('correction-area');
+    const btnCheck = document.getElementById('btn-check-recite');
+
+    // Nettoyage LaTeX
+    const userAns = mf.value.toLowerCase().replace(/\\\,/g, '').replace(/\s+/g, '').replace(/\\/g, '').trim();
     const possibleAnswers = currentReciteQuestion.back.split('|');
 
     const isCorrect = possibleAnswers.some(answer => {
         const cleanPossible = answer.toLowerCase().replace(/\\\,/g, '').replace(/\s+/g, '').replace(/\\/g, '').trim();
-        return userAnsClean === cleanPossible;
+        return userAns === cleanPossible;
     });
 
-    if (isSpeedRun) {
-        // ON POUSSE DANS L'HISTORIQUE IMMÉDIATEMENT
-        speedrunHistory.push({
-            q: currentReciteQuestion.front,
-            expected: possibleAnswers[0],
-            userAns: userAnsRaw.trim() === "" ? "(vide)" : userAnsRaw,
-            isCorrect: isCorrect
-        });
-
-        if (isCorrect) {
+    if (isCorrect) {
+        if (isSpeedRun) {
+            // Mode Défi : On incrémente et on enchaîne direct
             currentScore++;
             document.getElementById('recite-score').innerText = currentScore;
-        }
-        
-        loadNextOrFinish();
-    } else {
-        // Mode Normal
-        const feedback = document.getElementById('recite-feedback');
-        const btnCheck = document.getElementById('btn-check-recite');
-        if (isCorrect) {
+            loadNextOrFinish();
+        } else {
+            // Mode Normal : On montre le feedback vert
             btnCheck.style.display = 'none';
             feedback.style.display = 'block';
             feedback.style.backgroundColor = "#e8f8f0";
-            document.getElementById('feedback-text').innerHTML = "Bravo ! 🎉";
+            feedback.style.border = "2px solid var(--accent-green)";
+            feedbackText.innerHTML = "Bravo ! C'est juste 🎉";
+            feedbackText.style.color = "#155724";
+            correctionArea.style.display = 'none';
+            document.getElementById('btn-force-correct').style.display = 'none';
+        }
+    } else {
+        if (isSpeedRun) {
+            // Mode Défi : Flash rouge pour signaler l'erreur sans bloquer
+            mf.style.borderColor = "#e74c3c";
+            setTimeout(() => mf.style.borderColor = "var(--brand-school)", 300);
         } else {
+            // Mode Normal : Feedback rouge avec correction
             btnCheck.style.display = 'none';
             feedback.style.display = 'block';
             feedback.style.backgroundColor = "#fce8e6";
-            document.getElementById('feedback-text').innerHTML = "Faux... 🤔";
-            const corrArea = document.getElementById('correction-area');
-            corrArea.style.display = 'block';
-            corrArea.innerHTML = `Attendu : $${possibleAnswers[0]}$`;
-            if(window.MathJax) MathJax.typesetPromise([corrArea]);
+            feedback.style.border = "2px solid var(--accent-red)";
+            feedbackText.innerHTML = "Pas tout à fait... 🤔";
+            feedbackText.style.color = "#721c24";
+            correctionArea.style.display = 'block';
+            correctionArea.innerHTML = `Réponse attendue : <br><strong>${possibleAnswers[0].trim()}</strong>`;
+            document.getElementById('btn-force-correct').style.display = 'flex';
+            if(window.MathJax) MathJax.typesetPromise([correctionArea]);
         }
     }
 }
 
-function showReciteResults() {
-    if(reciteTimer) clearInterval(reciteTimer);
-    isSpeedRun = false;
-    
-    // 1. On cache tout ce qui précède pour ne pas laisser de place vide
-    document.getElementById('recite-game-zone').style.display = 'none';
-    document.getElementById('recite-timer-bar').style.display = 'none';
-    
-    // On force le conteneur à ne plus avoir de padding inutile
-    const viewRecite = document.getElementById('view-recite');
-    viewRecite.style.paddingBottom = "20px"; 
-
-    // 2. Afficher les résultats
-    const resDiv = document.getElementById('recite-results');
-    resDiv.style.display = 'block';
-
-    // 3. Scroll instantané vers le haut
-    const mainContainer = document.querySelector('main');
-    if (mainContainer) mainContainer.scrollTo({ top: 0, behavior: 'auto' });
-
-    // 4. Mise à jour du score
-    document.getElementById('speedrun-final-score').innerText = currentScore;
-
-    // 5. Remplir la liste (design compact)
-    const recapList = document.getElementById('speedrun-recap-list');
-    if (recapList) {
-        if (speedrunHistory.length === 0) {
-            recapList.innerHTML = '<p style="text-align:center; color:#888; margin-top:30px;">Aucune réponse enregistrée.</p>';
-        } else {
-            let html = '';
-            speedrunHistory.forEach((item, i) => {
-                const color = item.isCorrect ? '#27ae60' : '#e74c3c';
-                const icon = item.isCorrect ? '✅' : '❌';
-                const bg = item.isCorrect ? '#f9fffb' : '#fff9f9';
-                const cleanAns = item.userAns.replace(/\\/g, '');
-                const cleanExp = item.expected.replace(/\\/g, '');
-
-                html += `
-                    <div style="background:${bg}; margin-bottom:8px; padding:10px; border-radius:10px; border-left: 4px solid ${color}; border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;">
-                        <div style="font-weight:700; font-size:0.85rem; color:#333;">${i+1}. ${item.q}</div>
-                        <div style="color:${color}; font-size:0.85rem; font-weight:600;">${icon} Toi : ${cleanAns}</div>
-                        ${!item.isCorrect ? `<div style="color:#666; font-size:0.75rem; font-style:italic;">Attendu : ${cleanExp}</div>` : ''}
-                    </div>`;
-            });
-            recapList.innerHTML = html;
-        }
-    }
-    if(window.MathJax) MathJax.typesetPromise([recapList]);
+// 6. Navigation entre questions
+function goToNextQuestion() {
+    document.getElementById('recite-feedback').style.display = 'none';
+    document.getElementById('btn-check-recite').style.display = 'flex';
+    loadNextOrFinish();
 }
 
 function loadNextOrFinish() {
@@ -2288,13 +2187,30 @@ function loadNextOrFinish() {
         loadReciteQuestion();
     } else {
         if (isSpeedRun) {
-            reciteChapterData = [...reciteChapterData].sort(() => 0.5 - Math.random());
-            reciteIndex = 0;
-            loadReciteQuestion();
+            showReciteResults();
         } else {
+            alert("Félicitations, récitation terminée !");
             navigateTo('view-chapters');
         }
     }
+}
+
+// 7. Écran de résultats final
+function showReciteResults() {
+    clearInterval(reciteTimer);
+    isSpeedRun = false;
+    document.getElementById('recite-game-zone').style.display = 'none';
+    const resDiv = document.getElementById('recite-results');
+    resDiv.style.display = 'block';
+    document.getElementById('final-score-big').innerText = currentScore;
+}
+
+function forceValidAnswer() {
+    if (isSpeedRun) {
+        currentScore++;
+        document.getElementById('recite-score').innerText = currentScore;
+    }
+    goToNextQuestion();
 }
 
 /* ==========================================
@@ -2418,153 +2334,27 @@ function closePdfModal() {
 }
 
 /* =============================================================================
-   6. INITIALISATION (CORRIGÉE POLICE & VALIDATION)
+   6. INITIALISATION
    ============================================================================= */
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Gestion de la recherche
     const searchInput = document.getElementById('site-search');
-    if (searchInput) searchInput.addEventListener('input', performSearch);
+    if (searchInput) {
+        searchInput.addEventListener('input', performSearch);
+    }
 
+    // 2. Gestion des ESPACES pour MathLive
     const mf = document.getElementById('math-input');
     if (mf) {
-        mf.inlineShortcuts = {}; 
-        mf.defaultMode = 'text'; 
-        mf.style.fontFamily = "system-ui, -apple-system, sans-serif";
-
         mf.addEventListener('keydown', (ev) => {
-            if (ev.key === 'Enter') {
-                ev.preventDefault();
-                checkReciteAnswer();
-            }
             if (ev.code === 'Space') {
                 ev.preventDefault(); 
-                mf.insert('\\,'); 
+                // mf.insert('\\,') insère un petit espace LaTeX
+                mf.insert('\\,');   
             }
         });
     }
 
+    // 3. Update initial de la calculette
     updateFloatingCalcVisibility();
-});
-
-/* =============================================================================
-   SYSTÈME D'AUTHENTIFICATION & PROFILS
-   ============================================================================= */
-
-let authMode = 'signup'; 
-let currentUser = null;
-let userProfile = null;
-
-// 1. Basculer entre Inscription et Connexion
-function toggleAuthMode() {
-    authMode = (authMode === 'signup') ? 'login' : 'signup';
-    const btn = document.getElementById('btn-auth-action');
-    const switchTxt = document.getElementById('auth-switch');
-    const signupFields = document.getElementById('signup-fields');
-    
-    if (authMode === 'login') {
-        btn.innerText = "Se connecter";
-        switchTxt.innerText = "Pas de compte ? S'inscrire";
-        signupFields.style.display = 'none';
-    } else {
-        btn.innerText = "Créer mon compte";
-        switchTxt.innerText = "Déjà un compte ? Se connecter";
-        signupFields.style.display = 'flex';
-    }
-}
-
-// 2. Logique principale (SignUp / Login)
-async function handleAuth() {
-    const email = document.getElementById('auth-email').value;
-    const password = document.getElementById('auth-password').value;
-    const msg = document.getElementById('auth-msg');
-
-    if (!email || !password) return showError("Remplit tous les champs !");
-
-    if (authMode === 'signup') {
-        const prenom = document.getElementById('reg-prenom').value;
-        const nom = document.getElementById('reg-nom').value;
-        const phone = document.getElementById('auth-phone').value;
-
-        if (!prenom || !nom || !phone) return showError("Toutes les infos sont requises.");
-
-        // A. Inscription dans le système Auth de Supabase
-        const { data: authData, error: authError } = await sb.auth.signUp({ email, password });
-        if (authError) return showError(authError.message);
-
-        // B. Création de la fiche dans ta table 'profiles'
-        const { error: profError } = await sb.from('profiles').insert([
-            { 
-                id: authData.user.id, 
-                nom: nom, 
-                prenom: prenom, 
-                phone: phone, 
-                selected_chapters: [] 
-            }
-        ]);
-
-        if (profError) {
-            console.error(profError);
-            return showError("Erreur profil ou téléphone déjà utilisé.");
-        }
-
-        msg.style.display = 'block';
-        msg.style.color = 'green';
-        msg.innerText = "Inscription réussie ! Bienvenue.";
-        setTimeout(() => navigateTo('view-home'), 1500);
-
-    } else {
-        // Mode Connexion
-        const { error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) return showError("Email ou mot de passe incorrect.");
-        navigateTo('view-home');
-    }
-}
-
-function showError(text) {
-    const msg = document.getElementById('auth-msg');
-    msg.style.display = 'block';
-    msg.style.color = 'red';
-    msg.innerText = text;
-}
-
-// 3. Déconnexion
-async function handleLogout() {
-    await sb.auth.signOut();
-    window.location.reload();
-}
-
-// 4. Écouteur automatique d'état (Version Sécurisée)
-sb.auth.onAuthStateChange(async (event, session) => {
-    const navAuth = document.getElementById('nav-auth');
-    const navUser = document.getElementById('nav-user');
-    const navLogout = document.getElementById('nav-logout');
-    const userNameSpan = document.getElementById('user-name');
-
-    if (session) {
-        currentUser = session.user;
-        
-        // On récupère les infos du profil de manière sécurisée
-        const { data: profile, error } = await sb
-            .from('profiles')
-            .select('*')
-            .eq('id', currentUser.id)
-            .maybeSingle(); // maybeSingle est plus robuste que single()
-
-        if (profile) {
-            userProfile = profile;
-            if(userNameSpan) userNameSpan.innerText = profile.prenom;
-        }
-
-        // Mise à jour de l'interface
-        if(navAuth) navAuth.style.display = 'none';
-        if(navUser) navUser.style.display = 'block';
-        if(navLogout) navLogout.style.display = 'block';
-        
-    } else {
-        // Mode Déconnecté
-        currentUser = null;
-        userProfile = null;
-        if(navAuth) navAuth.style.display = 'block';
-        if(navUser) navUser.style.display = 'none';
-        if(navLogout) navLogout.style.display = 'none';
-    }
 });
