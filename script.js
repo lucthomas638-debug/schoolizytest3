@@ -2529,22 +2529,25 @@ sb.auth.onAuthStateChange(async (event, session) => {
     if (session) {
         currentUser = session.user;
         
-        // On récupère les infos du profil de manière sécurisée
+        // On récupère les infos du profil
         const { data: profile, error } = await sb
             .from('profiles')
             .select('*')
             .eq('id', currentUser.id)
-            .maybeSingle(); // maybeSingle est plus robuste que single()
+            .maybeSingle();
 
         if (profile) {
             userProfile = profile;
+            // On injecte uniquement le prénom
             if(userNameSpan) userNameSpan.innerText = profile.prenom;
         }
 
-        // Mise à jour de l'interface
+        // --- MISE À JOUR DE L'INTERFACE (CORRIGÉE) ---
         if(navAuth) navAuth.style.display = 'none';
-        if(navUser) navUser.style.display = 'block';
-        if(navLogout) navLogout.style.display = 'block';
+        
+        // On met 'flex' pour que l'émoji et le nom s'alignent proprement
+        if(navUser) navUser.style.display = 'flex'; 
+        if(navLogout) navLogout.style.display = 'flex';
         
     } else {
         // Mode Déconnecté
