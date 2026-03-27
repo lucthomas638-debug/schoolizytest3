@@ -2481,9 +2481,19 @@ math-field::part(virtual-keyboard-toggle) {
                 <li onclick="navigateTo('view-home')">Accueil</li>
                 <li onclick="navigateTo('view-apropos')">À propos</li>
                 <li onclick="navigateTo('view-outils')">Outils</li>
+            
                 <li id="nav-auth" onclick="navigateTo('view-auth')" style="color: var(--brand-school); font-weight: bold;">Connexion</li>
-                <li id="nav-user" style="display:none; color: var(--accent-green);">Salut, <span id="user-name"></span></li>
-                <li id="nav-logout" onclick="handleLogout()" style="display:none; color: var(--accent-red);">Déconnexion</li>
+            
+                <li id="nav-user" style="display:none; margin-left: 10px;">
+                    <div onclick="navigateTo('view-auth')" style="display: flex; align-items: center; gap: 8px; background: #f4effc; padding: 6px 15px; border-radius: 40px; border: 1px solid #e9defa; cursor: pointer;">
+                        <span style="font-size: 1.1rem;">💼</span>
+                        <span id="user-name" style="color: var(--brand-school); font-weight: 700; font-size: 0.9rem;"></span>
+                    </div>
+                </li>
+            
+                <li id="nav-logout" onclick="handleLogout()" style="display:none; cursor: pointer; margin-left: 5px; font-size: 1.2rem;" title="Déconnexion">
+                    🚪
+                </li>
             </ul>
         </nav>
     
