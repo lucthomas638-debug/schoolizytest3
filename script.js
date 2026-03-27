@@ -37,6 +37,19 @@ let currentScore = 0; // Ajoute celle-ci si elle manque
 let speedrunHistory = [];
 let currentChapterForReset = null;
 
+// Tout en haut de ton script.js
+async function checkInitialSession() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+        currentUser = session.user;
+        // On laisse onAuthStateChange gérer l'affichage du nom
+    } else {
+        // Optionnel : forcer le retour à l'accueil si non connecté
+        // navigateTo('view-home'); 
+    }
+}
+checkInitialSession();
+
 /* =============================================================================
    2. SYSTÈME DE NAVIGATION & VISIBILITÉ CALCULATRICE
    ============================================================================= */
