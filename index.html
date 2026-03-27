@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -2254,31 +2255,26 @@ input:checked + .slider:before { transform: translateX(21px); }
    STYLE DE L'ÉDITEUR MATHÉMATIQUE (MATHLIVE)
    ============================================================================= */
 
-/* =============================================================================
-   STYLE DE L'ÉDITEUR MATHÉMATIQUE (MATHLIVE) - VERSION NETTOYÉE
-   ============================================================================= */
-
 :root {
-    /* Couleurs du clavier virtuel */
+    /* Couleurs personnalisées pour le clavier virtuel MathLive */
     --keyboard-background: #fdfdfd;
     --keycap-background: #ffffff;
-    --keycap-text: var(--brand-school);
-    --keycap-background-hover: #fffcf5;
-    --keycap-border-bottom: #ddd;
+    --keycap-text: var(--brand-school);         /* Touches en violet */
+    --keycap-background-hover: #fffcf5;         /* Fond jaune clair au survol */
+    --keycap-border-bottom: #ddd;               /* Effet 3D léger sous les touches */
     
-    /* Curseur et sélection */
+    /* Curseur et sélection dans le champ de saisie */
     --caret-color: var(--brand-school);
     --selection-background-color: rgba(132, 89, 207, 0.2);
-    --keyboard-toolbar-text: var(--brand-school);
 
-    /* --- TAILLE DU CLAVIER --- */
-    --keyboard-height: 220px !important; 
+    /* On force aussi la couleur des 3 barres (menu) */
+    --keyboard-toolbar-text: var(--brand-school);
 }
 
-/* Le champ de saisie */
+/* Personnalisation du champ de saisie MathLive */
 math-field {
-    font-size: 1.5rem !important; /* Police maîtrisée */
-    padding: 12px;
+    font-size: 2.2rem;
+    padding: 15px;
     border: 2px solid var(--brand-school);
     border-radius: 15px;
     background: white;
@@ -2287,147 +2283,34 @@ math-field {
     transition: border-color 0.3s;
 }
 
-/* État focus */
+/* Changement de couleur quand on clique dans le champ */
 math-field:focus-within {
     border-color: var(--brand-izy) !important;
     box-shadow: 0 0 0 1px var(--brand-izy);
 }
 
-/* Le clavier virtuel (Bordure et Hauteur) */
+/* Bordure haute du clavier quand il apparaît */
 math-field::part(virtual-keyboard) {
-    max-height: 220px !important; /* Force la réduction de taille */
     border-top: 3px solid var(--brand-school);
     border-radius: 20px 20px 0 0;
-    box-shadow: 0 -5px 20px rgba(0,0,0,0.15);
-    background-color: var(--keyboard-background);
+    box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
 }
 
-/* Boutons interface clavier */
+/* On cache les boutons d'aide par défaut s'ils apparaissent */
 math-field::part(virtual-keyboard-toggle) {
     color: var(--brand-school);
 }
 
-/* Animation */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Alignement global de la page */
-#view-recite.active {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start; /* Bouton Retour à gauche */
-    justify-content: flex-start;
-    min-height: 100vh;
-    padding-top: 10px; /* On réduit au maximum l'espace en haut */
-}
-
-/* Centrage forcé des éléments principaux */
-#view-recite .view-title, 
-#recite-results,
-#recite-game-zone,
-#recite-timer-bar {
-    align-self: center; 
-}
-
-/* Réduction de l'espace du titre pour faire gagner 50px de hauteur */
-#view-recite .view-title {
-    margin-top: 0px !important;
-    margin-bottom: 15px !important;
-    padding-bottom: 5px !important;
-}
-
-/* LE BLOC DE RÉSULTATS REMONTÉ */
-#recite-results {
-    margin-top: 0px !important; /* On le colle quasiment au titre */
-    margin-bottom: 20px !important; /* On libère le bas */
-    width: 95%;
-    max-width: 1000px;
-    padding: 20px !important; /* On resserre l'intérieur */
-}
-
-.view {
-    display: none; /* Cache tout par défaut */
-}
-
-.view.active {
-    display: block; /* Affiche uniquement la vue active */
-}
-
-/* Optionnel : si tu veux que la vue auth soit centrée proprement */
-#view-auth.active {
-    display: flex;
-    flex-direction: column;
-}
-
-/* Aligner le bouton retour à gauche proprement */
-#view-auth {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start; /* Aligne le bouton retour à gauche */
-    padding: 20px;
-}
-
-#view-auth .view-title {
-    align-self: center; /* Garde le titre "MON COMPTE" au centre */
-}
-
-/* Container du formulaire blanc */
-.info-page-content {
-    align-self: center; /* Centre le bloc blanc sur la page */
-    background: white;
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-    width: 100%;
-    max-width: 450px;
-}
-
-/* Correction des inputs Nom/Prénom (pour qu'ils soient identiques) */
-#signup-fields > div {
-    display: flex;
-    gap: 10px;
-    width: 100%;
-}
-
-#signup-fields input, 
-#view-auth input.search-input {
-    height: 50px;
-    border-radius: 12px !important; /* Force l'arrondi uniforme */
-    border: 1px solid #eee;
-    padding: 0 15px;
-    font-size: 1rem;
-    width: 100%;
-    box-sizing: border-box; /* Évite que le bouton dépasse de la boite */
-}
-
-/* Le bouton "Créer mon compte" */
-#btn-auth-action {
-    width: 100%;
-    height: 50px;
-    border-radius: 50px; /* Style pilule plus élégant */
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-top: 10px;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-#btn-auth-action:active {
-    transform: scale(0.98);
-}
-
-/* CORRECTION : Taille équilibrée pour le champ téléphone */
-#auth-phone.search-input {
-    height: 60px !important; 
-    line-height: 60px !important;
-    font-size: 1.15rem !important; 
-    padding: 0 18px !important;
-    border-radius: 12px !important;
-    margin-bottom: 15px;
-}
+        from { 
+            opacity: 0; 
+            transform: translateY(-10px); 
+        }
+        to { 
+            opacity: 1; 
+            transform: translateY(0); 
+        }
+    }
     
 </style>
 
@@ -2464,9 +2347,6 @@ math-field::part(virtual-keyboard-toggle) {
                 <li onclick="navigateTo('view-home')">Accueil</li>
                 <li onclick="navigateTo('view-apropos')">À propos</li>
                 <li onclick="navigateTo('view-outils')">Outils</li>
-                <li id="nav-auth" onclick="navigateTo('view-auth')" style="color: var(--brand-school); font-weight: bold;">Connexion</li>
-                <li id="nav-user" style="display:none; color: var(--accent-green);">Salut, <span id="user-name"></span></li>
-                <li id="nav-logout" onclick="handleLogout()" style="display:none; color: var(--accent-red);">Déconnexion</li>
             </ul>
         </nav>
     
@@ -2474,31 +2354,6 @@ math-field::part(virtual-keyboard-toggle) {
 
     <!-- MAIN CONTAINER -->
     <main id="app-container">
-
-        <div id="view-auth" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-home')">← Retour</div>
-            <h2 class="view-title">Mon Compte</h2>
-            
-            <div class="info-page-content" style="max-width: 450px; margin: 0 auto;">
-                <div id="auth-form-box">
-                    <div id="signup-fields" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;">
-                        <div style="display: flex; gap: 10px;">
-                            <input type="text" id="reg-prenom" placeholder="Prénom" class="search-input" style="flex:1; border:1px solid #eee;">
-                            <input type="text" id="reg-nom" placeholder="Nom" class="search-input" style="flex:1; border:1px solid #eee;">
-                        </div>
-                        <input type="tel" id="auth-phone" placeholder="Numéro de téléphone" class="search-input" style="width:100%; border:1px solid #eee;">
-                    </div>
-        
-                    <input type="email" id="auth-email" placeholder="Email" class="search-input" style="width:100%; border:1px solid #eee; margin-bottom:10px;">
-                    <input type="password" id="auth-password" placeholder="Mot de passe" class="search-input" style="width:100%; border:1px solid #eee; margin-bottom:20px;">
-                    
-                    <button id="btn-auth-action" class="btn-nav primary" style="width:100%; justify-content:center; margin-bottom:15px;" onclick="handleAuth()">Créer mon compte</button>
-                    
-                    <p id="auth-switch" style="font-size: 0.85rem; cursor:pointer; color: var(--brand-school); text-align: center;" onclick="toggleAuthMode()">Déjà un compte ? Se connecter</p>
-                </div>
-                <p id="auth-msg" style="margin-top:15px; font-size:0.9rem; font-weight:bold; display:none; text-align: center;"></p>
-            </div>
-        </div>
         
         <!-- VUE 1 : ACCUEIL (FIXE, SANS SCROLL) -->
         <div id="view-home" class="view active">
@@ -3077,23 +2932,23 @@ math-field::part(virtual-keyboard-toggle) {
     </div>
 </div>
 
-<div id="view-recite" class="view container" style="padding-bottom: 300px;">
+<div id="view-recite" class="view container">
     <div class="btn-back" onclick="navigateTo('view-chapters')">← Retour</div>
-    
     <h2 class="view-title">Récitation</h2>
-    
-    <div id="recite-timer-bar" style="display:none; flex-direction:column; align-items:center; margin-bottom:20px;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 2rem;">⏱️</span>
-            <div id="recite-time-left" style="font-size: 2.5rem; font-weight: 900; color: var(--brand-school);">60</div>
-        </div>
-        <div id="recite-score-container" style="font-weight: bold; color: var(--accent-green);">
-            Score : <span id="recite-score">0</span>
-        </div>
-    </div>
 
-    <div id="recite-game-zone" style="position: relative; background: white; padding: 30px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center; min-height: 400px; display: flex; flex-direction: column; justify-content: center;">
+    <div id="recite-game-zone" class="recite-main-box" style="max-width: 700px; margin: 0 auto; text-align: center;">
         
+        <div id="recite-timer-bar" style="display:none; justify-content: space-between; align-items: center; background: #fff5f5; padding: 12px 25px; border-radius: 15px; margin-bottom: 25px; border: 2px solid var(--accent-red); box-shadow: 0 4px 10px rgba(220, 53, 69, 0.1);">
+            <div style="font-size: 1.6rem; font-weight: 900; color: var(--accent-red); font-family: monospace;">
+                ⏱️ <span id="recite-time-left">60</span>s
+            </div>
+            <div style="font-size: 1.2rem; font-weight: 800; color: var(--brand-school); background: white; padding: 5px 15px; border-radius: 20px;">
+                Score : <span id="recite-score" style="color: var(--accent-green);">0</span>
+            </div>
+        </div>
+
+        <p id="recite-question" style="font-size: 1.4rem; font-weight: 800; color: var(--text-dark); margin-bottom: 15px;"></p>
+
         <div style="display: flex; justify-content: center; margin-bottom: 25px;">
             <button id="btn-start-speedrun" class="btn-sablier" onclick="startSpeedRun()">
                 <span>⏳</span>
@@ -3103,52 +2958,43 @@ math-field::part(virtual-keyboard-toggle) {
             </button>
         </div>
 
-        <h3 id="recite-question" style="font-size: 1.5rem; margin-bottom: 2rem; color: var(--text-dark);">Chargement...</h3>
+        <math-field id="math-input" virtual-keyboard-mode="onfocus" style="width: 100%; border-radius: 15px; border: 2px solid var(--brand-school); font-size: 2.2rem; padding: 15px; background: white; outline: none;"></math-field>
 
-        <div style="max-width: 500px; margin: 0 auto; width: 100%;">
-            <math-field id="math-input"></math-field>
+        <button id="btn-check-recite" class="btn-nav" style="background: var(--brand-school); color: white; border:none; width: 100%; margin-top: 25px; height: 55px; justify-content: center; font-size: 1.1rem;" onclick="checkReciteAnswer()">
+            Vérifier la réponse
+        </button>
+
+        <div id="recite-feedback" style="display:none; margin-top: 20px; padding: 25px; border-radius: 15px; animation: fadeIn 0.3s ease-out;">
+            <p id="feedback-text" style="font-weight: bold; font-size: 1.3rem; margin-bottom: 15px;"></p>
             
-            <button id="btn-check-recite" class="btn-nav" style="width: 100%; margin-top: 20px; justify-content: center;" onclick="checkReciteAnswer()">
-                Vérifier la réponse
-            </button>
-        </div>
-
-        <div id="recite-feedback" style="display:none; margin-top: 20px; padding: 15px; border-radius: 15px;">
-            <p id="feedback-text" style="font-weight: bold;"></p>
-            <div id="correction-area" style="margin-top: 10px; font-size: 1.1rem;"></div>
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button class="btn-nav" style="flex: 1; justify-content: center;" onclick="goToNextQuestion()">Question suivante</button>
-                <button id="btn-force-correct" class="btn-nav" style="display:none; background: #eee; border:none; color: #666;" onclick="forceValidAnswer()">J'avais raison</button>
+            <div id="correction-area" style="margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.7); border-radius: 12px; font-size: 1.4rem; border: 1px solid rgba(0,0,0,0.05);">
+                </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button id="btn-next-recite" class="btn-nav" style="flex: 2; background: var(--brand-school); color: white; border: none; justify-content: center; height: 50px;" onclick="goToNextQuestion()">
+                    Continuer ›
+                </button>
+                <button id="btn-force-correct" class="btn-nav" style="flex: 1; background: #f0f0f0; color: #777; border: none; font-size: 0.85rem; justify-content: center; height: 50px;" onclick="forceValidAnswer()">
+                    C'était juste
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="recite-results" style="display:none; max-width: 1000px; margin: 20px auto; padding: 30px; background: white; border-radius: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border: 2px solid var(--brand-school);">
-        <h2 style="color: var(--brand-school); font-size: 2.2rem; margin-bottom: 25px; text-align: center;">Résultats du Défi ⏱️</h2>
+    <div id="recite-results" style="display:none; text-align: center; max-width: 600px; margin: 40px auto; padding: 40px; background: white; border-radius: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border: 2px solid var(--brand-school);">
+        <h2 style="color: var(--brand-school); font-size: 2.2rem; margin-bottom: 15px; -webkit-text-stroke: 0px;">Terminé ! ⏱️</h2>
         
-        <div id="speedrun-layout" style="display: flex; gap: 30px; align-items: flex-start; flex-wrap: wrap;">
-            <div id="speedrun-score-side" style="flex: 1; min-width: 250px;">
-                <div style="background: #fcfaff; padding: 30px; border-radius: 20px; border: 1px dashed var(--brand-school); text-align: center; margin-bottom: 20px;">
-                    <span id="speedrun-final-score" style="font-size: 6rem; font-weight: 900; color: var(--accent-green); display: block; line-height: 1;">0</span>
-                    <p style="font-size: 1.2rem; color: #666; font-weight: 600;">formules maîtrisées</p>
-                </div>
-                
-                <button class="btn-nav" style="width:100%; background:var(--accent-orange); color:white; border:none; margin-bottom:12px; justify-content:center; height: 50px;" onclick="openRecitation(currentChapterForReset)">
-                    🔄 Retenter le défi
-                </button>
-                <button class="btn-nav" style="width: 100%; background: var(--brand-school); color: white; border: none; justify-content: center; height: 50px;" onclick="navigateTo('view-chapters')">
-                    Retour aux chapitres
-                </button>
-            </div>
-
-            <div id="speedrun-recap-side" style="flex: 1.5; min-width: 300px; background: #fafafa; border-radius: 20px; border: 1px solid #eee; padding: 20px;">
-                <h3 style="text-align:center; margin-bottom:15px; font-size:1.1rem; color:var(--brand-school);">Analyse des réponses</h3>
-                <div id="speedrun-recap-list" style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
-                    </div>
-            </div>
+        <div style="background: #fcfaff; padding: 20px; border-radius: 20px; margin-bottom: 30px; border: 1px dashed var(--brand-school);">
+            <span id="final-score-big" style="font-size: 5rem; font-weight: 900; color: var(--accent-green); display: block; line-height: 1;">0</span>
+            <p style="font-size: 1.2rem; color: #666; font-weight: 600; margin-top: 10px;">formules maîtrisées en 1 minute</p>
         </div>
+
+        <button class="btn-nav" style="width: 100%; background: var(--brand-school); color: white; border: none; justify-content: center; height: 55px; font-size: 1.1rem;" onclick="navigateTo('view-chapters')">
+            Retour aux chapitres
+        </button>
     </div>
 </div>
     
 </body>
 </html>
+
