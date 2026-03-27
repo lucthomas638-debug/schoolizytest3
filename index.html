@@ -2355,95 +2355,78 @@ math-field::part(virtual-keyboard-toggle) {
     display: block; /* Affiche uniquement la vue active */
 }
 
-/* =============================================================================
-   VUE AUTHENTIFICATION (MON COMPTE) - DESIGN UNIFIÉ
-   ============================================================================= */
-
-/* 1. Structure de la page */
+/* Optionnel : si tu veux que la vue auth soit centrée proprement */
 #view-auth.active {
     display: flex;
     flex-direction: column;
-    align-items: flex-start; /* Bouton retour à gauche */
+}
+
+/* Aligner le bouton retour à gauche proprement */
+#view-auth {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Aligne le bouton retour à gauche */
     padding: 20px;
-    min-height: 100vh;
 }
 
 #view-auth .view-title {
-    align-self: center; /* Titre reste au milieu */
-    margin-bottom: 20px;
+    align-self: center; /* Garde le titre "MON COMPTE" au centre */
 }
 
-/* 2. Le conteneur blanc du formulaire */
-#view-auth .info-page-content {
-    align-self: center;
+/* Container du formulaire blanc */
+.info-page-content {
+    align-self: center; /* Centre le bloc blanc sur la page */
     background: white;
     padding: 30px;
-    border-radius: 24px;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.07);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
     width: 100%;
     max-width: 450px;
-    box-sizing: border-box;
 }
 
-/* 3. HARMONISATION TOTALE DES CHAMPS (Inputs) */
-#view-auth input.search-input {
-    height: 60px !important;            /* Hauteur confortable et moderne */
-    line-height: 60px !important;
-    width: 100% !important;
-    border-radius: 16px !important;     /* Arrondi plus doux */
-    border: 1.5px solid #f0f0f0 !important;
-    background-color: #fafafa !important;
-    padding: 0 20px !important;
-    font-size: 1.1rem !important;       /* Texte bien lisible */
-    margin-bottom: 15px !important;
-    box-sizing: border-box !important;
-    transition: border-color 0.2s, background-color 0.2s;
-}
-
-#view-auth input.search-input:focus {
-    border-color: var(--brand-school) !important;
-    background-color: white !important;
-    outline: none;
-}
-
-/* 4. Gestion spécifique de la ligne Nom/Prénom */
+/* Correction des inputs Nom/Prénom (pour qu'ils soient identiques) */
 #signup-fields > div {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     width: 100%;
 }
 
-/* 5. Bouton d'action principal */
+#signup-fields input, 
+#view-auth input.search-input {
+    height: 50px;
+    border-radius: 12px !important; /* Force l'arrondi uniforme */
+    border: 1px solid #eee;
+    padding: 0 15px;
+    font-size: 1rem;
+    width: 100%;
+    box-sizing: border-box; /* Évite que le bouton dépasse de la boite */
+}
+
+/* Le bouton "Créer mon compte" */
 #btn-auth-action {
     width: 100%;
-    height: 60px !important;            /* Même hauteur que les inputs */
-    border-radius: 50px !important;     /* Style pilule */
-    font-size: 1.1rem;
+    height: 50px;
+    border-radius: 50px; /* Style pilule plus élégant */
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-top: 10px;
     cursor: pointer;
-    background-color: var(--brand-school);
-    color: white;
-    border: none;
-    transition: transform 0.2s, filter 0.2s;
-}
-
-#btn-auth-action:hover {
-    filter: brightness(1.1);
+    transition: transform 0.2s;
 }
 
 #btn-auth-action:active {
-    transform: scale(0.97);
+    transform: scale(0.98);
 }
 
-/* 6. Lien de bascule (S'inscrire / Se connecter) */
-#auth-switch {
-    text-align: center;
-    margin-top: 20px;
-    font-weight: 600;
-    color: #888;
+/* CORRECTION : Taille équilibrée pour le champ téléphone */
+#auth-phone.search-input {
+    height: 60px !important; 
+    line-height: 60px !important;
+    font-size: 1.15rem !important; 
+    padding: 0 18px !important;
+    border-radius: 12px !important;
+    margin-bottom: 15px;
 }
     
 </style>
@@ -2481,21 +2464,10 @@ math-field::part(virtual-keyboard-toggle) {
                 <li onclick="navigateTo('view-home')">Accueil</li>
                 <li onclick="navigateTo('view-apropos')">À propos</li>
                 <li onclick="navigateTo('view-outils')">Outils</li>
-            
                 <li id="nav-auth" onclick="navigateTo('view-auth')" style="color: var(--brand-school); font-weight: bold;">Connexion</li>
-            
-                <li id="nav-user" style="display:none; margin-left: 10px;">
-                    <div onclick="navigateTo('view-auth')" style="display: flex; align-items: center; gap: 8px; background: #f4effc; padding: 6px 15px; border-radius: 40px; border: 1px solid #e9defa; cursor: pointer;">
-                        <span style="font-size: 1.1rem;">💼</span>
-                        <span id="user-name" style="color: var(--brand-school); font-weight: 700; font-size: 0.9rem;"></span>
-                    </div>
-                </li>
-            
-                <li id="nav-logout" onclick="handleLogout()" style="display:none; cursor: pointer; margin-left: 5px; font-size: 1.2rem;" title="Déconnexion">
-                    🚪
-                </li>
+                <li id="nav-user" style="display:none; color: var(--accent-green);">Salut, <span id="user-name"></span></li>
+                <li id="nav-logout" onclick="handleLogout()" style="display:none; color: var(--accent-red);">Déconnexion</li>
             </ul>
-            </div>
         </nav>
     
     </header>
