@@ -163,19 +163,16 @@ async function checkContentAndNavigate(subject) {
 
 // Étape 2 : Quand on choisit un mode (ex: Quiz)
 function chooseMode(mode) {
+    if (!currentUser) {
+        alert("Veuillez vous connecter pour accéder à ces fonctionnalités.");
+        return; // On arrête tout ici, l'utilisateur reste sur la vue actuelle
+    }
     state.currentMode = mode;
-    // On va chercher les chapitres disponibles pour ce sujet et cette classe
     loadChapters();
 }
 
 // Étape 3 : Charger la liste des chapitres depuis Supabase
 async function loadChapters() {
-
-      if (!currentUser) {
-           alert("🔒 Connecte-toi pour accéder aux chapitres !");
-           navigateTo('view-auth');
-           return;
-       }
    
     const { data, error } = await sb
         .from('lessons')
