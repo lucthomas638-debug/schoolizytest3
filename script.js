@@ -9,7 +9,7 @@ const sb = supabase.createClient(supabaseUrl, supabaseKey);
 const levelsData = {
     lycee: [{ name: "Seconde", code: "seconde" }, { name: "Première", code: "premiere" }, { name: "Terminale", code: "terminale" }],
     college: [{ name: "3ème", code: "3eme" }],
-    primaire: [{ name: "CP", code: "cp" }, { name: "CE1", code: "ce1" }, { name: "CchoosE2", code: "ce2" }, { name: "CM1", code: "cm1" }, { name: "CM2", code: "cm2" }]
+    primaire: [{ name: "CP", code: "cp" }, { name: "CE1", code: "ce1" }, { name: "CE2", code: "ce2" }, { name: "CM1", code: "cm1" }, { name: "CM2", code: "cm2" }]
 };
 
 const subjectsData = {
@@ -163,9 +163,10 @@ async function checkContentAndNavigate(subject) {
 
 // Étape 2 : Quand on choisit un mode (ex: Quiz)
 function chooseMode(mode) {
+    // On rafraîchit la vérification de l'utilisateur
     if (!currentUser) {
         alert("Veuillez vous connecter pour accéder à ces fonctionnalités.");
-        return; // On arrête tout ici, l'utilisateur reste sur la vue actuelle
+        return; 
     }
     state.currentMode = mode;
     loadChapters();
