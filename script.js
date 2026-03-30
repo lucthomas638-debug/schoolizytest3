@@ -162,12 +162,19 @@ async function checkContentAndNavigate(subject) {
 }
 
 // Étape 2 : Quand on choisit un mode (ex: Quiz)
-function chooseMode(mode) {
-    // On rafraîchit la vérification de l'utilisateur
-    if (!currentUser) {
+async function chooseMode(mode) {
+    // On demande à Supabase qui est là maintenant
+    const { data } = await sb.auth.getUser();
+    const user = data.user;
+
+    if (!user) {
         alert("Veuillez vous connecter pour accéder à ces fonctionnalités.");
+        navigateTo('view-auth'); // On aide l'utilisateur en l'envoyant sur la page auth
         return; 
     }
+    
+    // Si on arrive ici, l'utilisateur est bien connecté
+    currentUser = user; 
     state.currentMode = mode;
     loadChapters();
 }
@@ -2520,37 +2527,43 @@ async function handleLogout() {
 
 // 4. Écouteur automatique d'état (Version Sécurisée)
 sb.auth.onAuthStateChange(async (event, session) => {
-    const navAuth = document.getElementById('nav-auth');
-    const navUser = document.getElementById('nav-user');
-    const navLogout = document.getElementById('nav-logout');
-    const userNameSpan = document.getElementById('user-name');
+    // On attend un micro-délai pour être sûr que le HTML est prêt
+    setTimeout(async () => {
+        const navAuth = document.getElementById('nav-auth');
+        const navUser = document.getElementById('nav-user');
+        const navLogout = document.getElementById('nav-logout');
+        const userNameSpan = document.getElementById('user-name');
 
-    if (session && session.user) {
-        currentUser = session.user;
-        
-        try {
-            const { data: profile } = await sb
-                .from('profiles')
-                .select('prenom')
-                .eq('id', currentUser.id)
-                .maybeSingle();
+        if (session && session.user) {
+            currentUser = session.user;
+            
+            try {
+                const { data: profile, error } = await sb
+                    .from('profiles')
+                    .select('prenom')
+                    .eq('id', currentUser.id)
+                    .maybeSingle();
 
-            if (profile && userNameSpan) {
-                userProfile = profile;
-                userNameSpan.innerText = profile.prenom;
+                if (profile && userNameSpan) {
+                    userProfile = profile;
+                    userNameSpan.innerText = profile.prenom;
+                }
+            } catch (e) {
+                console.warn("Erreur récupération profil:", e);
             }
-        } catch (e) {
-            console.warn("Erreur récupération profil:", e);
-        }
 
-        if(navAuth) navAuth.style.display = 'none';
-        if(navUser) navUser.style.display = 'flex'; // Utilise flex pour l'alignement
-        if(navLogout) navLogout.style.display = 'block';
-        
-    } else {
-        currentUser = null;
-        if(navAuth) navAuth.style.display = 'block';
-        if(navUser) navUser.style.display = 'none';
-        if(navLogout) navLogout.style.display = 'none';
-    }
+            // Mise à jour de l'interface avec sécurité (if exist)
+            if (navAuth) navAuth.style.display = 'none';
+            if (navUser) navUser.style.display = 'flex'; 
+            if (navLogout) navLogout.style.display = 'block';
+            
+        } else {
+            // Mode déconnecté
+            currentUser = null;
+            userProfile = null;
+            if (navAuth) navAuth.style.display = 'block';
+            if (navUser) navUser.style.display = 'none';
+            if (navLogout) navLogout.style.display = 'none';
+        }
+    }, 10);
 });
