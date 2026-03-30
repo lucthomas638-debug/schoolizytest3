@@ -2458,6 +2458,7 @@ function toggleAuthMode() {
 
 // 2. Logique principale (SignUp / Login)
 async function handleAuth() {
+   alert("Le bouton fonctionne !"); // AJOUTE CETTE LIGNE TEMPORAIREMENT
     const email = document.getElementById('auth-email').value;
     const password = document.getElementById('auth-password').value;
     const msg = document.getElementById('auth-msg');
@@ -2524,30 +2525,30 @@ sb.auth.onAuthStateChange(async (event, session) => {
     const navLogout = document.getElementById('nav-logout');
     const userNameSpan = document.getElementById('user-name');
 
-    if (session) {
+    if (session && session.user) {
         currentUser = session.user;
         
-        // On récupère les infos du profil de manière sécurisée
-        const { data: profile, error } = await sb
-            .from('profiles')
-            .select('*')
-            .eq('id', currentUser.id)
-            .maybeSingle(); // maybeSingle est plus robuste que single()
+        try {
+            const { data: profile } = await sb
+                .from('profiles')
+                .select('prenom')
+                .eq('id', currentUser.id)
+                .maybeSingle();
 
-        if (profile) {
-            userProfile = profile;
-            if(userNameSpan) userNameSpan.innerText = profile.prenom;
+            if (profile && userNameSpan) {
+                userProfile = profile;
+                userNameSpan.innerText = profile.prenom;
+            }
+        } catch (e) {
+            console.warn("Erreur récupération profil:", e);
         }
 
-        // Mise à jour de l'interface
         if(navAuth) navAuth.style.display = 'none';
-        if(navUser) navUser.style.display = 'block';
+        if(navUser) navUser.style.display = 'flex'; // Utilise flex pour l'alignement
         if(navLogout) navLogout.style.display = 'block';
         
     } else {
-        // Mode Déconnecté
         currentUser = null;
-        userProfile = null;
         if(navAuth) navAuth.style.display = 'block';
         if(navUser) navUser.style.display = 'none';
         if(navLogout) navLogout.style.display = 'none';
