@@ -78,19 +78,29 @@
         .nav-links {
             list-style: none;
             display: flex;
-            gap: 2rem;
-            align-items: center; /* 👈 Aligne verticalement tous les boutons au centre */
+            gap: 2rem; /* Espacement normal pour Accueil, À propos, Outils */
+            align-items: center;
+            width: 100%; /* Permet d'utiliser tout l'espace pour pousser à droite */
         }
         
         .nav-links li {
             cursor: pointer;
-            font-weight: 600;
+            font-weight: 500; /* Retour au poids normal (pas gras) */
             transition: color 0.3s;
             display: flex;
-            align-items: center; /* Aligne l'icône 💼 et le texte à l'intérieur du li */
+            align-items: center;
         }
     
         .nav-links li:hover { color: var(--brand-school); }
+
+        /* On pousse le badge utilisateur et la déconnexion tout à droite */
+        #nav-user {
+            margin-left: auto; /* La magie est ici : ça pousse tout ce qui suit vers la droite */
+            color: var(--brand-school) !important;
+            font-weight: 600 !important; /* Un tout petit peu plus épais que les autres mais pas "Gras" */
+            cursor: default;
+            gap: 8px; /* Ajoute l'espace entre la mallette et le prénom */
+        }
 
         /* --- CONTENEUR PRINCIPAL DES VUES --- */
         main {
