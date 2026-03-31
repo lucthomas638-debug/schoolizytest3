@@ -2415,6 +2415,29 @@ math-field::part(virtual-keyboard-toggle) {
     filter: brightness(1.1);
     transform: translateY(-2px);
 }
+
+/* Style pour le prénom (💼 Prénom) */
+.user-badge {
+    color: var(--brand-school) !important; /* Violet */
+    font-weight: 800 !important;
+    cursor: default;
+}
+
+/* Style pour le bouton Déconnexion (Violet encadré orange) */
+.btn-logout-izy {
+    color: var(--brand-school) !important; /* Texte Violet */
+    border: 2px solid var(--brand-izy) !important; /* Encadré Orange (izy) */
+    padding: 5px 15px !important;
+    border-radius: 50px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.btn-logout-izy:hover {
+    background-color: var(--brand-izy);
+    color: white !important;
+    transform: translateY(-2px);
+}
     
 </style>
 
@@ -2447,14 +2470,14 @@ math-field::part(virtual-keyboard-toggle) {
                 </button>
             </div>
             </div>
-            <ul class="nav-links">
-                <li onclick="navigateTo('view-home')">Accueil</li>
-                <li onclick="navigateTo('view-apropos')">À propos</li>
-                <li onclick="navigateTo('view-outils')">Outils</li>
-                <li id="nav-auth" onclick="navigateTo('view-auth')" style="color: var(--brand-school); font-weight: bold;">Connexion</li>
-                <li id="nav-user" style="display:none; color: var(--accent-green);">Salut, <span id="user-name"></span></li>
-                <li id="nav-logout" onclick="handleLogout()" style="display:none; color: var(--accent-red);">Déconnexion</li>
-            </ul>
+                <ul class="nav-links">
+                    <li onclick="navigateTo('view-home')">Accueil</li>
+                    <li onclick="navigateTo('view-apropos')">À propos</li>
+                    <li onclick="navigateTo('view-outils')">Outils</li>
+                    <li id="nav-auth" onclick="navigateTo('view-auth')">Connexion</li>
+                    <li id="nav-user" class="user-badge" style="display:none;">💼 <span id="user-name"></span></li>
+                    <li id="nav-logout" class="btn-logout-izy" onclick="handleLogout()" style="display:none;">Déconnexion</li>
+                </ul>
         </nav>
     
     </header>
