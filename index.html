@@ -74,17 +74,22 @@
         }
         .logo span { color: var(--brand-izy); }
 
+        /* --- NAVIGATION HEADER (MISE À JOUR) --- */
         .nav-links {
             list-style: none;
             display: flex;
             gap: 2rem;
+            align-items: center; /* 👈 Aligne verticalement tous les boutons au centre */
         }
-
+        
         .nav-links li {
             cursor: pointer;
-            font-weight: 500;
+            font-weight: 600;
             transition: color 0.3s;
+            display: flex;
+            align-items: center; /* Aligne l'icône 💼 et le texte à l'intérieur du li */
         }
+    
         .nav-links li:hover { color: var(--brand-school); }
 
         /* --- CONTENEUR PRINCIPAL DES VUES --- */
@@ -2418,19 +2423,21 @@ math-field::part(virtual-keyboard-toggle) {
 
 /* Style pour le prénom (💼 Prénom) */
 .user-badge {
-    color: var(--brand-school) !important; /* Violet */
+    color: var(--brand-school) !important;
     font-weight: 800 !important;
     cursor: default;
+    margin-right: -10px; /* Rapproche un peu du bouton deconnexion */
 }
 
-/* Style pour le bouton Déconnexion (Violet encadré orange) */
+/* Style pour le bouton Déconnexion */
 .btn-logout-izy {
-    color: var(--brand-school) !important; /* Texte Violet */
-    border: 2px solid var(--brand-izy) !important; /* Encadré Orange (izy) */
-    padding: 5px 15px !important;
+    color: var(--brand-school) !important;
+    border: 2px solid var(--brand-izy) !important;
+    padding: 6px 18px !important; /* Ajustement léger pour le centrage */
     border-radius: 50px;
     font-weight: bold;
     transition: all 0.3s ease;
+    line-height: 1; /* Évite que le texte ne pousse les bords */
 }
 
 .btn-logout-izy:hover {
