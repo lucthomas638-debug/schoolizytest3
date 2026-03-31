@@ -2355,10 +2355,65 @@ math-field::part(virtual-keyboard-toggle) {
     display: block; /* Affiche uniquement la vue active */
 }
 
-/* Optionnel : si tu veux que la vue auth soit centrée proprement */
-#view-auth.active {
-    display: flex;
-    flex-direction: column;
+/* --- VUE AUTH (Connexion / Inscription) --- */
+
+/* La boîte blanche centrale */
+#view-auth .info-page-content {
+    max-width: 450px;
+    margin: 0 auto;
+    padding: 30px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+/* La ligne pour Prénom et Nom côte à côte */
+#signup-fields > div:first-child {
+    display: flex !important;
+    gap: 10px;
+    width: 100%;
+}
+
+/* On force les inputs de cette ligne à se partager l'espace */
+#signup-fields > div:first-child input {
+    flex: 1;
+    min-width: 0; /* Empêche le débordement sur petit écran */
+}
+
+/* Style général des inputs dans Auth */
+#view-auth .search-input {
+    width: 100%;
+    margin-bottom: 12px;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: 12px 15px;
+    font-size: 1rem;
+    box-sizing: border-box; /* IMPORTANT : empêche l'input de dépasser de la boîte */
+}
+
+/* Style spécifique pour le champ téléphone s'il doit être plus gros */
+#auth-phone {
+    height: 50px;
+}
+
+/* Le bouton principal */
+#btn-auth-action {
+    width: 100%;
+    height: 50px;
+    border-radius: 50px;
+    font-weight: 700;
+    text-transform: uppercase;
+    cursor: pointer;
+    background: var(--brand-school);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+    margin-bottom: 15px;
+}
+
+#btn-auth-action:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
 }
     
 </style>
@@ -3077,6 +3132,13 @@ math-field::part(virtual-keyboard-toggle) {
                     </div>
             </div>
         </div>
+    </div>
+    <div id="signup-fields" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;">
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="reg-prenom" placeholder="Prénom" class="search-input">
+            <input type="text" id="reg-nom" placeholder="Nom" class="search-input">
+        </div>
+        <input type="tel" id="auth-phone" placeholder="Numéro de téléphone" class="search-input">
     </div>
 </div>
 
