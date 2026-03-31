@@ -74,40 +74,30 @@
         }
         .logo span { color: var(--brand-izy); }
 
-        /* Le conteneur NAV doit prendre toute la largeur possible */
-        nav {
-            max-width: 1200px; /* Ou la largeur max que tu as choisie */
-            margin: 0 auto;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between; /* Ecarte le Logo à gauche et les Liens à droite */
-            align-items: center;
-        }
-        
-        /* La liste des liens doit aussi s'étendre */
+        /* 1. On s'assure que la liste prend toute la largeur restante */
         .nav-links {
             list-style: none;
             display: flex;
             align-items: center;
             gap: 2rem;
-            flex: 1; /* 👈 AJOUTE CECI : permet à la liste de prendre l'espace vide */
+            flex: 1; /* Prend tout le vide après le logo */
+            justify-content: flex-end; /* 👈 C'EST ÇA : pousse TOUT le contenu vers la droite */
         }
         
-        /* On remet les liens normaux sans gras */
+        /* 2. On retire les marges automatiques qui pourraient bloquer */
+        #nav-user, #nav-auth {
+            margin-left: 0 !important; 
+        }
+        
+        /* 3. Style des boutons (poids normal et espace 💼) */
         .nav-links li {
             cursor: pointer;
-            font-weight: 500; /* Poids normal */
+            font-weight: 500;
             color: var(--text-dark);
             display: flex;
             align-items: center;
-        }
-        
-        /* LA MAGIE : On pousse l'utilisateur et tout ce qui suit à droite */
-        #nav-user {
-            margin-left: auto; /* 👈 CE CODE pousse Emilien et Déconnexion tout à droite */
-            color: var(--brand-school) !important;
-            font-weight: 600 !important;
-            gap: 10px; /* Espace entre la mallette et le prénom */
+            gap: 8px; /* Espace pour le 💼 */
+            white-space: nowrap;
         }
 
         .nav-links li:hover { color: var(--brand-school); }
