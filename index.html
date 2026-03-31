@@ -2485,6 +2485,13 @@ math-field::part(virtual-keyboard-toggle) {
                 </div>
                 <p id="auth-msg" style="margin-top:15px; font-size:0.9rem; font-weight:bold; display:none; text-align: center;"></p>
             </div>
+                <div id="signup-fields" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;">
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="reg-prenom" placeholder="Prénom" class="search-input">
+                        <input type="text" id="reg-nom" placeholder="Nom" class="search-input">
+                    </div>
+                    <input type="tel" id="auth-phone" placeholder="Numéro de téléphone" class="search-input">
+                </div>
         </div>
         
         <!-- VUE 1 : ACCUEIL (FIXE, SANS SCROLL) -->
@@ -3132,13 +3139,6 @@ math-field::part(virtual-keyboard-toggle) {
                     </div>
             </div>
         </div>
-    </div>
-    <div id="signup-fields" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;">
-        <div style="display: flex; gap: 10px;">
-            <input type="text" id="reg-prenom" placeholder="Prénom" class="search-input">
-            <input type="text" id="reg-nom" placeholder="Nom" class="search-input">
-        </div>
-        <input type="tel" id="auth-phone" placeholder="Numéro de téléphone" class="search-input">
     </div>
 </div>
 
