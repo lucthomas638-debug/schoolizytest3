@@ -2373,13 +2373,9 @@ function renderAnnales(data) {
 
 // Cette fonction remplace "goBackToSubjects" pour être plus intelligente
 function backFromChapters() {
-    // Si l'élève est en mode Quiz/Exo/Flashcard, on le renvoie au choix du mode
-    // Sinon (mode lesson), on le renvoie à la liste des matières
-    if (state.currentMode !== 'lesson') {
-        navigateTo('view-mode');
-    } else {
-        openSubjectsPage(state.currentClassCode);
-    }
+    // On supprime la condition sur le mode 'lesson'.
+    // Peu importe le mode, on veut revenir au choix de l'activité (view-mode).
+    navigateTo('view-mode');
 }
 
 function goBackToClasses() { 
