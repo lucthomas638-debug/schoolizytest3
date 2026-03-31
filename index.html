@@ -74,33 +74,43 @@
         }
         .logo span { color: var(--brand-izy); }
 
-        /* --- NAVIGATION HEADER (MISE À JOUR) --- */
+        /* Le conteneur NAV doit prendre toute la largeur possible */
+        nav {
+            max-width: 1200px; /* Ou la largeur max que tu as choisie */
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between; /* Ecarte le Logo à gauche et les Liens à droite */
+            align-items: center;
+        }
+        
+        /* La liste des liens doit aussi s'étendre */
         .nav-links {
             list-style: none;
             display: flex;
-            gap: 2rem; /* Espacement normal pour Accueil, À propos, Outils */
             align-items: center;
-            width: 100%; /* Permet d'utiliser tout l'espace pour pousser à droite */
+            gap: 2rem;
+            flex: 1; /* 👈 AJOUTE CECI : permet à la liste de prendre l'espace vide */
         }
         
+        /* On remet les liens normaux sans gras */
         .nav-links li {
             cursor: pointer;
-            font-weight: 500; /* Retour au poids normal (pas gras) */
-            transition: color 0.3s;
+            font-weight: 500; /* Poids normal */
+            color: var(--text-dark);
             display: flex;
             align-items: center;
         }
-    
-        .nav-links li:hover { color: var(--brand-school); }
-
-        /* On pousse le badge utilisateur et la déconnexion tout à droite */
+        
+        /* LA MAGIE : On pousse l'utilisateur et tout ce qui suit à droite */
         #nav-user {
-            margin-left: auto; /* La magie est ici : ça pousse tout ce qui suit vers la droite */
+            margin-left: auto; /* 👈 CE CODE pousse Emilien et Déconnexion tout à droite */
             color: var(--brand-school) !important;
-            font-weight: 600 !important; /* Un tout petit peu plus épais que les autres mais pas "Gras" */
-            cursor: default;
-            gap: 8px; /* Ajoute l'espace entre la mallette et le prénom */
+            font-weight: 600 !important;
+            gap: 10px; /* Espace entre la mallette et le prénom */
         }
+
+        .nav-links li:hover { color: var(--brand-school); }
 
         /* --- CONTENEUR PRINCIPAL DES VUES --- */
         main {
