@@ -2497,6 +2497,49 @@ math-field::part(virtual-keyboard-toggle) {
     flex: 1; padding: 12px; border: none; border-radius: 50px;
     background: var(--brand-school); color: white; font-weight: bold; cursor: pointer;
 }
+
+/* Container de la ligne Prénom/Nom */
+.form-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.form-row input {
+    flex: 1;
+}
+
+/* Bouton secondaire (Blanc, Bordures violettes) */
+.btn-secondary {
+    background-color: white !important;
+    color: var(--brand-school) !important;
+    border: 2px solid var(--brand-school) !important;
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+}
+
+.btn-secondary:hover {
+    background-color: #f3f0ff !important; /* Un très léger fond violet au survol */
+    transform: translateY(-2px);
+}
+
+.auth-switch-container {
+    text-align: center;
+    margin-top: 5px;
+}
+
+/* Style du message d'erreur */
+#auth-msg {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    display: none;
+    text-align: center;
+}
     
 </style>
 
@@ -2548,24 +2591,29 @@ math-field::part(virtual-keyboard-toggle) {
             <div class="btn-back" onclick="navigateTo('view-home')">← Retour</div>
             <h2 class="view-title">Mon Compte</h2>
             
-            <div class="info-page-content" style="max-width: 450px; margin: 0 auto;">
+            <div class="info-page-content">
                 <div id="auth-form-box">
-                    <div id="signup-fields" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;">
-                        <div style="display: flex; gap: 10px;">
-                            <input type="text" id="reg-prenom" placeholder="Prénom" class="search-input" style="flex:1; border:1px solid #eee;">
-                            <input type="text" id="reg-nom" placeholder="Nom" class="search-input" style="flex:1; border:1px solid #eee;">
+                    <div id="signup-fields">
+                        <div class="form-row">
+                            <input type="text" id="reg-prenom" placeholder="Prénom" class="search-input">
+                            <input type="text" id="reg-nom" placeholder="Nom" class="search-input">
                         </div>
-                        <input type="tel" id="auth-phone" placeholder="Numéro de téléphone" class="search-input" style="width:100%; border:1px solid #eee;">
+                        <input type="tel" id="auth-phone" placeholder="Numéro de téléphone" class="search-input">
                     </div>
         
-                    <input type="email" id="auth-email" placeholder="Email" class="search-input" style="width:100%; border:1px solid #eee; margin-bottom:10px;">
-                    <input type="password" id="auth-password" placeholder="Mot de passe" class="search-input" style="width:100%; border:1px solid #eee; margin-bottom:20px;">
+                    <input type="email" id="auth-email" placeholder="Email" class="search-input">
+                    <input type="password" id="auth-password" placeholder="Mot de passe" class="search-input">
                     
-                    <button id="btn-auth-action" class="btn-nav primary" style="width:100%; justify-content:center; margin-bottom:15px;" onclick="handleAuth()">Créer mon compte</button>
+                    <button id="btn-auth-action" onclick="handleAuth()">Créer mon compte</button>
                     
-                    <p id="auth-switch" style="font-size: 0.85rem; cursor:pointer; color: var(--brand-school); text-align: center;" onclick="toggleAuthMode()">Déjà un compte ? Se connecter</p>
+                    <div class="auth-switch-container">
+                        <button id="auth-switch" class="btn-secondary" onclick="toggleAuthMode()">
+                            Déjà un compte ? Se connecter
+                        </button>
+                    </div>
                 </div>
-                <p id="auth-msg" style="margin-top:15px; font-size:0.9rem; font-weight:bold; display:none; text-align: center;"></p>
+        
+                <p id="auth-msg"></p>
             </div>
         </div>
         
