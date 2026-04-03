@@ -2455,6 +2455,48 @@ math-field::part(virtual-keyboard-toggle) {
     color: white !important;
     transform: translateY(-2px);
 }
+
+/* --- MODALE PERSONNALISÉE --- */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Fond sombre transparent */
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px); /* Floute l'arrière-plan pour le style */
+}
+
+.modal-card {
+    background: white;
+    padding: 30px;
+    border-radius: 25px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+    animation: popIn 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+@keyframes popIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.modal-icon { font-size: 3rem; margin-bottom: 15px; }
+.modal-card h3 { color: var(--brand-school); margin-bottom: 10px; font-size: 1.5rem; }
+.modal-card p { color: #666; margin-bottom: 25px; }
+
+.modal-buttons { display: flex; gap: 10px; }
+
+.btn-modal-close {
+    flex: 1; padding: 12px; border: none; border-radius: 50px;
+    background: #f0f0f0; color: #666; font-weight: bold; cursor: pointer;
+}
+
+.btn-modal-auth {
+    flex: 1; padding: 12px; border: none; border-radius: 50px;
+    background: var(--brand-school); color: white; font-weight: bold; cursor: pointer;
+}
     
 </style>
 
