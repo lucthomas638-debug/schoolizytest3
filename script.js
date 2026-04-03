@@ -2452,18 +2452,18 @@ let userProfile = null;
 // 1. Basculer entre Inscription et Connexion
 function toggleAuthMode() {
     authMode = (authMode === 'signup') ? 'login' : 'signup';
-    const btn = document.getElementById('btn-auth-action');
-    const switchTxt = document.getElementById('auth-switch');
+    const btnAction = document.getElementById('btn-auth-action');
+    const btnSwitch = document.getElementById('auth-switch'); // C'est maintenant un bouton
     const signupFields = document.getElementById('signup-fields');
     
     if (authMode === 'login') {
-        btn.innerText = "Se connecter";
-        switchTxt.innerText = "Pas de compte ? S'inscrire";
+        btnAction.innerText = "Se connecter";
+        btnSwitch.innerText = "Pas de compte ? S'inscrire";
         signupFields.style.display = 'none';
     } else {
-        btn.innerText = "Créer mon compte";
-        switchTxt.innerText = "Déjà un compte ? Se connecter";
-        signupFields.style.display = 'flex';
+        btnAction.innerText = "Créer mon compte";
+        btnSwitch.innerText = "Déjà un compte ? Se connecter";
+        signupFields.style.display = 'block';
     }
 }
 
