@@ -163,20 +163,28 @@ async function checkContentAndNavigate(subject) {
 
 // Étape 2 : Quand on choisit un mode (ex: Quiz)
 async function chooseMode(mode) {
-    // On demande à Supabase qui est là maintenant
     const { data } = await sb.auth.getUser();
     const user = data.user;
 
     if (!user) {
-        alert("Veuillez vous connecter pour accéder à ces fonctionnalités.");
-        navigateTo('view-auth'); // On aide l'utilisateur en l'envoyant sur la page auth
+        // Au lieu de alert(), on affiche notre modale
+        document.getElementById('custom-modal').style.display = 'flex';
         return; 
     }
     
-    // Si on arrive ici, l'utilisateur est bien connecté
     currentUser = user; 
     state.currentMode = mode;
     loadChapters();
+}
+
+// Fonctions pour gérer la modale
+function closeModal() {
+    document.getElementById('custom-modal').style.display = 'none';
+}
+
+function goToAuth() {
+    closeModal();
+    navigateTo('view-auth');
 }
 
 // Étape 3 : Charger la liste des chapitres depuis Supabase
