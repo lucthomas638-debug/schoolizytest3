@@ -3175,6 +3175,18 @@ math-field::part(virtual-keyboard-toggle) {
     </div>
 </div>
 
+<div id="custom-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+        <div class="modal-icon">🔒</div>
+        <h3>Connexion requise</h3>
+        <p>Tu dois être connecté pour accéder aux révisions et aux quiz !</p>
+        <div class="modal-buttons">
+            <button class="btn-modal-close" onclick="closeModal()">Plus tard</button>
+            <button class="btn-modal-auth" onclick="goToAuth()">Se connecter</button>
+        </div>
+    </div>
+</div>
+
 </main>
     
 </body>
