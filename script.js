@@ -2469,7 +2469,6 @@ function toggleAuthMode() {
 
 // 2. Logique principale (SignUp / Login)
 async function handleAuth() {
-   alert("Le bouton fonctionne !"); // AJOUTE CETTE LIGNE TEMPORAIREMENT
     const email = document.getElementById('auth-email').value;
     const password = document.getElementById('auth-password').value;
     const msg = document.getElementById('auth-msg');
