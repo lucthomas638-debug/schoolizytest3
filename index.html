@@ -2540,6 +2540,34 @@ math-field::part(virtual-keyboard-toggle) {
     display: none;
     text-align: center;
 }
+
+.nav-offres-badge {
+    background-color: #fffcf5; /* Fond crème */
+    border: 2px solid var(--brand-izy); /* Bordure orange */
+    color: var(--brand-school); /* Texte violet */
+    padding: 5px 15px;
+    border-radius: 50px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s ease;
+    margin-left: 15px; /* Espace après le logo */
+    margin-right: auto; /* Pousse tout le reste (pomo + liens) vers la droite */
+}
+
+.nav-offres-badge:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(245, 191, 120, 0.3);
+    background-color: var(--brand-izy);
+    color: white;
+}
+
+.nav-offres-badge span {
+    font-size: 1.1rem;
+}
     
 </style>
 
@@ -2552,6 +2580,10 @@ math-field::part(virtual-keyboard-toggle) {
 <header>
         <nav>
             <div class="logo" onclick="navigateTo('view-home')">School<span>izy</span>.</div>
+
+            <div class="nav-offres-badge" onclick="navigateTo('view-offres')">
+                <span>⚡</span> Offres
+            </div>
             
             <div class="pomodoro-wrapper" id="pomo-container">
                 <span class="pomo-icon">⏱️</span>
@@ -2579,7 +2611,6 @@ math-field::part(virtual-keyboard-toggle) {
                     <li id="nav-auth" onclick="navigateTo('view-auth')">Connexion</li>
                     <li id="nav-user" class="user-badge" style="display:none;">💼 <span id="user-name"></span></li>
                     <li id="nav-logout" class="btn-logout-izy" onclick="handleLogout()" style="display:none;">Déconnexion</li>
-                    <li onclick="navigateTo('view-offres')" style="color: var(--accent-orange); font-weight: bold;">Offres ⚡</li>
                 </ul>
         </nav>
     
