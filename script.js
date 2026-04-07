@@ -692,30 +692,30 @@ function showQuizResult(score, total, container, chapterNum) {
     resultDiv.className = 'quiz-result-box';
     
     // Détermination du titre et des messages selon le mode
-    // Note : On utilise l'état global isTimeAttack qui est encore à true au moment de l'appel dans finishQuiz
     const isSurvie = isTimeAttack; 
     const title = isSurvie ? "🔥 Score de Survie" : "Résultat du Quiz";
     
     let message = "";
     let percentage = total > 0 ? (score / total) * 100 : 0;
+    let shouldLaunchConfetti = false; // Flag pour lancer les confettis plus tard
 
-   if (isSurvie) {
-           if (percentage === 100 && total >= 10) {
-               message = "🏆 INCROYABLE ! Vitesse et précision absolues !";
-               launchSuccessConfetti(); // 🎉 Confettis pour le mode survie parfait
-           }
-           else if (percentage >= 80) message = "⚡ Quelle rapidité ! Tu maîtrises le sujet sous pression !";
-           else if (percentage >= 50) message = "👍 Bien joué ! Essaye d'aller encore plus vite la prochaine fois !";
-           else message = "💪 La survie c'est dur, mais tu progresses ! Continue !";
-       } else {
-           if (percentage === 100) {
-               message = "🏆 Excellent ! Un sans faute !";
-               launchSuccessConfetti(); // 🎉 Confettis pour le 20/20
-           }
-           else if (percentage >= 80) message = "😎 Très bien joué !";
-           else if (percentage >= 50) message = "👍 Pas mal, continue comme ça !";
-           else message = "💪 Tu peux faire mieux, réessaie !";
-       }
+    if (isSurvie) {
+        if (percentage === 100 && total >= 10) {
+            message = "🏆 INCROYABLE ! Vitesse et précision absolues !";
+            shouldLaunchConfetti = true;
+        }
+        else if (percentage >= 80) message = "⚡ Quelle rapidité ! Tu maîtrises le sujet sous pression !";
+        else if (percentage >= 50) message = "👍 Bien joué ! Essaye d'aller encore plus vite la prochaine fois !";
+        else message = "💪 La survie c'est dur, mais tu progresses ! Continue !";
+    } else {
+        if (percentage === 100) {
+            message = "🏆 Excellent ! Un sans faute !";
+            shouldLaunchConfetti = true;
+        }
+        else if (percentage >= 80) message = "😎 Très bien joué !";
+        else if (percentage >= 50) message = "👍 Pas mal, continue comme ça !";
+        else message = "💪 Tu peux faire mieux, réessaie !";
+    }
 
     resultDiv.innerHTML = `
         <h3 style="margin-bottom:10px;">${title}</h3>
@@ -742,7 +742,6 @@ function showQuizResult(score, total, container, chapterNum) {
     // Bouton recommencer
     document.getElementById('btn-restart-quiz').onclick = function() {
         document.querySelector('main').scrollTop = 0;
-        // On relance le quiz normal ou survie selon le dernier mode joué
         if (isSurvie) {
             startSurvivalMode(chapterNum);
         } else {
@@ -750,9 +749,15 @@ function showQuizResult(score, total, container, chapterNum) {
         }
     };
 
+    // Délai pour l'affichage et les confettis
     setTimeout(() => {
         resultDiv.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
+        
+        // On lance les confettis SEULEMENT quand la boîte est visible
+        if (shouldLaunchConfetti) {
+            launchSuccessConfetti();
+        }
+    }, 150);
 }
 
 // Flashcards 
