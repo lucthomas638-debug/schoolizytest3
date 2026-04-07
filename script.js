@@ -688,76 +688,57 @@ function finishQuiz(chapterNum) {
 }
 
 function showQuizResult(score, total, container, chapterNum) {
+    // 1. Sécurité : on force l'affichage du container (annule l'écran blanc)
+    container.style.opacity = "1";
+    container.classList.remove('rendering');
+
     const resultDiv = document.createElement('div');
     resultDiv.className = 'quiz-result-box';
     
-    // Détermination du titre et des messages selon le mode
-    const isSurvie = isTimeAttack; 
-    const title = isSurvie ? "🔥 Score de Survie" : "Résultat du Quiz";
-    
-    let message = "";
-    let percentage = total > 0 ? (score / total) * 100 : 0;
-    let shouldLaunchConfetti = false; // Flag pour lancer les confettis plus tard
+    const isSurvie = isTimeAttack;
+    const percentage = total > 0 ? (score / total) * 100 : 0;
+    let shouldLaunchConfetti = (percentage === 100);
 
-    if (isSurvie) {
-        if (percentage === 100 && total >= 10) {
-            message = "🏆 INCROYABLE ! Vitesse et précision absolues !";
-            shouldLaunchConfetti = true;
-        }
-        else if (percentage >= 80) message = "⚡ Quelle rapidité ! Tu maîtrises le sujet sous pression !";
-        else if (percentage >= 50) message = "👍 Bien joué ! Essaye d'aller encore plus vite la prochaine fois !";
-        else message = "💪 La survie c'est dur, mais tu progresses ! Continue !";
-    } else {
-        if (percentage === 100) {
-            message = "🏆 Excellent ! Un sans faute !";
-            shouldLaunchConfetti = true;
-        }
-        else if (percentage >= 80) message = "😎 Très bien joué !";
-        else if (percentage >= 50) message = "👍 Pas mal, continue comme ça !";
-        else message = "💪 Tu peux faire mieux, réessaie !";
+    // Détermination du message simplifié
+    let message = percentage === 100 ? "🏆 Excellent ! Un sans faute !" : 
+                  percentage >= 80  ? "😎 Très bien joué !" : "💪 Continue tes efforts !";
+
+    if (isSurvie && percentage === 100 && total < 10) {
+        message = "👍 Pas mal ! Fais plus de 10 questions pour le trophée !";
+        shouldLaunchConfetti = false; 
     }
 
     resultDiv.innerHTML = `
-        <h3 style="margin-bottom:10px;">${title}</h3>
+        <h3 style="margin-bottom:10px;">${isSurvie ? "🔥 Score de Survie" : "Résultat du Quiz"}</h3>
         <div class="quiz-score">${score} / ${total}</div>
-        
-        ${isSurvie ? `<p style="font-size: 0.9rem; color: var(--brand-school); font-weight: bold; margin-bottom: 10px;">Questions répondues : ${total}</p>` : ''}
-        
+        ${isSurvie ? `<p style="font-weight:bold; color:var(--brand-school);">Questions : ${total}</p>` : ''}
         <p style="margin-bottom:20px;">${message}</p>
         
         <button class="btn-restart" id="btn-restart-quiz">🔄 Recommencer</button>
         
         <div class="quick-nav-footer">
-            <button class="btn-nav-quick" onclick="chooseMode('lesson'); displayLesson(${chapterNum})">
-                📖 Revoir la Leçon
-            </button>
-            <button class="btn-nav-quick primary" onclick="alert('Bientôt disponible !')">
-                🧠 Faire les Exercices
-            </button>
+            <button class="btn-nav-quick" onclick="chooseMode('lesson'); displayLesson(${chapterNum})">📖 Cours</button>
+            <button class="btn-nav-quick primary" onclick="alert('Bientôt disponible !')">🧠 Exercices</button>
         </div>
     `;
 
-    container.appendChild(resultDiv);
+    // On l'ajoute au début (avant la correction)
+    container.prepend(resultDiv);
 
-    // Bouton recommencer
-    document.getElementById('btn-restart-quiz').onclick = function() {
-        document.querySelector('main').scrollTop = 0;
-        if (isSurvie) {
-            startSurvivalMode(chapterNum);
-        } else {
-            openQuiz(chapterNum);
-        }
+    // Logique du bouton recommencer
+    document.getElementById('btn-restart-quiz').onclick = () => {
+        document.querySelector('main').scrollTo({ top: 0, behavior: 'smooth' });
+        if (isSurvie) startSurvivalMode(chapterNum);
+        else openQuiz(chapterNum);
     };
 
-    // Délai pour l'affichage et les confettis
+    // Déclenchement visuel
     setTimeout(() => {
         resultDiv.scrollIntoView({ behavior: 'smooth' });
-        
-        // On lance les confettis SEULEMENT quand la boîte est visible
         if (shouldLaunchConfetti) {
             launchSuccessConfetti();
         }
-    }, 150);
+    }, 200);
 }
 
 // Flashcards 
