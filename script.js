@@ -699,17 +699,23 @@ function showQuizResult(score, total, container, chapterNum) {
     let message = "";
     let percentage = total > 0 ? (score / total) * 100 : 0;
 
-    if (isSurvie) {
-        if (percentage === 100 && total >= 10) message = "🏆 INCROYABLE ! Vitesse et précision absolues !";
-        else if (percentage >= 80) message = "⚡ Quelle rapidité ! Tu maîtrises le sujet sous pression !";
-        else if (percentage >= 50) message = "👍 Bien joué ! Essaye d'aller encore plus vite la prochaine fois !";
-        else message = "💪 La survie c'est dur, mais tu progresses ! Continue !";
-    } else {
-        if (percentage === 100) message = "🏆 Excellent ! Un sans faute !";
-        else if (percentage >= 80) message = "😎 Très bien joué !";
-        else if (percentage >= 50) message = "👍 Pas mal, continue comme ça !";
-        else message = "💪 Tu peux faire mieux, réessaie !";
-    }
+   if (isSurvie) {
+           if (percentage === 100 && total >= 10) {
+               message = "🏆 INCROYABLE ! Vitesse et précision absolues !";
+               launchSuccessConfetti(); // 🎉 Confettis pour le mode survie parfait
+           }
+           else if (percentage >= 80) message = "⚡ Quelle rapidité ! Tu maîtrises le sujet sous pression !";
+           else if (percentage >= 50) message = "👍 Bien joué ! Essaye d'aller encore plus vite la prochaine fois !";
+           else message = "💪 La survie c'est dur, mais tu progresses ! Continue !";
+       } else {
+           if (percentage === 100) {
+               message = "🏆 Excellent ! Un sans faute !";
+               launchSuccessConfetti(); // 🎉 Confettis pour le 20/20
+           }
+           else if (percentage >= 80) message = "😎 Très bien joué !";
+           else if (percentage >= 50) message = "👍 Pas mal, continue comme ça !";
+           else message = "💪 Tu peux faire mieux, réessaie !";
+       }
 
     resultDiv.innerHTML = `
         <h3 style="margin-bottom:10px;">${title}</h3>
