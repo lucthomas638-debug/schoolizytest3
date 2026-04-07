@@ -2778,6 +2778,12 @@ math-field::part(virtual-keyboard-toggle) {
                     <p>Calculateur Chimie</p>
                 </div>
 
+                <div class="card orange" onclick="navigateTo('view-tool-moyenne')">
+                    <span style="font-size:3rem;">🎯</span>
+                    <h3>Objectif Moyenne</h3>
+                    <p>Calcule ta note cible</p>
+                </div>
+
             </div>
         </div>
 
@@ -2910,38 +2916,70 @@ math-field::part(virtual-keyboard-toggle) {
                 </div>
             </div>
 
-        <!-- Repère vecteurs -->
+        <!-- Moyenne -->
 
-<div id="view-tool-repere" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-outils')">← Retour Outils</div>
-            <h2 class="view-title">Repère Interactif</h2>
+        <div id="view-tool-moyenne" class="view container">
+            <div class="btn-back" onclick="navigateTo('view-outils')">← Retour</div>
+            <h2 class="view-title">Objectif Moyenne</h2>
         
-            <div class="tool-layout">
-                <div class="canvas-container" style="position:relative;">
-                    <canvas id="repereCanvas" width="400" height="400"></canvas>
-                    <div id="mouse-tooltip" style="position:absolute; top:10px; right:10px; background:rgba(255,255,255,0.8); padding:5px; border-radius:4px; font-size:0.8rem; pointer-events:none;">x:0, y:0</div>
-                </div>
-                <div class="tool-controls">
-                    <h3>Boîte à outils</h3>
-                    <div class="toolbar" style="display:flex; gap:10px; margin-bottom:1rem; flex-wrap:wrap;">
-                        <button id="btn-mode-point" class="mode-btn active" onclick="setRepereMode('point')" style="flex:1;">📍 Point</button>
-                        <button id="btn-mode-vector" class="mode-btn" onclick="setRepereMode('vector')" style="flex:1;">➡️ Vecteur</button>
-                        <button id="btn-mode-move" class="mode-btn" onclick="setRepereMode('move')" style="flex:1;">✋ Déplacer</button>
-                        <button id="btn-mode-delete" class="mode-btn" onclick="setRepereMode('delete')" style="background:#fee; color:#c0392b; flex:1;">🗑️ Gomme</button>
+            <div class="info-page-content" style="max-width: 600px; margin: 0 auto;">
+                <p>Calcule la note qu'il te faut pour atteindre ton objectif !</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+                    <div class="input-group">
+                        <label>Ta moyenne actuelle :</label>
+                        <input type="number" id="moy-actuelle" placeholder="ex: 12.5" class="search-input" step="0.1">
                     </div>
-
-                    <div class="instruction-box" style="background:#f9f9f9; padding:10px; border-radius:8px; font-size:0.9rem; color:#555;">
-                        <p id="repere-instruction"><strong>Mode Point :</strong> Cliquez sur la grille pour ajouter un point (précision 0,25).</p>
+                    <div class="input-group">
+                        <label>Coefficient du prochain DS :</label>
+                        <input type="number" id="moy-coeff" value="1" class="search-input">
+                    </div>
+                    <div class="input-group">
+                        <label>Moyenne visée :</label>
+                        <input type="number" id="moy-cible" placeholder="ex: 14" class="search-input" step="0.1">
                     </div>
                     
-                    <div style="margin-top:15px; font-size:0.9rem;">
-                        <strong>Coordonnées souris :</strong> <span id="mouse-coords">x: 0, y: 0</span>
-                    </div>
-
-                    <button onclick="clearRepere()" class="btn-danger-full">🗑️ Tout effacer</button>
+                    <button class="btn-nav primary" style="width: 100%; justify-content: center;" onclick="calculerMoyenneCible()">Calculer la note nécessaire</button>
                 </div>
-            </div> 
+        
+                <div id="moy-resultat" style="display:none; margin-top: 30px; padding: 20px; border-radius: 15px; background: #fcfaff; border: 2px solid var(--brand-school);">
+                    <h3 id="moy-result-text" style="color: var(--brand-school); font-size: 1.2rem;"></h3>
+                </div>
+            </div>
         </div>
+
+        <!-- Repère vecteurs -->
+
+        <div id="view-tool-repere" class="view container">
+                <div class="btn-back" onclick="navigateTo('view-outils')">← Retour Outils</div>
+                <h2 class="view-title">Repère Interactif</h2>
+            
+                <div class="tool-layout">
+                    <div class="canvas-container" style="position:relative;">
+                        <canvas id="repereCanvas" width="400" height="400"></canvas>
+                        <div id="mouse-tooltip" style="position:absolute; top:10px; right:10px; background:rgba(255,255,255,0.8); padding:5px; border-radius:4px; font-size:0.8rem; pointer-events:none;">x:0, y:0</div>
+                    </div>
+                    <div class="tool-controls">
+                        <h3>Boîte à outils</h3>
+                        <div class="toolbar" style="display:flex; gap:10px; margin-bottom:1rem; flex-wrap:wrap;">
+                            <button id="btn-mode-point" class="mode-btn active" onclick="setRepereMode('point')" style="flex:1;">📍 Point</button>
+                            <button id="btn-mode-vector" class="mode-btn" onclick="setRepereMode('vector')" style="flex:1;">➡️ Vecteur</button>
+                            <button id="btn-mode-move" class="mode-btn" onclick="setRepereMode('move')" style="flex:1;">✋ Déplacer</button>
+                            <button id="btn-mode-delete" class="mode-btn" onclick="setRepereMode('delete')" style="background:#fee; color:#c0392b; flex:1;">🗑️ Gomme</button>
+                        </div>
+    
+                        <div class="instruction-box" style="background:#f9f9f9; padding:10px; border-radius:8px; font-size:0.9rem; color:#555;">
+                            <p id="repere-instruction"><strong>Mode Point :</strong> Cliquez sur la grille pour ajouter un point (précision 0,25).</p>
+                        </div>
+                        
+                        <div style="margin-top:15px; font-size:0.9rem;">
+                            <strong>Coordonnées souris :</strong> <span id="mouse-coords">x: 0, y: 0</span>
+                        </div>
+    
+                        <button onclick="clearRepere()" class="btn-danger-full">🗑️ Tout effacer</button>
+                    </div>
+                </div> 
+            </div>
 
         <!-- Tableau Periodique -->
 
