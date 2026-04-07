@@ -2570,3 +2570,58 @@ sb.auth.onAuthStateChange(async (event, session) => {
         }
     }, 10);
 });
+
+/* =============================================================================
+   FONCTIONS GLOBALES (CONFETTIS & MOYENNE)
+   ============================================================================= */
+
+// Fonction pour lancer les confettis
+function launchSuccessConfetti() {
+    const duration = 3 * 1000;
+    const end = Date.now() + duration;
+
+    (function frame() {
+        confetti({
+            particleCount: 3,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: ['#8459cf', '#f5bf78']
+        });
+        confetti({
+            particleCount: 3,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: ['#8459cf', '#f5bf78']
+        });
+
+        if (Date.now() < end) {
+            requestAnimationFrame(frame);
+        }
+    }());
+}
+
+// Fonction pour le calculateur de moyenne cible
+function calculerMoyenneCible() {
+    const actuelle = parseFloat(document.getElementById('moy-actuelle').value);
+    const coeff = parseFloat(document.getElementById('moy-coeff').value);
+    const cible = parseFloat(document.getElementById('moy-cible').value);
+    const resBox = document.getElementById('moy-resultat');
+    const resText = document.getElementById('moy-result-text');
+
+    if (isNaN(actuelle) || isNaN(cible)) return alert("Remplis les moyennes !");
+
+    // Formule pour calculer la note nécessaire
+    const noteRequise = ((cible * (1 + coeff)) - actuelle) / coeff;
+
+    resBox.style.display = 'block';
+    if (noteRequise > 20) {
+        resText.innerHTML = `Ouch ! Il te faudrait un <strong>${noteRequise.toFixed(2)}/20</strong>. C'est mathématiquement impossible sur ce seul devoir, vise un peu plus bas ! 😅`;
+    } else if (noteRequise <= 0) {
+        resText.innerHTML = `Tranquille ! Même avec un 0/20, tu restes au-dessus de ton objectif. 😎`;
+    } else {
+        resText.innerHTML = `Pour atteindre ${cible}/20, tu dois obtenir au moins <strong>${noteRequise.toFixed(2)}/20</strong> au prochain DS. Tu peux le faire ! 💪`;
+        launchSuccessConfetti(); // On fête la motivation !
+    }
+}
