@@ -2588,15 +2588,14 @@ sb.auth.onAuthStateChange(async (event, session) => {
 
 // Fonction pour lancer les confettis
 function launchSuccessConfetti() {
-    // On utilise la méthode globale de la bibliothèque qui est la plus sûre
-    // Elle crée son propre canvas invisible sans toucher à ton DOM
+    // On appelle directement la bibliothèque. 
+    // Elle gère elle-même la création d'un calque transparent par-dessus ton site.
     confetti({
         particleCount: 150,
         spread: 70,
         origin: { y: 0.6 },
-        colors: ['#8459cf', '#f5bf78'],
-        zIndex: 9999, // Passe devant tout
-        disableForReducedMotion: true // Optionnel : respecte les réglages utilisateur
+        zIndex: 9999, // S'assure de passer devant le texte et les boutons
+        colors: ['#8459cf', '#f5bf78'] // Tes couleurs Schoolizy
     });
 }
 
