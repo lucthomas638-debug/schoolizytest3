@@ -2588,23 +2588,36 @@ sb.auth.onAuthStateChange(async (event, session) => {
 
 // Fonction pour lancer les confettis
 function launchSuccessConfetti() {
+    // On définit les paramètres communs pour que ce soit AU-DESSUS de tout
+    const confettiDefaults = {
+        spread: 360,
+        ticks: 100,
+        gravity: 1,
+        decay: 0.94,
+        startVelocity: 30,
+        shapes: ['circle', 'square'],
+        colors: ['#8459cf', '#f5bf78'],
+        // Cette ligne est la clé : elle force le canvas à être au premier plan
+        zIndex: 9999 
+    };
+
     const duration = 3 * 1000;
     const end = Date.now() + duration;
 
     (function frame() {
         confetti({
+            ...confettiDefaults,
             particleCount: 3,
             angle: 60,
             spread: 55,
-            origin: { x: 0 },
-            colors: ['#8459cf', '#f5bf78']
+            origin: { x: 0, y: 0.6 } // Part de la gauche
         });
         confetti({
+            ...confettiDefaults,
             particleCount: 3,
             angle: 120,
             spread: 55,
-            origin: { x: 1 },
-            colors: ['#8459cf', '#f5bf78']
+            origin: { x: 1, y: 0.6 } // Part de la droite
         });
 
         if (Date.now() < end) {
