@@ -701,11 +701,13 @@ function showQuizResult(score, total, container, chapterNum) {
 
     if (isSurvie) {
         if (percentage === 100 && total >= 10) message = "🏆 INCROYABLE ! Vitesse et précision absolues !";
+                   launchSuccessConfetti(); // On fête la motivation !
         else if (percentage >= 80) message = "⚡ Quelle rapidité ! Tu maîtrises le sujet sous pression !";
         else if (percentage >= 50) message = "👍 Bien joué ! Essaye d'aller encore plus vite la prochaine fois !";
         else message = "💪 La survie c'est dur, mais tu progresses ! Continue !";
     } else {
         if (percentage === 100) message = "🏆 Excellent ! Un sans faute !";
+                   launchSuccessConfetti(); // On fête la motivation !
         else if (percentage >= 80) message = "😎 Très bien joué !";
         else if (percentage >= 50) message = "👍 Pas mal, continue comme ça !";
         else message = "💪 Tu peux faire mieux, réessaie !";
@@ -2505,6 +2507,7 @@ async function handleAuth() {
         msg.style.display = 'block';
         msg.style.color = 'green';
         msg.innerText = "Inscription réussie ! Bienvenue.";
+        launchSuccessConfetti(); // On fête la motivation !
         setTimeout(() => navigateTo('view-home'), 1500);
 
     } else {
@@ -2622,6 +2625,5 @@ function calculerMoyenneCible() {
         resText.innerHTML = `Tranquille ! Même avec un 0/20, tu restes au-dessus de ton objectif. 😎`;
     } else {
         resText.innerHTML = `Pour atteindre ${cible}/20, tu dois obtenir au moins <strong>${noteRequise.toFixed(2)}/20</strong> au prochain DS. Tu peux le faire ! 💪`;
-        launchSuccessConfetti(); // On fête la motivation !
     }
 }
