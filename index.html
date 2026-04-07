@@ -84,9 +84,15 @@
             justify-content: flex-end; /* 👈 C'EST ÇA : pousse TOUT le contenu vers la droite */
         }
         
-        /* 2. On retire les marges automatiques qui pourraient bloquer */
-        #nav-user, #nav-auth {
+        /* 2. On retire les marges automatiques SAUF pour l'écart Outils/Prénom */
+        #nav-auth {
             margin-left: 0 !important; 
+        }
+        
+        #nav-user {
+            margin-left: 40px !important; /* 👈 C'est ici qu'on crée l'espace entre Outils et le Prénom */
+            color: var(--brand-school) !important;
+            font-weight: 600 !important;
         }
         
         /* 3. Style des boutons (poids normal et espace 💼) */
@@ -96,10 +102,10 @@
             color: var(--text-dark);
             display: flex;
             align-items: center;
-            gap: 8px; /* Espace pour le 💼 */
+            gap: 8px; 
             white-space: nowrap;
         }
-
+        
         .nav-links li:hover { color: var(--brand-school); }
 
         /* --- CONTENEUR PRINCIPAL DES VUES --- */
