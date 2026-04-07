@@ -688,7 +688,7 @@ function finishQuiz(chapterNum) {
 }
 
 function showQuizResult(score, total, container, chapterNum) {
-    // 1. Sécurité : on force l'affichage du container (annule l'écran blanc)
+    // 1. ON FORCE TOUT À ÊTRE VISIBLE TOUT DE SUITE
     container.style.opacity = "1";
     container.classList.remove('rendering');
 
@@ -697,50 +697,41 @@ function showQuizResult(score, total, container, chapterNum) {
     
     const isSurvie = isTimeAttack;
     const percentage = total > 0 ? (score / total) * 100 : 0;
-    let shouldLaunchConfetti = (percentage === 100);
-
-    // Détermination du message simplifié
-    let message = percentage === 100 ? "🏆 Excellent ! Un sans faute !" : 
-                  percentage >= 80  ? "😎 Très bien joué !" : "💪 Continue tes efforts !";
-
-    if (isSurvie && percentage === 100 && total < 10) {
-        message = "👍 Pas mal ! Fais plus de 10 questions pour le trophée !";
-        shouldLaunchConfetti = false; 
-    }
+    
+    // Détermination du message
+    let message = percentage === 100 ? "🏆 Excellent ! Un sans faute !" : "👍 Bien joué !";
 
     resultDiv.innerHTML = `
         <h3 style="margin-bottom:10px;">${isSurvie ? "🔥 Score de Survie" : "Résultat du Quiz"}</h3>
         <div class="quiz-score">${score} / ${total}</div>
-        ${isSurvie ? `<p style="font-weight:bold; color:var(--brand-school);">Questions : ${total}</p>` : ''}
         <p style="margin-bottom:20px;">${message}</p>
-        
         <button class="btn-restart" id="btn-restart-quiz">🔄 Recommencer</button>
-        
         <div class="quick-nav-footer">
             <button class="btn-nav-quick" onclick="chooseMode('lesson'); displayLesson(${chapterNum})">📖 Cours</button>
-            <button class="btn-nav-quick primary" onclick="alert('Bientôt disponible !')">🧠 Exercices</button>
         </div>
     `;
 
-    // On l'ajoute au début (avant la correction)
+    // 2. ON INJECTE ET ON S'ASSURE QUE ÇA NE BOUGE PLUS
     container.prepend(resultDiv);
 
-    // Logique du bouton recommencer
     document.getElementById('btn-restart-quiz').onclick = () => {
-        document.querySelector('main').scrollTo({ top: 0, behavior: 'smooth' });
         if (isSurvie) startSurvivalMode(chapterNum);
         else openQuiz(chapterNum);
     };
 
-    // Déclenchement visuel
+    // 3. ON LANCE LES CONFETTIS SANS ATTENDRE
+    if (percentage === 100) {
+        // On laisse juste 50ms pour le DOM, c'est invisible à l'oeil nu
+        setTimeout(() => {
+            launchSuccessConfetti();
+        }, 50);
+    }
+
+    // Le scroll peut se faire un peu après
     setTimeout(() => {
         resultDiv.scrollIntoView({ behavior: 'smooth' });
-        if (shouldLaunchConfetti) {
-            launchSuccessConfetti();
-        }
-    }, 200);
+    }, 150);
 }
-
 // Flashcards 
 
 async function openFlashcards(chapterNum) {
