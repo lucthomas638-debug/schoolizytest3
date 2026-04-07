@@ -2470,6 +2470,30 @@ function launchSuccessConfetti() {
     }());
 }
 
+function calculerMoyenneCible() {
+    const actuelle = parseFloat(document.getElementById('moy-actuelle').value);
+    const coeff = parseFloat(document.getElementById('moy-coeff').value);
+    const cible = parseFloat(document.getElementById('moy-cible').value);
+    const resBox = document.getElementById('moy-resultat');
+    const resText = document.getElementById('moy-result-text');
+
+    if (!actuelle || !cible) return alert("Remplis les moyennes !");
+
+    // Formule : Note = (Cible * (NbDevoirs + Coeff) - Actuelle * NbDevoirs) / Coeff
+    // Simplifié ici en considérant que la moyenne actuelle représente une base de coeff 1
+    const noteRequise = ((cible * (1 + coeff)) - actuelle) / coeff;
+
+    resBox.style.display = 'block';
+    if (noteRequise > 20) {
+        resText.innerHTML = `Ouch ! Il te faudrait un <strong>${noteRequise.toFixed(2)}/20</strong>. C'est mathématiquement impossible sur ce seul devoir, vise un peu plus bas ou demande un plus gros coeff ! 😅`;
+    } else if (noteRequise <= 0) {
+        resText.innerHTML = `Tranquille ! Même avec un 0/20, tu restes au-dessus de ton objectif. 😎`;
+    } else {
+        resText.innerHTML = `Pour atteindre ${cible}/20, tu dois obtenir au moins <strong>${noteRequise.toFixed(2)}/20</strong> au prochain DS. Tu peux le faire ! 💪`;
+        launchSuccessConfetti(); // Et hop, des confettis pour motiver !
+    }
+}
+
 /* =============================================================================
    SYSTÈME D'AUTHENTIFICATION & PROFILS
    ============================================================================= */
