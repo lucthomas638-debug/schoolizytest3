@@ -2778,12 +2778,6 @@ math-field::part(virtual-keyboard-toggle) {
                     <p>Calculateur Chimie</p>
                 </div>
 
-                <div class="card orange" onclick="navigateTo('view-tool-moyenne')">
-                    <span style="font-size:3rem;">🎯</span>
-                    <h3>Objectif Moyenne</h3>
-                    <p>Calcule ta note cible</p>
-                </div>
-
             </div>
         </div>
 
@@ -2915,38 +2909,6 @@ math-field::part(virtual-keyboard-toggle) {
             
                 </div>
             </div>
-
-        <!-- Moyenne -->
-
-        <div id="view-tool-moyenne" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-outils')">← Retour</div>
-            <h2 class="view-title">Objectif Moyenne</h2>
-        
-            <div class="info-page-content" style="max-width: 600px; margin: 0 auto;">
-                <p>Calcule la note qu'il te faut pour atteindre ton objectif !</p>
-                
-                <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
-                    <div class="input-group">
-                        <label>Ta moyenne actuelle :</label>
-                        <input type="number" id="moy-actuelle" placeholder="ex: 12.5" class="search-input" step="0.1">
-                    </div>
-                    <div class="input-group">
-                        <label>Coefficient du prochain DS :</label>
-                        <input type="number" id="moy-coeff" value="1" class="search-input">
-                    </div>
-                    <div class="input-group">
-                        <label>Moyenne visée :</label>
-                        <input type="number" id="moy-cible" placeholder="ex: 14" class="search-input" step="0.1">
-                    </div>
-                    
-                    <button class="btn-nav primary" style="width: 100%; justify-content: center;" onclick="calculerMoyenneCible()">Calculer la note nécessaire</button>
-                </div>
-        
-                <div id="moy-resultat" style="display:none; margin-top: 30px; padding: 20px; border-radius: 15px; background: #fcfaff; border: 2px solid var(--brand-school);">
-                    <h3 id="moy-result-text" style="color: var(--brand-school); font-size: 1.2rem;"></h3>
-                </div>
-            </div>
-        </div>
 
         <!-- Repère vecteurs -->
 
