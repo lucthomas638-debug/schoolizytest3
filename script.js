@@ -701,13 +701,11 @@ function showQuizResult(score, total, container, chapterNum) {
 
     if (isSurvie) {
         if (percentage === 100 && total >= 10) message = "🏆 INCROYABLE ! Vitesse et précision absolues !";
-           launchSuccessConfetti(); // 🎉 AJOUTÉ ICI
         else if (percentage >= 80) message = "⚡ Quelle rapidité ! Tu maîtrises le sujet sous pression !";
         else if (percentage >= 50) message = "👍 Bien joué ! Essaye d'aller encore plus vite la prochaine fois !";
         else message = "💪 La survie c'est dur, mais tu progresses ! Continue !";
     } else {
         if (percentage === 100) message = "🏆 Excellent ! Un sans faute !";
-           launchSuccessConfetti(); // 🎉 AJOUTÉ ICI
         else if (percentage >= 80) message = "😎 Très bien joué !";
         else if (percentage >= 50) message = "👍 Pas mal, continue comme ça !";
         else message = "💪 Tu peux faire mieux, réessaie !";
@@ -2507,7 +2505,6 @@ async function handleAuth() {
         msg.style.display = 'block';
         msg.style.color = 'green';
         msg.innerText = "Inscription réussie ! Bienvenue.";
-        launchSuccessConfetti(); // 🎉 AJOUTÉ ICI
         setTimeout(() => navigateTo('view-home'), 1500);
 
     } else {
