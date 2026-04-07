@@ -2588,42 +2588,16 @@ sb.auth.onAuthStateChange(async (event, session) => {
 
 // Fonction pour lancer les confettis
 function launchSuccessConfetti() {
-    // On définit les paramètres communs pour que ce soit AU-DESSUS de tout
-    const confettiDefaults = {
-        spread: 360,
-        ticks: 100,
-        gravity: 1,
-        decay: 0.94,
-        startVelocity: 30,
-        shapes: ['circle', 'square'],
+    // On utilise la méthode globale de la bibliothèque qui est la plus sûre
+    // Elle crée son propre canvas invisible sans toucher à ton DOM
+    confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
         colors: ['#8459cf', '#f5bf78'],
-        // Cette ligne est la clé : elle force le canvas à être au premier plan
-        zIndex: 9999 
-    };
-
-    const duration = 3 * 1000;
-    const end = Date.now() + duration;
-
-    (function frame() {
-        confetti({
-            ...confettiDefaults,
-            particleCount: 3,
-            angle: 60,
-            spread: 55,
-            origin: { x: 0, y: 0.6 } // Part de la gauche
-        });
-        confetti({
-            ...confettiDefaults,
-            particleCount: 3,
-            angle: 120,
-            spread: 55,
-            origin: { x: 1, y: 0.6 } // Part de la droite
-        });
-
-        if (Date.now() < end) {
-            requestAnimationFrame(frame);
-        }
-    }());
+        zIndex: 9999, // Passe devant tout
+        disableForReducedMotion: true // Optionnel : respecte les réglages utilisateur
+    });
 }
 
 // Fonction pour le calculateur de moyenne cible
