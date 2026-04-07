@@ -602,14 +602,17 @@ function finishQuiz(chapterNum) {
     
     // 2. NETTOYAGE VISUEL
     const container = document.getElementById('quiz-container');
-    container.classList.remove('survival-mode');
+    container.classList.remove('survival-mode'); // Retire la bordure rouge animée
     container.classList.add('rendering');
 
-    // Réinitialisation du timer display
+    // Réinitialisation du style du timer
     const timerDisplay = document.getElementById('quiz-timer-display');
     if (timerDisplay) {
-        timerDisplay.style.display = "none";
         timerDisplay.classList.remove('low-time');
+        timerDisplay.style.color = ""; 
+        timerDisplay.style.fontSize = "";
+        // On le cache systématiquement à la fin
+        timerDisplay.style.display = "none";
     }
 
     let finalScore = 0;
@@ -624,10 +627,11 @@ function finishQuiz(chapterNum) {
     });
 
     // 4. GÉNÉRATION DE LA CORRECTION
-    // On vide le container et on met le titre
     container.innerHTML = '<h2 style="text-align:center; margin-bottom:20px; color:var(--brand-school);">Correction détaillée</h2>';
     
     quizData.forEach((q, idx) => {
+        // On n'affiche la correction que pour les questions répondues (important en mode survie)
+        // ou pour toutes les questions si on est en mode normal
         if (userAnswers[idx] !== undefined || !isTimeAttack) {
             const card = document.createElement('div');
             card.className = 'quiz-question-card';
@@ -655,71 +659,105 @@ function finishQuiz(chapterNum) {
         }
     });
 
-    // 5. APPEL DE L'AFFICHAGE DU RÉSULTAT FINAL
-    // On calcule sur combien de questions on note
-    const totalPourNote = isTimeAttack ? questionsRepondues : quizData.length;
-    showQuizResult(finalScore, totalPourNote, container, chapterNum);
+    // --- LOGIQUE DE SCORE DYNAMIQUE ---
+    // En mode survie, on note sur le nombre de questions traitées.
+    // En mode normal, on note sur le nombre total de questions du quiz.
+    const totalQuestionsComptees = isTimeAttack ? questionsRepondues : quizData.length;
 
-    // Rendu MathJax final
+    // On affiche le résultat (on passe isTimeAttack pour le label personnalisé)
+    showQuizResult(finalScore, totalQuestionsComptees, container, chapterNum);
+
+    // 5. RESET DE L'ÉTAT ET TRAITEMENT FINAL
+    isTimeAttack = false; 
+
     if (window.MathJax) {
-        MathJax.typesetPromise([container]).then(() => {
-            container.classList.remove('rendering');
-        });
+        setTimeout(() => {
+            MathJax.typesetClear([container]);
+            MathJax.typesetPromise([container]).then(() => {
+                container.classList.remove('rendering');
+            });
+        }, 10);
     } else {
         container.classList.remove('rendering');
     }
+
+    setTimeout(() => {
+        const resultBox = container.querySelector('.quiz-result-box');
+        if(resultBox) resultBox.scrollIntoView({ behavior: 'smooth' });
+    }, 300);
 }
 
 function showQuizResult(score, total, container, chapterNum) {
     const resultDiv = document.createElement('div');
     resultDiv.className = 'quiz-result-box';
     
+    // Détermination du titre et des messages selon le mode
     const isSurvie = isTimeAttack; 
     const title = isSurvie ? "🔥 Score de Survie" : "Résultat du Quiz";
     
-    let percentage = total > 0 ? (score / total) * 100 : 0;
     let message = "";
-    let shouldLaunchConfetti = (percentage === 100); // On prépare les confettis si 100%
+    let percentage = total > 0 ? (score / total) * 100 : 0;
+    let shouldLaunchConfetti = false; // Flag pour lancer les confettis plus tard
 
     if (isSurvie) {
-        if (percentage === 100 && total >= 10) message = "🏆 INCROYABLE ! Vitesse et précision absolues !";
-        else if (percentage >= 80) message = "⚡ Quelle rapidité ! Tu maîtrises le sujet !";
-        else message = "💪 Continue tes efforts !";
+        if (percentage === 100 && total >= 10) {
+            message = "🏆 INCROYABLE ! Vitesse et précision absolues !";
+            shouldLaunchConfetti = true;
+        }
+        else if (percentage >= 80) message = "⚡ Quelle rapidité ! Tu maîtrises le sujet sous pression !";
+        else if (percentage >= 50) message = "👍 Bien joué ! Essaye d'aller encore plus vite la prochaine fois !";
+        else message = "💪 La survie c'est dur, mais tu progresses ! Continue !";
     } else {
-        if (percentage === 100) message = "🏆 Excellent ! Un sans faute !";
+        if (percentage === 100) {
+            message = "🏆 Excellent ! Un sans faute !";
+            shouldLaunchConfetti = true;
+        }
         else if (percentage >= 80) message = "😎 Très bien joué !";
-        else message = "👍 Pas mal, continue comme ça !";
+        else if (percentage >= 50) message = "👍 Pas mal, continue comme ça !";
+        else message = "💪 Tu peux faire mieux, réessaie !";
     }
 
     resultDiv.innerHTML = `
         <h3 style="margin-bottom:10px;">${title}</h3>
         <div class="quiz-score">${score} / ${total}</div>
+        
+        ${isSurvie ? `<p style="font-size: 0.9rem; color: var(--brand-school); font-weight: bold; margin-bottom: 10px;">Questions répondues : ${total}</p>` : ''}
+        
         <p style="margin-bottom:20px;">${message}</p>
+        
         <button class="btn-restart" id="btn-restart-quiz">🔄 Recommencer</button>
+        
         <div class="quick-nav-footer">
-            <button class="btn-nav-quick" onclick="chooseMode('lesson'); displayLesson(${chapterNum})">📖 Revoir le cours</button>
+            <button class="btn-nav-quick" onclick="chooseMode('lesson'); displayLesson(${chapterNum})">
+                📖 Revoir la Leçon
+            </button>
+            <button class="btn-nav-quick primary" onclick="alert('Bientôt disponible !')">
+                🧠 Faire les Exercices
+            </button>
         </div>
     `;
 
-    // On ajoute la boîte de résultat à la fin du container (sous la correction)
     container.appendChild(resultDiv);
 
     // Bouton recommencer
     document.getElementById('btn-restart-quiz').onclick = function() {
         document.querySelector('main').scrollTop = 0;
-        if (isSurvie) startSurvivalMode(chapterNum);
-        else openQuiz(chapterNum);
+        if (isSurvie) {
+            startSurvivalMode(chapterNum);
+        } else {
+            openQuiz(chapterNum);
+        }
     };
 
-    // Délai pour s'assurer que tout est bien dessiné à l'écran
+    // Délai pour l'affichage et les confettis
     setTimeout(() => {
         resultDiv.scrollIntoView({ behavior: 'smooth' });
         
-        // On lance les confettis PAR-DESSUS le résultat affiché
+        // On lance les confettis SEULEMENT quand la boîte est visible
         if (shouldLaunchConfetti) {
             launchSuccessConfetti();
         }
-    }, 300);
+    }, 150);
 }
 
 // Flashcards 
