@@ -688,50 +688,78 @@ function finishQuiz(chapterNum) {
 }
 
 function showQuizResult(score, total, container, chapterNum) {
-    // 1. ON FORCE TOUT À ÊTRE VISIBLE TOUT DE SUITE
-    container.style.opacity = "1";
-    container.classList.remove('rendering');
-
     const resultDiv = document.createElement('div');
     resultDiv.className = 'quiz-result-box';
     
-    const isSurvie = isTimeAttack;
-    const percentage = total > 0 ? (score / total) * 100 : 0;
+    // Détermination du titre et des messages selon le mode
+    const isSurvie = isTimeAttack; 
+    const title = isSurvie ? "🔥 Score de Survie" : "Résultat du Quiz";
     
-    // Détermination du message
-    let message = percentage === 100 ? "🏆 Excellent ! Un sans faute !" : "👍 Bien joué !";
+    let message = "";
+    let percentage = total > 0 ? (score / total) * 100 : 0;
+    let shouldLaunchConfetti = false; // Flag pour lancer les confettis plus tard
+
+    if (isSurvie) {
+        if (percentage === 100 && total >= 10) {
+            message = "🏆 INCROYABLE ! Vitesse et précision absolues !";
+            shouldLaunchConfetti = true;
+        }
+        else if (percentage >= 80) message = "⚡ Quelle rapidité ! Tu maîtrises le sujet sous pression !";
+        else if (percentage >= 50) message = "👍 Bien joué ! Essaye d'aller encore plus vite la prochaine fois !";
+        else message = "💪 La survie c'est dur, mais tu progresses ! Continue !";
+    } else {
+        if (percentage === 100) {
+            message = "🏆 Excellent ! Un sans faute !";
+            shouldLaunchConfetti = true;
+        }
+        else if (percentage >= 80) message = "😎 Très bien joué !";
+        else if (percentage >= 50) message = "👍 Pas mal, continue comme ça !";
+        else message = "💪 Tu peux faire mieux, réessaie !";
+    }
 
     resultDiv.innerHTML = `
-        <h3 style="margin-bottom:10px;">${isSurvie ? "🔥 Score de Survie" : "Résultat du Quiz"}</h3>
+        <h3 style="margin-bottom:10px;">${title}</h3>
         <div class="quiz-score">${score} / ${total}</div>
+        
+        ${isSurvie ? `<p style="font-size: 0.9rem; color: var(--brand-school); font-weight: bold; margin-bottom: 10px;">Questions répondues : ${total}</p>` : ''}
+        
         <p style="margin-bottom:20px;">${message}</p>
+        
         <button class="btn-restart" id="btn-restart-quiz">🔄 Recommencer</button>
+        
         <div class="quick-nav-footer">
-            <button class="btn-nav-quick" onclick="chooseMode('lesson'); displayLesson(${chapterNum})">📖 Cours</button>
+            <button class="btn-nav-quick" onclick="chooseMode('lesson'); displayLesson(${chapterNum})">
+                📖 Revoir la Leçon
+            </button>
+            <button class="btn-nav-quick primary" onclick="alert('Bientôt disponible !')">
+                🧠 Faire les Exercices
+            </button>
         </div>
     `;
 
-    // 2. ON INJECTE ET ON S'ASSURE QUE ÇA NE BOUGE PLUS
-    container.prepend(resultDiv);
+    container.appendChild(resultDiv);
 
-    document.getElementById('btn-restart-quiz').onclick = () => {
-        if (isSurvie) startSurvivalMode(chapterNum);
-        else openQuiz(chapterNum);
+    // Bouton recommencer
+    document.getElementById('btn-restart-quiz').onclick = function() {
+        document.querySelector('main').scrollTop = 0;
+        if (isSurvie) {
+            startSurvivalMode(chapterNum);
+        } else {
+            openQuiz(chapterNum);
+        }
     };
 
-    // 3. ON LANCE LES CONFETTIS SANS ATTENDRE
-    if (percentage === 100) {
-        // On laisse juste 50ms pour le DOM, c'est invisible à l'oeil nu
-        setTimeout(() => {
-            launchSuccessConfetti();
-        }, 50);
-    }
-
-    // Le scroll peut se faire un peu après
+    // Délai pour l'affichage et les confettis
     setTimeout(() => {
         resultDiv.scrollIntoView({ behavior: 'smooth' });
+        
+        // On lance les confettis SEULEMENT quand la boîte est visible
+        if (shouldLaunchConfetti) {
+            launchSuccessConfetti();
+        }
     }, 150);
 }
+
 // Flashcards 
 
 async function openFlashcards(chapterNum) {
