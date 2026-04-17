@@ -1713,22 +1713,12 @@
 .flashcard-front, .flashcard-back {
     position: absolute;
     width: 100%;
-    /* MODIFICATIONS ICI */
-    min-height: 100%; /* La carte fait au moins la taille du parent */
-    height: auto;     /* Mais elle peut s'allonger si besoin */
-    /* ------------- */
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    border-radius: 25px;
-    border: 3px solid var(--brand-school);
-    background: white;
+    min-height: 100%;
+    height: auto;
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* Aligne tout de haut en bas */
     align-items: center;
-    justify-content: center;
-    padding: 20px;
-    text-align: center;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+    padding: 40px 20px 20px 20px; /* On augmente le padding top pour laisser de la place au label */
 }
 
 .flashcard-back {
@@ -1764,6 +1754,31 @@
     font-size: 1.1rem;
     font-weight: 700;
     color: var(--text-dark);
+}
+
+/* Le petit titre "Question" en haut */
+.card-label {
+    position: absolute;
+    top: 15px;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    color: var(--brand-school);
+}
+
+/* Le contenu qui vient du CSV */
+.card-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    margin-top: 10px; /* Espace sous le label */
+}
+
+.card-body img {
+    max-width: 100%;
+    height: auto;
+    margin-top: 15px; /* L'image sera TOUJOURS sous le texte */
 }
 
 /* 6. Barre d'actions unique (Boutons regroupés) */
