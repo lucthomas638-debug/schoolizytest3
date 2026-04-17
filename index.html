@@ -1686,7 +1686,8 @@
 .flashcard {
     flex: 1;
     max-width: 300px;
-    height: 220px;
+    min-height: 220px; /* Taille de départ */
+    height: auto;      /* Permet à la carte de grandir si l'image est grosse */
     cursor: pointer;
     perspective: 1200px;
     transition: transform 0.3s ease;
@@ -1718,7 +1719,7 @@
     display: flex;
     flex-direction: column; /* Aligne tout de haut en bas */
     align-items: center;
-    padding: 40px 20px 20px 20px; /* On augmente le padding top pour laisser de la place au label */
+    padding: 60px 20px 20px 20px; /* On augmente le padding top pour laisser de la place au label */
 }
 
 .flashcard-back {
@@ -1754,31 +1755,20 @@
     font-size: 1.1rem;
     font-weight: 700;
     color: var(--text-dark);
-}
-
-/* Le petit titre "Question" en haut */
-.card-label {
-    position: absolute;
-    top: 15px;
-    font-weight: bold;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    color: var(--brand-school);
-}
-
-/* Le contenu qui vient du CSV */
-.card-body {
+    /* Ajoute ces lignes */
+    max-height: 80%; 
+    overflow-y: auto; /* Ajoute une petite barre de défilement interne si c'est VRAIMENT trop long */
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 100%;
-    margin-top: 10px; /* Espace sous le label */
 }
-
-.card-body img {
-    max-width: 100%;
-    height: auto;
-    margin-top: 15px; /* L'image sera TOUJOURS sous le texte */
+    
+.flash-txt img {
+    max-height: 120px; /* Limite la hauteur de l'image pour laisser de la place au texte */
+    width: auto;
+    object-fit: contain;
+    margin-top: 10px;
 }
 
 /* 6. Barre d'actions unique (Boutons regroupés) */
