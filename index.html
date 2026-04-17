@@ -1713,7 +1713,10 @@
 .flashcard-front, .flashcard-back {
     position: absolute;
     width: 100%;
-    height: 100%;
+    /* MODIFICATIONS ICI */
+    min-height: 100%; /* La carte fait au moins la taille du parent */
+    height: auto;     /* Mais elle peut s'allonger si besoin */
+    /* ------------- */
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
     border-radius: 25px;
