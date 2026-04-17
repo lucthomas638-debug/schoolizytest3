@@ -1686,8 +1686,9 @@
 .flashcard {
     flex: 1;
     max-width: 300px;
-    min-height: 220px; /* Taille de départ */
-    height: auto;      /* Permet à la carte de grandir si l'image est grosse */
+    /* MODIFICATION : min-height au lieu de height fixe pour permettre l'extension */
+    min-height: 220px; 
+    height: auto;
     cursor: pointer;
     perspective: 1200px;
     transition: transform 0.3s ease;
@@ -1701,8 +1702,10 @@
 .flashcard-inner {
     position: relative;
     width: 100%;
+    /* MODIFICATION : Doit suivre la hauteur du parent flex */
     height: 100%;
-    transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); /* Effet rebond */
+    min-height: 220px;
+    transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
     transform-style: preserve-3d;
 }
 
@@ -1710,16 +1713,27 @@
     transform: rotateY(180deg);
 }
 
-/* 4. Faces Recto et Verso (Identiques en Blanc Bord Violet) */
+/* 4. Faces Recto et Verso */
 .flashcard-front, .flashcard-back {
     position: absolute;
     width: 100%;
+    /* MODIFICATION : min-height pour s'adapter au contenu */
     min-height: 100%;
     height: auto;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border-radius: 25px;
+    border: 3px solid var(--brand-school);
+    background: white;
     display: flex;
-    flex-direction: column; /* Aligne tout de haut en bas */
+    flex-direction: column; 
     align-items: center;
-    padding: 60px 20px 20px 20px; /* On augmente le padding top pour laisser de la place au label */
+    justify-content: center;
+    /* MODIFICATION : padding-top augmenté (60px) pour éviter que le texte touche le label "Question" */
+    padding: 60px 20px 25px 20px; 
+    text-align: center;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+    box-sizing: border-box;
 }
 
 .flashcard-back {
@@ -1738,7 +1752,7 @@
 
 .flashcard-hint {
     position: absolute;
-    top: 15px;
+    top: 15px; /* Reste fixé en haut */
     left: 50%;
     transform: translateX(-50%);
     font-size: 0.7rem;
@@ -1749,29 +1763,33 @@
     border-radius: 10px;
     background: #f0edff;
     color: var(--brand-school);
+    z-index: 2; /* S'assure de rester au-dessus */
 }
 
+/* MODIFICATION : Conteneur de texte et image */
 .flash-txt {
     font-size: 1.1rem;
     font-weight: 700;
     color: var(--text-dark);
-    /* Ajoute ces lignes */
-    max-height: 80%; 
-    overflow-y: auto; /* Ajoute une petite barre de défilement interne si c'est VRAIMENT trop long */
     width: 100%;
+    /* Limite le contenu à 80% de la hauteur de la face si nécessaire */
+    max-height: 80%;
     display: flex;
     flex-direction: column;
     align-items: center;
-}
-    
-.flash-txt img {
-    max-height: 120px; /* Limite la hauteur de l'image pour laisser de la place au texte */
-    width: auto;
-    object-fit: contain;
-    margin-top: 10px;
+    justify-content: center;
 }
 
-/* 6. Barre d'actions unique (Boutons regroupés) */
+/* AJOUT : Style pour les images de molécules dans les flashcards */
+.flash-txt img {
+    max-width: 100%;
+    max-height: 120px; /* Limite la hauteur de l'image pour ne pas trop étirer la carte */
+    height: auto;
+    margin-top: 15px; /* Espace entre le texte et l'image */
+    object-fit: contain;
+}
+
+/* 6. Barre d'actions unique */
 .actions-toolbar {
     display: flex;
     align-items: center;
@@ -1793,7 +1811,7 @@
     margin: 0 5px;
 }
 
-/* 7. Style des boutons (Blanc Bord Violet) */
+/* 7. Style des boutons */
 .btn-nav-quick {
     background: white !important;
     color: var(--brand-school) !important;
@@ -1816,12 +1834,10 @@
     transform: translateY(-2px);
 }
 
-/* Style spécial pour le bouton Piocher (Pointillés) */
 .btn-piocher {
     border: 2px dashed var(--brand-school) !important;
     background-color: #fffcf5 !important;
 }
-
 /* --- BOUTON FLOTTANT --- */
 #floating-calc-btn {
     position: fixed;
