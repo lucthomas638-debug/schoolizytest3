@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -16,6 +15,8 @@
       };
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <script src="script.js" defer></script>
 
@@ -75,17 +76,38 @@
         }
         .logo span { color: var(--brand-izy); }
 
+        /* 1. On s'assure que la liste prend toute la largeur restante */
         .nav-links {
             list-style: none;
             display: flex;
+            align-items: center;
             gap: 2rem;
+            flex: 1; /* Prend tout le vide après le logo */
+            justify-content: flex-end; /* 👈 C'EST ÇA : pousse TOUT le contenu vers la droite */
         }
-
+        
+        /* 2. On retire les marges automatiques SAUF pour l'écart Outils/Prénom */
+        #nav-auth {
+            margin-left: 0 !important; 
+        }
+        
+        #nav-user {
+            margin-left: 20px !important; /* 👈 C'est ici qu'on crée l'espace entre Outils et le Prénom */
+            color: var(--brand-school) !important;
+            font-weight: 600 !important;
+        }
+        
+        /* 3. Style des boutons (poids normal et espace 💼) */
         .nav-links li {
             cursor: pointer;
             font-weight: 500;
-            transition: color 0.3s;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px; 
+            white-space: nowrap;
         }
+        
         .nav-links li:hover { color: var(--brand-school); }
 
         /* --- CONTENEUR PRINCIPAL DES VUES --- */
@@ -1664,7 +1686,9 @@
 .flashcard {
     flex: 1;
     max-width: 300px;
-    height: 220px;
+    /* MODIFICATION : min-height au lieu de height fixe pour permettre l'extension */
+    min-height: 220px; 
+    height: auto;
     cursor: pointer;
     perspective: 1200px;
     transition: transform 0.3s ease;
@@ -1678,8 +1702,10 @@
 .flashcard-inner {
     position: relative;
     width: 100%;
+    /* MODIFICATION : Doit suivre la hauteur du parent flex */
     height: 100%;
-    transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); /* Effet rebond */
+    min-height: 220px;
+    transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
     transform-style: preserve-3d;
 }
 
@@ -1687,23 +1713,27 @@
     transform: rotateY(180deg);
 }
 
-/* 4. Faces Recto et Verso (Identiques en Blanc Bord Violet) */
+/* 4. Faces Recto et Verso */
 .flashcard-front, .flashcard-back {
     position: absolute;
     width: 100%;
-    height: 100%;
+    /* MODIFICATION : min-height pour s'adapter au contenu */
+    min-height: 100%;
+    height: auto;
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
     border-radius: 25px;
     border: 3px solid var(--brand-school);
     background: white;
     display: flex;
-    flex-direction: column;
+    flex-direction: column; 
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    /* MODIFICATION : padding-top augmenté (60px) pour éviter que le texte touche le label "Question" */
+    padding: 60px 20px 25px 20px; 
     text-align: center;
     box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+    box-sizing: border-box;
 }
 
 .flashcard-back {
@@ -1722,7 +1752,7 @@
 
 .flashcard-hint {
     position: absolute;
-    top: 15px;
+    top: 15px; /* Reste fixé en haut */
     left: 50%;
     transform: translateX(-50%);
     font-size: 0.7rem;
@@ -1733,15 +1763,33 @@
     border-radius: 10px;
     background: #f0edff;
     color: var(--brand-school);
+    z-index: 2; /* S'assure de rester au-dessus */
 }
 
+/* MODIFICATION : Conteneur de texte et image */
 .flash-txt {
     font-size: 1.1rem;
     font-weight: 700;
     color: var(--text-dark);
+    width: 100%;
+    /* Limite le contenu à 80% de la hauteur de la face si nécessaire */
+    max-height: 80%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-/* 6. Barre d'actions unique (Boutons regroupés) */
+/* AJOUT : Style pour les images de molécules dans les flashcards */
+.flash-txt img {
+    max-width: 100%;
+    max-height: 120px; /* Limite la hauteur de l'image pour ne pas trop étirer la carte */
+    height: auto;
+    margin-top: 15px; /* Espace entre le texte et l'image */
+    object-fit: contain;
+}
+
+/* 6. Barre d'actions unique */
 .actions-toolbar {
     display: flex;
     align-items: center;
@@ -1752,7 +1800,8 @@
     border-radius: 100px;
     border: 2px solid #eee;
     box-shadow: 0 10px 30px rgba(0,0,0,0.06);
-    margin: 20px auto;
+    /* MODIFICATION : On passe à 50px ou 60px de marge en haut */
+    margin: 70px auto 50px auto; 
     width: fit-content;
 }
 
@@ -1763,7 +1812,7 @@
     margin: 0 5px;
 }
 
-/* 7. Style des boutons (Blanc Bord Violet) */
+/* 7. Style des boutons */
 .btn-nav-quick {
     background: white !important;
     color: var(--brand-school) !important;
@@ -1786,12 +1835,10 @@
     transform: translateY(-2px);
 }
 
-/* Style spécial pour le bouton Piocher (Pointillés) */
 .btn-piocher {
     border: 2px dashed var(--brand-school) !important;
     background-color: #fffcf5 !important;
 }
-
 /* --- BOUTON FLOTTANT --- */
 #floating-calc-btn {
     position: fixed;
@@ -2255,26 +2302,31 @@ input:checked + .slider:before { transform: translateX(21px); }
    STYLE DE L'ÉDITEUR MATHÉMATIQUE (MATHLIVE)
    ============================================================================= */
 
+/* =============================================================================
+   STYLE DE L'ÉDITEUR MATHÉMATIQUE (MATHLIVE) - VERSION NETTOYÉE
+   ============================================================================= */
+
 :root {
-    /* Couleurs personnalisées pour le clavier virtuel MathLive */
+    /* Couleurs du clavier virtuel */
     --keyboard-background: #fdfdfd;
     --keycap-background: #ffffff;
-    --keycap-text: var(--brand-school);         /* Touches en violet */
-    --keycap-background-hover: #fffcf5;         /* Fond jaune clair au survol */
-    --keycap-border-bottom: #ddd;               /* Effet 3D léger sous les touches */
+    --keycap-text: var(--brand-school);
+    --keycap-background-hover: #fffcf5;
+    --keycap-border-bottom: #ddd;
     
-    /* Curseur et sélection dans le champ de saisie */
+    /* Curseur et sélection */
     --caret-color: var(--brand-school);
     --selection-background-color: rgba(132, 89, 207, 0.2);
-
-    /* On force aussi la couleur des 3 barres (menu) */
     --keyboard-toolbar-text: var(--brand-school);
+
+    /* --- TAILLE DU CLAVIER --- */
+    --keyboard-height: 220px !important; 
 }
 
-/* Personnalisation du champ de saisie MathLive */
+/* Le champ de saisie */
 math-field {
-    font-size: 2.2rem;
-    padding: 15px;
+    font-size: 1.5rem !important; /* Police maîtrisée */
+    padding: 12px;
     border: 2px solid var(--brand-school);
     border-radius: 15px;
     background: white;
@@ -2283,34 +2335,272 @@ math-field {
     transition: border-color 0.3s;
 }
 
-/* Changement de couleur quand on clique dans le champ */
+/* État focus */
 math-field:focus-within {
     border-color: var(--brand-izy) !important;
     box-shadow: 0 0 0 1px var(--brand-izy);
 }
 
-/* Bordure haute du clavier quand il apparaît */
+/* Le clavier virtuel (Bordure et Hauteur) */
 math-field::part(virtual-keyboard) {
+    max-height: 220px !important; /* Force la réduction de taille */
     border-top: 3px solid var(--brand-school);
     border-radius: 20px 20px 0 0;
-    box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.15);
+    background-color: var(--keyboard-background);
 }
 
-/* On cache les boutons d'aide par défaut s'ils apparaissent */
+/* Boutons interface clavier */
 math-field::part(virtual-keyboard-toggle) {
     color: var(--brand-school);
 }
 
+/* Animation */
 @keyframes fadeIn {
-        from { 
-            opacity: 0; 
-            transform: translateY(-10px); 
-        }
-        to { 
-            opacity: 1; 
-            transform: translateY(0); 
-        }
-    }
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Alignement global de la page */
+#view-recite.active {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Bouton Retour à gauche */
+    justify-content: flex-start;
+    min-height: 100vh;
+    padding-top: 10px; /* On réduit au maximum l'espace en haut */
+}
+
+/* Centrage forcé des éléments principaux */
+#view-recite .view-title, 
+#recite-results,
+#recite-game-zone,
+#recite-timer-bar {
+    align-self: center; 
+}
+
+/* Réduction de l'espace du titre pour faire gagner 50px de hauteur */
+#view-recite .view-title {
+    margin-top: 0px !important;
+    margin-bottom: 15px !important;
+    padding-bottom: 5px !important;
+}
+
+/* LE BLOC DE RÉSULTATS REMONTÉ */
+#recite-results {
+    margin-top: 0px !important; /* On le colle quasiment au titre */
+    margin-bottom: 20px !important; /* On libère le bas */
+    width: 95%;
+    max-width: 1000px;
+    padding: 20px !important; /* On resserre l'intérieur */
+}
+
+.view {
+    display: none; /* Cache tout par défaut */
+}
+
+.view.active {
+    display: block; /* Affiche uniquement la vue active */
+}
+
+/* --- VUE AUTH (Connexion / Inscription) --- */
+
+/* La boîte blanche centrale */
+#view-auth .info-page-content {
+    max-width: 450px;
+    margin: 0 auto;
+    padding: 30px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+/* La ligne pour Prénom et Nom côte à côte */
+#signup-fields > div:first-child {
+    display: flex !important;
+    gap: 10px;
+    width: 100%;
+}
+
+/* On force les inputs de cette ligne à se partager l'espace */
+#signup-fields > div:first-child input {
+    flex: 1;
+    min-width: 0; /* Empêche le débordement sur petit écran */
+}
+
+/* Style général des inputs dans Auth */
+#view-auth .search-input {
+    width: 100%;
+    margin-bottom: 12px;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: 12px 15px;
+    font-size: 1rem;
+    box-sizing: border-box; /* IMPORTANT : empêche l'input de dépasser de la boîte */
+}
+
+/* Style spécifique pour le champ téléphone s'il doit être plus gros */
+#auth-phone {
+    height: 50px;
+}
+
+/* Le bouton principal */
+#btn-auth-action {
+    width: 100%;
+    height: 50px;
+    border-radius: 50px;
+    font-weight: 700;
+    text-transform: uppercase;
+    cursor: pointer;
+    background: var(--brand-school);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+    margin-bottom: 15px;
+}
+
+#btn-auth-action:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+}
+
+/* Style pour le prénom (💼 Prénom) */
+.user-badge {
+    color: var(--brand-school) !important;
+    font-weight: 800 !important;
+    cursor: default;
+    margin-right: -10px; /* Rapproche un peu du bouton deconnexion */
+}
+
+/* Style pour le bouton Déconnexion */
+.btn-logout-izy {
+    color: var(--brand-school) !important;
+    border: 2px solid var(--brand-izy) !important;
+    padding: 6px 18px !important; /* Ajustement léger pour le centrage */
+    border-radius: 50px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    line-height: 1; /* Évite que le texte ne pousse les bords */
+}
+
+.btn-logout-izy:hover {
+    background-color: var(--brand-izy);
+    color: white !important;
+    transform: translateY(-2px);
+}
+
+/* --- MODALE PERSONNALISÉE --- */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Fond sombre transparent */
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px); /* Floute l'arrière-plan pour le style */
+}
+
+.modal-card {
+    background: white;
+    padding: 30px;
+    border-radius: 25px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+    animation: popIn 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+@keyframes popIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.modal-icon { font-size: 3rem; margin-bottom: 15px; }
+.modal-card h3 { color: var(--brand-school); margin-bottom: 10px; font-size: 1.5rem; }
+.modal-card p { color: #666; margin-bottom: 25px; }
+
+.modal-buttons { display: flex; gap: 10px; }
+
+.btn-modal-close {
+    flex: 1; padding: 12px; border: none; border-radius: 50px;
+    background: #f0f0f0; color: #666; font-weight: bold; cursor: pointer;
+}
+
+.btn-modal-auth {
+    flex: 1; padding: 12px; border: none; border-radius: 50px;
+    background: var(--brand-school); color: white; font-weight: bold; cursor: pointer;
+}
+
+/* Container de la ligne Prénom/Nom */
+.form-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.form-row input {
+    flex: 1;
+}
+
+/* Bouton secondaire (Blanc, Bordures violettes) */
+.btn-secondary {
+    background-color: white !important;
+    color: var(--brand-school) !important;
+    border: 2px solid var(--brand-school) !important;
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+}
+
+.btn-secondary:hover {
+    background-color: #f3f0ff !important; /* Un très léger fond violet au survol */
+    transform: translateY(-2px);
+}
+
+.auth-switch-container {
+    text-align: center;
+    margin-top: 5px;
+}
+
+/* Style du message d'erreur */
+#auth-msg {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    display: none;
+    text-align: center;
+}
+
+.nav-offres-badge {
+    background-color: #fffcf5; /* Fond crème */
+    border: 2px solid var(--brand-izy); /* Bordure orange */
+    color: var(--brand-school); /* Texte violet */
+    padding: 5px 15px;
+    border-radius: 50px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s ease;
+    margin-left: 110px; /* Espace après le logo */
+    margin-right: auto; /* Pousse tout le reste (pomo + liens) vers la droite */
+}
+
+.nav-offres-badge:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(245, 191, 120, 0.3);
+    background-color: var(--brand-izy);
+    color: white;
+}
+
+.nav-offres-badge span {
+    font-size: 1.1rem;
+}
     
 </style>
 
@@ -2323,6 +2613,10 @@ math-field::part(virtual-keyboard-toggle) {
 <header>
         <nav>
             <div class="logo" onclick="navigateTo('view-home')">School<span>izy</span>.</div>
+
+            <div class="nav-offres-badge" onclick="navigateTo('view-offres')">
+                <span>⚡</span> Offres
+            </div>
             
             <div class="pomodoro-wrapper" id="pomo-container">
                 <span class="pomo-icon">⏱️</span>
@@ -2343,17 +2637,50 @@ math-field::part(virtual-keyboard-toggle) {
                 </button>
             </div>
             </div>
-            <ul class="nav-links">
-                <li onclick="navigateTo('view-home')">Accueil</li>
-                <li onclick="navigateTo('view-apropos')">À propos</li>
-                <li onclick="navigateTo('view-outils')">Outils</li>
-            </ul>
+                <ul class="nav-links">
+                    <li onclick="navigateTo('view-home')">Accueil</li>
+                    <li onclick="navigateTo('view-apropos')">À propos</li>
+                    <li onclick="navigateTo('view-outils')">Outils</li>
+                    <li id="nav-auth" onclick="navigateTo('view-auth')">Connexion</li>
+                    <li id="nav-user" class="user-badge" style="display:none;">💼 <span id="user-name"></span></li>
+                    <li id="nav-logout" class="btn-logout-izy" onclick="handleLogout()" style="display:none;">Déconnexion</li>
+                </ul>
         </nav>
     
     </header>
 
     <!-- MAIN CONTAINER -->
     <main id="app-container">
+
+        <div id="view-auth" class="view container">
+            <div class="btn-back" onclick="navigateTo('view-home')">← Retour</div>
+            <h2 class="view-title">Mon Compte</h2>
+            
+            <div class="info-page-content">
+                <div id="auth-form-box">
+                    <div id="signup-fields">
+                        <div class="form-row">
+                            <input type="text" id="reg-prenom" placeholder="Prénom" class="search-input">
+                            <input type="text" id="reg-nom" placeholder="Nom" class="search-input">
+                        </div>
+                        <input type="tel" id="auth-phone" placeholder="Numéro de téléphone" class="search-input">
+                    </div>
+        
+                    <input type="email" id="auth-email" placeholder="Email" class="search-input">
+                    <input type="password" id="auth-password" placeholder="Mot de passe" class="search-input">
+                    
+                    <button id="btn-auth-action" onclick="handleAuth()">Créer mon compte</button>
+                    
+                    <div class="auth-switch-container">
+                        <button id="auth-switch" class="btn-secondary" onclick="toggleAuthMode()">
+                            Déjà un compte ? Se connecter
+                        </button>
+                    </div>
+                </div>
+        
+                <p id="auth-msg"></p>
+            </div>
+        </div>
         
         <!-- VUE 1 : ACCUEIL (FIXE, SANS SCROLL) -->
         <div id="view-home" class="view active">
@@ -2543,38 +2870,103 @@ math-field::part(virtual-keyboard-toggle) {
             </div>
         </div>
 
+        <div id="view-offres" class="view container">
+                <div class="btn-back" onclick="navigateTo('view-home')">← Retour</div>
+                <h2 class="view-title">Choisis ton Pass</h2>
+            
+                <div id="trial-banner" style="background: #fffcf5; color: var(--brand-school); padding: 15px; border-radius: 15px; text-align: center; margin-bottom: 30px; font-weight: bold; border: 2px dashed var(--brand-izy);">
+                    🎁 1ère Connexion : **Semaine Découverte active** ! Accès complet à 1 matière pendant 7 jours.
+                </div>
+            
+                <div class="grid-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                    
+                    <div class="card">
+                        <span style="font-size: 2rem;">📖</span>
+                        <h3>Izy Free</h3>
+                        <p style="font-size: 1.5rem; font-weight: 900;">Gratuit</p>
+                        <ul style="text-align: left; font-size: 0.9rem; margin: 15px 0; color: #666; list-style: none; padding: 0;">
+                            <li>✅ Accès aux <strong>Cours</strong></li>
+                            <li>✅ Accès aux <strong>Outils</strong></li>
+                            <li>❌ Pas de Quiz ni Récitation</li>
+                            <li>❌ Pas d'Audio-Révision</li>
+                        </ul>
+                        <button class="btn-secondary" style="width:100%;">Actuel</button>
+                    </div>
+            
+                    <div class="card" style="border-color: var(--brand-izy);">
+                        <span style="font-size: 2rem;">⚡</span>
+                        <h3>Izy Pass</h3>
+                        <p style="font-size: 1.5rem; font-weight: 900;">9€<small>/mois</small></p>
+                        <ul style="text-align: left; font-size: 0.9rem; margin: 15px 0; list-style: none; padding: 0;">
+                            <li>✅ <strong>2 matières</strong> au choix</li>
+                            <li>✅ 1 seul niveau (ex: Lycée)</li>
+                            <li>✅ Quiz & Récitation illimités</li>
+                            <li>✅ Audio-Révision incluse</li>
+                        </ul>
+                        <button class="btn-nav" style="width:100%; justify-content:center;">Prendre le Pass</button>
+                    </div>
+            
+                    <div class="card" style="border: 2px solid var(--brand-school); background: #fcfaff;">
+                        <span style="font-size: 2rem;">💎</span>
+                        <h3>Izy Pass Premium</h3>
+                        <p style="font-size: 1.5rem; font-weight: 900; color: var(--brand-school);">14€<small>/mois</small></p>
+                        <ul style="text-align: left; font-size: 0.9rem; margin: 15px 0; list-style: none; padding: 0;">
+                            <li>✅ <strong>Toutes les matières</strong></li>
+                            <li>✅ 1 seul niveau complet</li>
+                            <li>✅ Accès aux Battle Royales</li>
+                            <li>✅ Inscription Concours</li>
+                        </ul>
+                        <button class="btn-nav primary" style="width:100%; justify-content:center;">Devenir Premium</button>
+                    </div>
+            
+                    <div class="card" style="background: var(--brand-school); color: white;">
+                        <span style="font-size: 2rem;">👨‍👩‍👧‍👦</span>
+                        <h3 style="color: white;">Izy Pass Famille</h3>
+                        <p style="font-size: 1.5rem; font-weight: 900;">Dès 18€<small>/mois</small></p>
+                        <p style="font-size: 0.8rem; opacity: 0.9;">14€ + 4€ par enfant</p>
+                        <ul style="text-align: left; font-size: 0.9rem; margin: 15px 0; list-style: none; padding: 0;">
+                            <li>✅ Jusqu'à 5 comptes enfants</li>
+                            <li>✅ Tous les niveaux inclus</li>
+                            <li>✅ Économie massive</li>
+                        </ul>
+                        <button class="btn-secondary" style="width:100%; border:none;">Calculer mon prix</button>
+                    </div>
+            
+                </div>
+            </div>
+
         <!-- Repère vecteurs -->
 
-<div id="view-tool-repere" class="view container">
-            <div class="btn-back" onclick="navigateTo('view-outils')">← Retour Outils</div>
-            <h2 class="view-title">Repère Interactif</h2>
-        
-            <div class="tool-layout">
-                <div class="canvas-container" style="position:relative;">
-                    <canvas id="repereCanvas" width="400" height="400"></canvas>
-                    <div id="mouse-tooltip" style="position:absolute; top:10px; right:10px; background:rgba(255,255,255,0.8); padding:5px; border-radius:4px; font-size:0.8rem; pointer-events:none;">x:0, y:0</div>
-                </div>
-                <div class="tool-controls">
-                    <h3>Boîte à outils</h3>
-                    <div class="toolbar" style="display:flex; gap:10px; margin-bottom:1rem; flex-wrap:wrap;">
-                        <button id="btn-mode-point" class="mode-btn active" onclick="setRepereMode('point')" style="flex:1;">📍 Point</button>
-                        <button id="btn-mode-vector" class="mode-btn" onclick="setRepereMode('vector')" style="flex:1;">➡️ Vecteur</button>
-                        <button id="btn-mode-move" class="mode-btn" onclick="setRepereMode('move')" style="flex:1;">✋ Déplacer</button>
-                        <button id="btn-mode-delete" class="mode-btn" onclick="setRepereMode('delete')" style="background:#fee; color:#c0392b; flex:1;">🗑️ Gomme</button>
+        <div id="view-tool-repere" class="view container">
+                <div class="btn-back" onclick="navigateTo('view-outils')">← Retour Outils</div>
+                <h2 class="view-title">Repère Interactif</h2>
+            
+                <div class="tool-layout">
+                    <div class="canvas-container" style="position:relative;">
+                        <canvas id="repereCanvas" width="400" height="400"></canvas>
+                        <div id="mouse-tooltip" style="position:absolute; top:10px; right:10px; background:rgba(255,255,255,0.8); padding:5px; border-radius:4px; font-size:0.8rem; pointer-events:none;">x:0, y:0</div>
                     </div>
-
-                    <div class="instruction-box" style="background:#f9f9f9; padding:10px; border-radius:8px; font-size:0.9rem; color:#555;">
-                        <p id="repere-instruction"><strong>Mode Point :</strong> Cliquez sur la grille pour ajouter un point (précision 0,25).</p>
+                    <div class="tool-controls">
+                        <h3>Boîte à outils</h3>
+                        <div class="toolbar" style="display:flex; gap:10px; margin-bottom:1rem; flex-wrap:wrap;">
+                            <button id="btn-mode-point" class="mode-btn active" onclick="setRepereMode('point')" style="flex:1;">📍 Point</button>
+                            <button id="btn-mode-vector" class="mode-btn" onclick="setRepereMode('vector')" style="flex:1;">➡️ Vecteur</button>
+                            <button id="btn-mode-move" class="mode-btn" onclick="setRepereMode('move')" style="flex:1;">✋ Déplacer</button>
+                            <button id="btn-mode-delete" class="mode-btn" onclick="setRepereMode('delete')" style="background:#fee; color:#c0392b; flex:1;">🗑️ Gomme</button>
+                        </div>
+    
+                        <div class="instruction-box" style="background:#f9f9f9; padding:10px; border-radius:8px; font-size:0.9rem; color:#555;">
+                            <p id="repere-instruction"><strong>Mode Point :</strong> Cliquez sur la grille pour ajouter un point (précision 0,25).</p>
+                        </div>
+                        
+                        <div style="margin-top:15px; font-size:0.9rem;">
+                            <strong>Coordonnées souris :</strong> <span id="mouse-coords">x: 0, y: 0</span>
+                        </div>
+    
+                        <button onclick="clearRepere()" class="btn-danger-full">🗑️ Tout effacer</button>
                     </div>
-                    
-                    <div style="margin-top:15px; font-size:0.9rem;">
-                        <strong>Coordonnées souris :</strong> <span id="mouse-coords">x: 0, y: 0</span>
-                    </div>
-
-                    <button onclick="clearRepere()" class="btn-danger-full">🗑️ Tout effacer</button>
-                </div>
-            </div> 
-        </div>
+                </div> 
+            </div>
 
         <!-- Tableau Periodique -->
 
@@ -2904,8 +3296,6 @@ math-field::part(virtual-keyboard-toggle) {
             </div>
         </div>
 
-    </main>
-
     <div id="floating-calc-btn" onclick="toggleFloatingCalc()">
         <span>🧮</span>
     </div>
@@ -2932,23 +3322,23 @@ math-field::part(virtual-keyboard-toggle) {
     </div>
 </div>
 
-<div id="view-recite" class="view container">
+<div id="view-recite" class="view container" style="padding-bottom: 300px;">
     <div class="btn-back" onclick="navigateTo('view-chapters')">← Retour</div>
+    
     <h2 class="view-title">Récitation</h2>
-
-    <div id="recite-game-zone" class="recite-main-box" style="max-width: 700px; margin: 0 auto; text-align: center;">
-        
-        <div id="recite-timer-bar" style="display:none; justify-content: space-between; align-items: center; background: #fff5f5; padding: 12px 25px; border-radius: 15px; margin-bottom: 25px; border: 2px solid var(--accent-red); box-shadow: 0 4px 10px rgba(220, 53, 69, 0.1);">
-            <div style="font-size: 1.6rem; font-weight: 900; color: var(--accent-red); font-family: monospace;">
-                ⏱️ <span id="recite-time-left">60</span>s
-            </div>
-            <div style="font-size: 1.2rem; font-weight: 800; color: var(--brand-school); background: white; padding: 5px 15px; border-radius: 20px;">
-                Score : <span id="recite-score" style="color: var(--accent-green);">0</span>
-            </div>
+    
+    <div id="recite-timer-bar" style="display:none; flex-direction:column; align-items:center; margin-bottom:20px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 2rem;">⏱️</span>
+            <div id="recite-time-left" style="font-size: 2.5rem; font-weight: 900; color: var(--brand-school);">60</div>
         </div>
+        <div id="recite-score-container" style="font-weight: bold; color: var(--accent-green);">
+            Score : <span id="recite-score">0</span>
+        </div>
+    </div>
 
-        <p id="recite-question" style="font-size: 1.4rem; font-weight: 800; color: var(--text-dark); margin-bottom: 15px;"></p>
-
+    <div id="recite-game-zone" style="position: relative; background: white; padding: 30px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center; min-height: 400px; display: flex; flex-direction: column; justify-content: center;">
+        
         <div style="display: flex; justify-content: center; margin-bottom: 25px;">
             <button id="btn-start-speedrun" class="btn-sablier" onclick="startSpeedRun()">
                 <span>⏳</span>
@@ -2958,43 +3348,66 @@ math-field::part(virtual-keyboard-toggle) {
             </button>
         </div>
 
-        <math-field id="math-input" virtual-keyboard-mode="onfocus" style="width: 100%; border-radius: 15px; border: 2px solid var(--brand-school); font-size: 2.2rem; padding: 15px; background: white; outline: none;"></math-field>
+        <h3 id="recite-question" style="font-size: 1.5rem; margin-bottom: 2rem; color: var(--text-dark);">Chargement...</h3>
 
-        <button id="btn-check-recite" class="btn-nav" style="background: var(--brand-school); color: white; border:none; width: 100%; margin-top: 25px; height: 55px; justify-content: center; font-size: 1.1rem;" onclick="checkReciteAnswer()">
-            Vérifier la réponse
-        </button>
+        <div style="max-width: 500px; margin: 0 auto; width: 100%;">
+            <math-field id="math-input"></math-field>
+            
+            <button id="btn-check-recite" class="btn-nav" style="width: 100%; margin-top: 20px; justify-content: center;" onclick="checkReciteAnswer()">
+                Vérifier la réponse
+            </button>
+        </div>
 
-        <div id="recite-feedback" style="display:none; margin-top: 20px; padding: 25px; border-radius: 15px; animation: fadeIn 0.3s ease-out;">
-            <p id="feedback-text" style="font-weight: bold; font-size: 1.3rem; margin-bottom: 15px;"></p>
-            
-            <div id="correction-area" style="margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.7); border-radius: 12px; font-size: 1.4rem; border: 1px solid rgba(0,0,0,0.05);">
-                </div>
-            
-            <div style="display: flex; gap: 10px; justify-content: center;">
-                <button id="btn-next-recite" class="btn-nav" style="flex: 2; background: var(--brand-school); color: white; border: none; justify-content: center; height: 50px;" onclick="goToNextQuestion()">
-                    Continuer ›
-                </button>
-                <button id="btn-force-correct" class="btn-nav" style="flex: 1; background: #f0f0f0; color: #777; border: none; font-size: 0.85rem; justify-content: center; height: 50px;" onclick="forceValidAnswer()">
-                    C'était juste
-                </button>
+        <div id="recite-feedback" style="display:none; margin-top: 20px; padding: 15px; border-radius: 15px;">
+            <p id="feedback-text" style="font-weight: bold;"></p>
+            <div id="correction-area" style="margin-top: 10px; font-size: 1.1rem;"></div>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn-nav" style="flex: 1; justify-content: center;" onclick="goToNextQuestion()">Question suivante</button>
+                <button id="btn-force-correct" class="btn-nav" style="display:none; background: #eee; border:none; color: #666;" onclick="forceValidAnswer()">J'avais raison</button>
             </div>
         </div>
     </div>
 
-    <div id="recite-results" style="display:none; text-align: center; max-width: 600px; margin: 40px auto; padding: 40px; background: white; border-radius: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border: 2px solid var(--brand-school);">
-        <h2 style="color: var(--brand-school); font-size: 2.2rem; margin-bottom: 15px; -webkit-text-stroke: 0px;">Terminé ! ⏱️</h2>
+    <div id="recite-results" style="display:none; max-width: 1000px; margin: 20px auto; padding: 30px; background: white; border-radius: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border: 2px solid var(--brand-school);">
+        <h2 style="color: var(--brand-school); font-size: 2.2rem; margin-bottom: 25px; text-align: center;">Résultats du Défi ⏱️</h2>
         
-        <div style="background: #fcfaff; padding: 20px; border-radius: 20px; margin-bottom: 30px; border: 1px dashed var(--brand-school);">
-            <span id="final-score-big" style="font-size: 5rem; font-weight: 900; color: var(--accent-green); display: block; line-height: 1;">0</span>
-            <p style="font-size: 1.2rem; color: #666; font-weight: 600; margin-top: 10px;">formules maîtrisées en 1 minute</p>
-        </div>
+        <div id="speedrun-layout" style="display: flex; gap: 30px; align-items: flex-start; flex-wrap: wrap;">
+            <div id="speedrun-score-side" style="flex: 1; min-width: 250px;">
+                <div style="background: #fcfaff; padding: 30px; border-radius: 20px; border: 1px dashed var(--brand-school); text-align: center; margin-bottom: 20px;">
+                    <span id="speedrun-final-score" style="font-size: 6rem; font-weight: 900; color: var(--accent-green); display: block; line-height: 1;">0</span>
+                    <p style="font-size: 1.2rem; color: #666; font-weight: 600;">formules maîtrisées</p>
+                </div>
+                
+                <button class="btn-nav" style="width:100%; background:var(--accent-orange); color:white; border:none; margin-bottom:12px; justify-content:center; height: 50px;" onclick="openRecitation(currentChapterForReset)">
+                    🔄 Retenter le défi
+                </button>
+                <button class="btn-nav" style="width: 100%; background: var(--brand-school); color: white; border: none; justify-content: center; height: 50px;" onclick="navigateTo('view-chapters')">
+                    Retour aux chapitres
+                </button>
+            </div>
 
-        <button class="btn-nav" style="width: 100%; background: var(--brand-school); color: white; border: none; justify-content: center; height: 55px; font-size: 1.1rem;" onclick="navigateTo('view-chapters')">
-            Retour aux chapitres
-        </button>
+            <div id="speedrun-recap-side" style="flex: 1.5; min-width: 300px; background: #fafafa; border-radius: 20px; border: 1px solid #eee; padding: 20px;">
+                <h3 style="text-align:center; margin-bottom:15px; font-size:1.1rem; color:var(--brand-school);">Analyse des réponses</h3>
+                <div id="speedrun-recap-list" style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
+                    </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<div id="custom-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+        <div class="modal-icon">🔒</div>
+        <h3>Connexion requise</h3>
+        <p>Tu dois être connecté pour accéder aux révisions et aux quiz !</p>
+        <div class="modal-buttons">
+            <button class="btn-modal-close" onclick="closeModal()">Plus tard</button>
+            <button class="btn-modal-auth" onclick="goToAuth()">Se connecter</button>
+        </div>
+    </div>
+</div>
+
+</main>
     
 </body>
 </html>
-
