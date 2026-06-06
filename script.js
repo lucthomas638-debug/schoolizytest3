@@ -1,2360 +1,1906 @@
 /* =============================================================================
-   1. CONFIGURATION & ÉTAT INITIAL
+   SCHOOLIZY — SCRIPT PRINCIPAL
+   Réécrit, nettoyé et corrigé. Sommaire :
+     0. Config Supabase & données
+     1. Utilitaires (toast, loading, thème)
+     2. Navigation entre vues
+     3. Recherche
+     4. Niveaux → classes → matières → modes → chapitres
+     5. Leçon & fiche récap
+     6. Quiz (normal + survie) & navigation clavier
+     7. Flashcards
+     8. Exercices
+     9. Récitation (MathLive) & défi 1 minute
+    10. Outils : trigo, repère, tableau périodique, convertisseur, traceur, masse molaire
+    11. Annales (PDF)
+    12. Pomodoro & calculatrice flottante
+    13. Initialisation (DOMContentLoaded)
+   ============================================================================= */
+
+"use strict";
+
+/* =============================================================================
+   0. CONFIG SUPABASE & DONNÉES
    ============================================================================= */
 const supabaseUrl = 'https://kuuxhzyfnqrdoewfoiyf.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dXhoenlmbnFyZG9ld2ZvaXlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NjA2NzQsImV4cCI6MjA4ODEzNjY3NH0.ar-162v-HZ91M80xpDfE_mavK6xyE1Ciu7bZh-PNhHM';
+const STORAGE_ANNALES = 'https://kuuxhzyfnqrdoewfoiyf.supabase.co/storage/v1/object/public/annales/';
 
-const sb = supabase.createClient(supabaseUrl, supabaseKey);
+// Client Supabase (la lib globale s'appelle "supabase")
+const sb = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-const levelsData = {
-    lycee: [{ name: "Seconde", code: "seconde" }, { name: "Première", code: "premiere" }, { name: "Terminale", code: "terminale" }],
-    college: [{ name: "3ème", code: "3eme" }],
-    primaire: [{ name: "CP", code: "cp" }, { name: "CE1", code: "ce1" }, { name: "CE2", code: "ce2" }, { name: "CM1", code: "cm1" }, { name: "CM2", code: "cm2" }]
+// État global de l'application
+const state = {
+    currentLevel: null,
+    currentClassCode: null,
+    currentClassLabel: null,
+    currentSubject: null,
+    currentMode: null,
+    currentChapter: null
 };
 
+// Structure des niveaux : label affiché + code BDD
+const levelsData = {
+    primaire: [
+        { label: "CP",  code: "cp"  },
+        { label: "CE1", code: "ce1" },
+        { label: "CE2", code: "ce2" },
+        { label: "CM1", code: "cm1" },
+        { label: "CM2", code: "cm2" }
+    ],
+    college: [
+        { label: "3ème", code: "3eme" }
+    ],
+    lycee: [
+        { label: "Seconde",   code: "seconde"   },
+        { label: "Première",  code: "premiere"  },
+        { label: "Terminale", code: "terminale" }
+    ]
+};
+
+// Matières par code de classe
 const subjectsData = {
-    seconde: ["Maths", "Physique-Chimie"],
-    premiere: ["Maths", "Physique-Chimie"],
+    seconde:   ["Maths", "Physique-Chimie"],
+    premiere:  ["Maths", "Physique-Chimie"],
     terminale: ["Maths", "Physique-Chimie"]
 };
 
-let state = { currentLevelGroup: '', currentClassCode: '', currentSubject: '', currentMode: 'lesson' };
+const LEVEL_LABELS = { primaire: "Primaire", college: "Collège", lycee: "Lycée" };
 
-// AJOUTE ÇA ICI POUR QUE TOUT LE FICHIER LES VOIE
-let quizData = []; 
-let currentStep = 0; 
-let userAnswers = {};
-let isTimeAttack = false;
-let quizTimer = null;
-let timeLeft = 60;
-let allQuestionsBackup = []; // Variable à remplir quand tu charges le chapitre
-let currentReciteQuestion = null;
-let reciteChapterData = [];
-let reciteIndex = 0;
-let isSpeedRun = false;
-let reciteTimer = null;
-let currentScore = 0; // Ajoute celle-ci si elle manque
+// Données du tableau périodique (118 éléments)
+const fullElements = [
+  {n:1,s:"H",name:"Hydrogène",m:1.008,row:1,col:1,fam:"nonmetal"},
+  {n:2,s:"He",name:"Hélium",m:4.003,row:1,col:18,fam:"noble"},
+  {n:3,s:"Li",name:"Lithium",m:6.94,row:2,col:1,fam:"alkali"},
+  {n:4,s:"Be",name:"Béryllium",m:9.012,row:2,col:2,fam:"alkaline"},
+  {n:5,s:"B",name:"Bore",m:10.81,row:2,col:13,fam:"metalloid"},
+  {n:6,s:"C",name:"Carbone",m:12.011,row:2,col:14,fam:"nonmetal"},
+  {n:7,s:"N",name:"Azote",m:14.007,row:2,col:15,fam:"nonmetal"},
+  {n:8,s:"O",name:"Oxygène",m:15.999,row:2,col:16,fam:"nonmetal"},
+  {n:9,s:"F",name:"Fluor",m:18.998,row:2,col:17,fam:"halogen"},
+  {n:10,s:"Ne",name:"Néon",m:20.18,row:2,col:18,fam:"noble"},
+  {n:11,s:"Na",name:"Sodium",m:22.99,row:3,col:1,fam:"alkali"},
+  {n:12,s:"Mg",name:"Magnésium",m:24.305,row:3,col:2,fam:"alkaline"},
+  {n:13,s:"Al",name:"Aluminium",m:26.982,row:3,col:13,fam:"post-trans"},
+  {n:14,s:"Si",name:"Silicium",m:28.085,row:3,col:14,fam:"metalloid"},
+  {n:15,s:"P",name:"Phosphore",m:30.974,row:3,col:15,fam:"nonmetal"},
+  {n:16,s:"S",name:"Soufre",m:32.06,row:3,col:16,fam:"nonmetal"},
+  {n:17,s:"Cl",name:"Chlore",m:35.45,row:3,col:17,fam:"halogen"},
+  {n:18,s:"Ar",name:"Argon",m:39.948,row:3,col:18,fam:"noble"},
+  {n:19,s:"K",name:"Potassium",m:39.098,row:4,col:1,fam:"alkali"},
+  {n:20,s:"Ca",name:"Calcium",m:40.078,row:4,col:2,fam:"alkaline"},
+  {n:21,s:"Sc",name:"Scandium",m:44.956,row:4,col:3,fam:"transition"},
+  {n:22,s:"Ti",name:"Titane",m:47.867,row:4,col:4,fam:"transition"},
+  {n:23,s:"V",name:"Vanadium",m:50.942,row:4,col:5,fam:"transition"},
+  {n:24,s:"Cr",name:"Chrome",m:51.996,row:4,col:6,fam:"transition"},
+  {n:25,s:"Mn",name:"Manganèse",m:54.938,row:4,col:7,fam:"transition"},
+  {n:26,s:"Fe",name:"Fer",m:55.845,row:4,col:8,fam:"transition"},
+  {n:27,s:"Co",name:"Cobalt",m:58.933,row:4,col:9,fam:"transition"},
+  {n:28,s:"Ni",name:"Nickel",m:58.693,row:4,col:10,fam:"transition"},
+  {n:29,s:"Cu",name:"Cuivre",m:63.546,row:4,col:11,fam:"transition"},
+  {n:30,s:"Zn",name:"Zinc",m:65.38,row:4,col:12,fam:"transition"},
+  {n:31,s:"Ga",name:"Gallium",m:69.723,row:4,col:13,fam:"post-trans"},
+  {n:32,s:"Ge",name:"Germanium",m:72.63,row:4,col:14,fam:"metalloid"},
+  {n:33,s:"As",name:"Arsenic",m:74.922,row:4,col:15,fam:"metalloid"},
+  {n:34,s:"Se",name:"Sélénium",m:78.971,row:4,col:16,fam:"nonmetal"},
+  {n:35,s:"Br",name:"Brome",m:79.904,row:4,col:17,fam:"halogen"},
+  {n:36,s:"Kr",name:"Krypton",m:83.798,row:4,col:18,fam:"noble"},
+  {n:37,s:"Rb",name:"Rubidium",m:85.468,row:5,col:1,fam:"alkali"},
+  {n:38,s:"Sr",name:"Strontium",m:87.62,row:5,col:2,fam:"alkaline"},
+  {n:39,s:"Y",name:"Yttrium",m:88.906,row:5,col:3,fam:"transition"},
+  {n:40,s:"Zr",name:"Zirconium",m:91.224,row:5,col:4,fam:"transition"},
+  {n:41,s:"Nb",name:"Niobium",m:92.906,row:5,col:5,fam:"transition"},
+  {n:42,s:"Mo",name:"Molybdène",m:95.95,row:5,col:6,fam:"transition"},
+  {n:43,s:"Tc",name:"Technétium",m:98,row:5,col:7,fam:"transition"},
+  {n:44,s:"Ru",name:"Ruthénium",m:101.07,row:5,col:8,fam:"transition"},
+  {n:45,s:"Rh",name:"Rhodium",m:102.906,row:5,col:9,fam:"transition"},
+  {n:46,s:"Pd",name:"Palladium",m:106.42,row:5,col:10,fam:"transition"},
+  {n:47,s:"Ag",name:"Argent",m:107.868,row:5,col:11,fam:"transition"},
+  {n:48,s:"Cd",name:"Cadmium",m:112.414,row:5,col:12,fam:"transition"},
+  {n:49,s:"In",name:"Indium",m:114.818,row:5,col:13,fam:"post-trans"},
+  {n:50,s:"Sn",name:"Étain",m:118.71,row:5,col:14,fam:"post-trans"},
+  {n:51,s:"Sb",name:"Antimoine",m:121.76,row:5,col:15,fam:"metalloid"},
+  {n:52,s:"Te",name:"Tellure",m:127.6,row:5,col:16,fam:"metalloid"},
+  {n:53,s:"I",name:"Iode",m:126.904,row:5,col:17,fam:"halogen"},
+  {n:54,s:"Xe",name:"Xénon",m:131.293,row:5,col:18,fam:"noble"},
+  {n:55,s:"Cs",name:"Césium",m:132.905,row:6,col:1,fam:"alkali"},
+  {n:56,s:"Ba",name:"Baryum",m:137.327,row:6,col:2,fam:"alkaline"},
+  {n:57,s:"La",name:"Lanthane",m:138.905,row:8,col:3,fam:"lanthanide"},
+  {n:58,s:"Ce",name:"Cérium",m:140.116,row:8,col:4,fam:"lanthanide"},
+  {n:59,s:"Pr",name:"Praséodyme",m:140.908,row:8,col:5,fam:"lanthanide"},
+  {n:60,s:"Nd",name:"Néodyme",m:144.242,row:8,col:6,fam:"lanthanide"},
+  {n:61,s:"Pm",name:"Prométhium",m:145,row:8,col:7,fam:"lanthanide"},
+  {n:62,s:"Sm",name:"Samarium",m:150.36,row:8,col:8,fam:"lanthanide"},
+  {n:63,s:"Eu",name:"Europium",m:151.964,row:8,col:9,fam:"lanthanide"},
+  {n:64,s:"Gd",name:"Gadolinium",m:157.25,row:8,col:10,fam:"lanthanide"},
+  {n:65,s:"Tb",name:"Terbium",m:158.925,row:8,col:11,fam:"lanthanide"},
+  {n:66,s:"Dy",name:"Dysprosium",m:162.5,row:8,col:12,fam:"lanthanide"},
+  {n:67,s:"Ho",name:"Holmium",m:164.93,row:8,col:13,fam:"lanthanide"},
+  {n:68,s:"Er",name:"Erbium",m:167.259,row:8,col:14,fam:"lanthanide"},
+  {n:69,s:"Tm",name:"Thulium",m:168.934,row:8,col:15,fam:"lanthanide"},
+  {n:70,s:"Yb",name:"Ytterbium",m:173.045,row:8,col:16,fam:"lanthanide"},
+  {n:71,s:"Lu",name:"Lutécium",m:174.967,row:8,col:17,fam:"lanthanide"},
+  {n:72,s:"Hf",name:"Hafnium",m:178.49,row:6,col:4,fam:"transition"},
+  {n:73,s:"Ta",name:"Tantale",m:180.948,row:6,col:5,fam:"transition"},
+  {n:74,s:"W",name:"Tungstène",m:183.84,row:6,col:6,fam:"transition"},
+  {n:75,s:"Re",name:"Rhénium",m:186.207,row:6,col:7,fam:"transition"},
+  {n:76,s:"Os",name:"Osmium",m:190.23,row:6,col:8,fam:"transition"},
+  {n:77,s:"Ir",name:"Iridium",m:192.217,row:6,col:9,fam:"transition"},
+  {n:78,s:"Pt",name:"Platine",m:195.084,row:6,col:10,fam:"transition"},
+  {n:79,s:"Au",name:"Or",m:196.967,row:6,col:11,fam:"transition"},
+  {n:80,s:"Hg",name:"Mercure",m:200.592,row:6,col:12,fam:"transition"},
+  {n:81,s:"Tl",name:"Thallium",m:204.38,row:6,col:13,fam:"post-trans"},
+  {n:82,s:"Pb",name:"Plomb",m:207.2,row:6,col:14,fam:"post-trans"},
+  {n:83,s:"Bi",name:"Bismuth",m:208.98,row:6,col:15,fam:"post-trans"},
+  {n:84,s:"Po",name:"Polonium",m:209,row:6,col:16,fam:"post-trans"},
+  {n:85,s:"At",name:"Astate",m:210,row:6,col:17,fam:"halogen"},
+  {n:86,s:"Rn",name:"Radon",m:222,row:6,col:18,fam:"noble"},
+  {n:87,s:"Fr",name:"Francium",m:223,row:7,col:1,fam:"alkali"},
+  {n:88,s:"Ra",name:"Radium",m:226,row:7,col:2,fam:"alkaline"},
+  {n:89,s:"Ac",name:"Actinium",m:227,row:9,col:3,fam:"actinide"},
+  {n:90,s:"Th",name:"Thorium",m:232.038,row:9,col:4,fam:"actinide"},
+  {n:91,s:"Pa",name:"Protactinium",m:231.036,row:9,col:5,fam:"actinide"},
+  {n:92,s:"U",name:"Uranium",m:238.029,row:9,col:6,fam:"actinide"},
+  {n:93,s:"Np",name:"Neptunium",m:237,row:9,col:7,fam:"actinide"},
+  {n:94,s:"Pu",name:"Plutonium",m:244,row:9,col:8,fam:"actinide"},
+  {n:95,s:"Am",name:"Américium",m:243,row:9,col:9,fam:"actinide"},
+  {n:96,s:"Cm",name:"Curium",m:247,row:9,col:10,fam:"actinide"},
+  {n:97,s:"Bk",name:"Berkélium",m:247,row:9,col:11,fam:"actinide"},
+  {n:98,s:"Cf",name:"Californium",m:251,row:9,col:12,fam:"actinide"},
+  {n:99,s:"Es",name:"Einsteinium",m:252,row:9,col:13,fam:"actinide"},
+  {n:100,s:"Fm",name:"Fermium",m:257,row:9,col:14,fam:"actinide"},
+  {n:101,s:"Md",name:"Mendélévium",m:258,row:9,col:15,fam:"actinide"},
+  {n:102,s:"No",name:"Nobélium",m:259,row:9,col:16,fam:"actinide"},
+  {n:103,s:"Lr",name:"Lawrencium",m:262,row:9,col:17,fam:"actinide"},
+  {n:104,s:"Rf",name:"Rutherfordium",m:267,row:7,col:4,fam:"transition"},
+  {n:105,s:"Db",name:"Dubnium",m:270,row:7,col:5,fam:"transition"},
+  {n:106,s:"Sg",name:"Seaborgium",m:271,row:7,col:6,fam:"transition"},
+  {n:107,s:"Bh",name:"Bohrium",m:270,row:7,col:7,fam:"transition"},
+  {n:108,s:"Hs",name:"Hassium",m:277,row:7,col:8,fam:"transition"},
+  {n:109,s:"Mt",name:"Meitnerium",m:276,row:7,col:9,fam:"transition"},
+  {n:110,s:"Ds",name:"Darmstadtium",m:281,row:7,col:10,fam:"transition"},
+  {n:111,s:"Rg",name:"Roentgenium",m:282,row:7,col:11,fam:"transition"},
+  {n:112,s:"Cn",name:"Copernicium",m:285,row:7,col:12,fam:"transition"},
+  {n:113,s:"Nh",name:"Nihonium",m:286,row:7,col:13,fam:"post-trans"},
+  {n:114,s:"Fl",name:"Flérovium",m:289,row:7,col:14,fam:"post-trans"},
+  {n:115,s:"Mc",name:"Moscovium",m:290,row:7,col:15,fam:"post-trans"},
+  {n:116,s:"Lv",name:"Livermorium",m:293,row:7,col:16,fam:"post-trans"},
+  {n:117,s:"Ts",name:"Tennesse",m:294,row:7,col:17,fam:"halogen"},
+  {n:118,s:"Og",name:"Oganesson",m:294,row:7,col:18,fam:"noble"}
+];
+
+// Valeurs trigonométriques remarquables (clé = degrés)
+const remarkableValues = {
+    0:   { rad: "0",            cos: "1",            sin: "0",            tan: "0" },
+    30:  { rad: "π/6",          cos: "√3/2",         sin: "1/2",          tan: "√3/3" },
+    45:  { rad: "π/4",          cos: "√2/2",         sin: "√2/2",         tan: "1" },
+    60:  { rad: "π/3",          cos: "1/2",          sin: "√3/2",         tan: "√3" },
+    90:  { rad: "π/2",          cos: "0",            sin: "1",            tan: "∞" },
+    120: { rad: "2π/3",         cos: "-1/2",         sin: "√3/2",         tan: "-√3" },
+    135: { rad: "3π/4",         cos: "-√2/2",        sin: "√2/2",         tan: "-1" },
+    150: { rad: "5π/6",         cos: "-√3/2",        sin: "1/2",          tan: "-√3/3" },
+    180: { rad: "π",            cos: "-1",           sin: "0",            tan: "0" },
+    210: { rad: "7π/6",         cos: "-√3/2",        sin: "-1/2",         tan: "√3/3" },
+    225: { rad: "5π/4",         cos: "-√2/2",        sin: "-√2/2",        tan: "1" },
+    240: { rad: "4π/3",         cos: "-1/2",         sin: "-√3/2",        tan: "√3" },
+    270: { rad: "3π/2",         cos: "0",            sin: "-1",           tan: "∞" },
+    300: { rad: "5π/3",         cos: "1/2",          sin: "-√3/2",        tan: "-√3" },
+    315: { rad: "7π/4",         cos: "√2/2",         sin: "-√2/2",        tan: "-1" },
+    330: { rad: "11π/6",        cos: "√3/2",         sin: "-1/2",         tan: "-√3/3" }
+};
+
+// Masses molaires atomiques (g/mol) pour le calculateur
+const atomMasses = {
+    H: 1.008, He: 4.003, Li: 6.94, Be: 9.012, B: 10.81, C: 12.011, N: 14.007,
+    O: 15.999, F: 18.998, Ne: 20.180, Na: 22.990, Mg: 24.305, Al: 26.982,
+    Si: 28.085, P: 30.974, S: 32.06, Cl: 35.45, Ar: 39.948, K: 39.098,
+    Ca: 40.078, Fe: 55.845, Cu: 63.546, Zn: 65.38, Ag: 107.868, I: 126.904,
+    Ba: 137.327, Au: 196.967, Hg: 200.592, Pb: 207.2
+};
+
+// Table de conversion : facteur vers l'unité de base de chaque catégorie
+const convData = {
+    length: {
+        label: "Longueur",
+        base: "m",
+        units: { km: 1000, m: 1, dm: 0.1, cm: 0.01, mm: 0.001, "µm": 1e-6, mi: 1609.34, yd: 0.9144, ft: 0.3048, in: 0.0254 }
+    },
+    mass: {
+        label: "Masse",
+        base: "g",
+        units: { t: 1e6, kg: 1000, g: 1, mg: 0.001, "µg": 1e-6, lb: 453.592, oz: 28.3495 }
+    },
+    time: {
+        label: "Temps",
+        base: "s",
+        units: { j: 86400, h: 3600, min: 60, s: 1, ms: 0.001 }
+    },
+    speed: {
+        label: "Vitesse",
+        base: "m/s",
+        units: { "km/h": 0.277778, "m/s": 1, "mph": 0.44704, "kn": 0.514444 }
+    },
+    volume: {
+        label: "Volume",
+        base: "L",
+        units: { "m³": 1000, hL: 100, L: 1, dL: 0.1, cL: 0.01, mL: 0.001, "cm³": 0.001 }
+    },
+    data: {
+        label: "Données",
+        base: "o",
+        units: { To: 1e12, Go: 1e9, Mo: 1e6, ko: 1000, o: 1, bit: 0.125 }
+    }
+};
 
 /* =============================================================================
-   2. SYSTÈME DE NAVIGATION & VISIBILITÉ CALCULATRICE
+   1. UTILITAIRES (toast, loading, thème)
    ============================================================================= */
-
-function navigateTo(viewId) {
-    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-    const target = document.getElementById(viewId);
-    
-    // LISTE DES VUES QUI DOIVENT CACHER LE BOUTON
-    const viewsToHide = ['view-home', 'view-apropos', 'view-outils', 'view-level-classes', 'view-subjects'];
-    
-    if (viewsToHide.includes(viewId)) {
-        state.currentSubject = ''; // On vide le sujet pour forcer la disparition
-    }
-
-    if (target) {
-        target.classList.add('active');
-        const main = document.querySelector('main');
-        if (main) main.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    
-    // On lance la vérification du bouton après chaque changement de vue
-    updateFloatingCalcVisibility();
+// Notification non bloquante (remplace les alert())
+function showToast(msg, type = "info", duration = 3000) {
+    const container = document.getElementById('toast-container');
+    if (!container) { console.log(msg); return; }
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.classList.add('fade-out');
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
 }
 
-function updateFloatingCalcVisibility() {
-    const btn = document.getElementById('floating-calc-btn');
-    const popup = document.getElementById('calc-popup');
-    if (!btn) return;
-    
-    const subjectsWithCalc = ['maths', 'physique-chimie', 'physique'];
-    const currentSub = state.currentSubject ? state.currentSubject.toLowerCase().trim() : '';
-    
-    // Si on est dans une matière scientifique ET qu'on n'est pas sur l'accueil
-    if (currentSub && subjectsWithCalc.includes(currentSub)) {
-        btn.style.display = 'flex';
+// Affiche un état de chargement dans un conteneur
+function showLoading(containerId, message = "Chargement...") {
+    const c = document.getElementById(containerId);
+    if (!c) return;
+    c.innerHTML = `<div class="loading-state"><div class="spinner">⏳</div><p>${message}</p></div>`;
+}
+
+// Bascule clair / sombre, persistée dans localStorage
+function toggleTheme() {
+    const isDark = document.body.classList.toggle('dark-mode');
+    localStorage.setItem('schoolizy-theme', isDark ? 'dark' : 'light');
+    const btn = document.getElementById('theme-toggle');
+    if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+}
+
+// Applique le thème enregistré au chargement
+function applySavedTheme() {
+    const saved = localStorage.getItem('schoolizy-theme');
+    const btn = document.getElementById('theme-toggle');
+    if (saved === 'dark') {
+        document.body.classList.add('dark-mode');
+        if (btn) btn.textContent = '☀️';
     } else {
-        btn.style.display = 'none';
-        if (popup) popup.style.display = 'none'; 
+        if (btn) btn.textContent = '🌙';
     }
 }
 
-function toggleFloatingCalc() {
-    const popup = document.getElementById('calc-popup');
-    if (!popup) return;
-    popup.style.display = (popup.style.display === 'none' || popup.style.display === '') ? 'flex' : 'none';
+// Recompose les formules MathJax présentes dans le DOM
+function typesetMath() {
+    if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise().catch(() => {});
+    }
 }
 
-function openLevelPage(levelKey) {
-    state.currentLevelGroup = levelKey;
-    const titles = { 'primaire': 'Primaire', 'college': 'Collège', 'lycee': 'Lycée' };
-    document.getElementById('level-title').innerText = titles[levelKey] || "Niveau";
+/* =============================================================================
+   2. NAVIGATION ENTRE VUES
+   ============================================================================= */
+function navigateTo(viewId) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    const target = document.getElementById(viewId);
+    if (target) target.classList.add('active');
+
+    // La calculatrice flottante n'apparaît que dans les vues de travail
+    const calcBtn = document.getElementById('floating-calc-btn');
+    if (calcBtn) {
+        const showCalc = ['view-lesson', 'view-quiz', 'view-final-exercises', 'view-fiche', 'view-recite'];
+        calcBtn.style.display = showCalc.includes(viewId) ? 'flex' : 'none';
+    }
+
+    // Remonte en haut du conteneur principal
+    const main = document.getElementById('app-container');
+    if (main) main.scrollTop = 0;
+}
+
+/* =============================================================================
+   3. RECHERCHE
+   ============================================================================= */
+function performSearch() {
+    const input = document.getElementById('site-search');
+    const box = document.getElementById('search-results');
+    if (!input || !box) return;
+
+    const q = input.value.trim().toLowerCase();
+    if (q.length < 2) { box.style.display = 'none'; box.innerHTML = ''; return; }
+
+    // Construit l'index de recherche à partir des niveaux/classes/matières
+    const results = [];
+    for (const level in levelsData) {
+        if (LEVEL_LABELS[level].toLowerCase().includes(q)) {
+            results.push({ label: `${LEVEL_LABELS[level]} (niveau)`, action: () => openLevelPage(level) });
+        }
+        levelsData[level].forEach(cls => {
+            if (cls.label.toLowerCase().includes(q)) {
+                results.push({ label: `${cls.label} — ${LEVEL_LABELS[level]}`, action: () => openClass(level, cls) });
+            }
+            (subjectsData[cls.code] || []).forEach(subj => {
+                if (subj.toLowerCase().includes(q) || cls.label.toLowerCase().includes(q)) {
+                    results.push({
+                        label: `${subj} — ${cls.label}`,
+                        action: () => { openClass(level, cls); setTimeout(() => openSubject(subj), 50); }
+                    });
+                }
+            });
+        });
+    }
+
+    if (results.length === 0) {
+        box.innerHTML = `<div class="result-item" style="color:#999; cursor:default;">Aucun résultat pour « ${q} »</div>`;
+        box.style.display = 'block';
+        return;
+    }
+
+    box.innerHTML = '';
+    results.slice(0, 8).forEach(r => {
+        const div = document.createElement('div');
+        div.className = 'result-item';
+        div.textContent = r.label;
+        div.onclick = () => {
+            box.style.display = 'none';
+            input.value = '';
+            r.action();
+        };
+        box.appendChild(div);
+    });
+    box.style.display = 'block';
+}
+
+/* =============================================================================
+   4. NIVEAUX → CLASSES → MATIÈRES → MODES → CHAPITRES
+   ============================================================================= */
+function openLevelPage(level) {
+    state.currentLevel = level;
+    document.getElementById('level-title').textContent = LEVEL_LABELS[level] || "Classes";
+
     const grid = document.getElementById('classes-grid');
     grid.innerHTML = '';
-    (levelsData[levelKey] || []).forEach(cls => {
+    (levelsData[level] || []).forEach(cls => {
         const card = document.createElement('div');
         card.className = 'class-btn';
-        card.innerHTML = `<h3>${cls.name}</h3>`;
-        card.onclick = () => openSubjectsPage(cls.code, cls.name);
+        card.innerHTML = `<span>🎒</span><h3>${cls.label}</h3>`;
+        card.onclick = () => openClass(level, cls);
         grid.appendChild(card);
     });
+
     navigateTo('view-level-classes');
 }
 
-function openSubjectsPage(classCode, className) {
-    state.currentClassCode = classCode;
-    const info = getClassInfo(classCode);
-    if (!className) className = info.name;
-    state.currentLevelGroup = info.group;
-    document.getElementById('subject-title').innerText = className;
+function openClass(level, cls) {
+    state.currentLevel = level;
+    state.currentClassCode = cls.code;
+    state.currentClassLabel = cls.label;
+    localStorage.setItem('schoolizy-last-class', JSON.stringify({ level, cls }));
+
+    document.getElementById('subject-title').textContent = `Matières — ${cls.label}`;
+
     const grid = document.getElementById('subjects-grid');
     grid.innerHTML = '';
-    (subjectsData[classCode] || []).forEach(subj => {
-        const card = document.createElement('div');
-        card.className = 'subject-card';
-        card.innerHTML = `<h3>${subj}</h3>`;
-        card.onclick = () => checkContentAndNavigate(subj);
-        grid.appendChild(card);
-    });
+    const subjects = subjectsData[cls.code] || [];
+
+    if (subjects.length === 0) {
+        grid.innerHTML = `<p style="grid-column:1/-1; text-align:center; color:#888;">
+            Les matières pour cette classe arrivent bientôt ! 📚</p>`;
+    } else {
+        const icons = { "Maths": "🔢", "Physique-Chimie": "⚗️", "SVT": "🧬", "Français": "📖", "Histoire-Géo": "🌍" };
+        subjects.forEach(subj => {
+            const card = document.createElement('div');
+            card.className = 'subject-card';
+            card.innerHTML = `<span>${icons[subj] || "📘"}</span><h3>${subj}</h3>`;
+            card.onclick = () => openSubject(subj);
+            grid.appendChild(card);
+        });
+    }
+
     navigateTo('view-subjects');
 }
 
-function getClassInfo(classCode) {
-    for (const [group, classes] of Object.entries(levelsData)) {
-        const found = classes.find(c => c.code === classCode);
-        if (found) return { name: found.name, group: group };
-    }
-    return { name: classCode, group: 'lycee' };
-}
-
-function performSearch() {
-    const input = document.getElementById('site-search');
-    const resContainer = document.getElementById('search-results');
-    const query = input.value.toLowerCase().trim();
-    if (query.length < 2) { resContainer.style.display = 'none'; return; }
-    resContainer.innerHTML = '';
-    let matches = [];
-    for (const [code, subs] of Object.entries(subjectsData)) {
-        subs.forEach(s => {
-            const info = getClassInfo(code);
-            if (`${s} ${info.name}`.toLowerCase().includes(query)) matches.push({ s, code, info });
-        });
-    }
-    matches.slice(0, 8).forEach(m => {
-        const d = document.createElement('div');
-        d.className = 'result-item';
-        d.innerHTML = `<strong>${m.s}</strong> <small>(${m.info.name})</small>`;
-        d.onclick = () => { input.value = ''; resContainer.style.display = 'none'; state.currentClassCode = m.code; state.currentLevelGroup = m.info.group; checkContentAndNavigate(m.s); };
-        resContainer.appendChild(d);
-    });
-    resContainer.style.display = 'block';
-}
-
-/* =============================================================================
-   3. GESTION SUPABASE & MODES (COURS, QUIZ, EXOS)
-   ============================================================================= */
-
-// Étape 1 : Quand on clique sur une matière (ex: Maths)
-async function checkContentAndNavigate(subject) {
+function openSubject(subject) {
     state.currentSubject = subject;
-    // On affiche d'abord le choix du mode (Cours, Quiz, etc.)
     navigateTo('view-mode');
 }
 
-// Étape 2 : Quand on choisit un mode (ex: Quiz)
+// Choix d'une activité ; déclenche le chargement adapté
 function chooseMode(mode) {
     state.currentMode = mode;
-    // On va chercher les chapitres disponibles pour ce sujet et cette classe
+
+    if (mode === 'recite') {
+        // La récitation n'a pas de sélection de chapitre : on démarre directement
+        loadReciteQuestions();
+        return;
+    }
+
+    document.getElementById('chapters-title').textContent =
+        `${state.currentSubject} — Choisis un chapitre`;
+
+    // La barre d'options multi n'apparaît que pour le quiz
+    const optionsBar = document.getElementById('quiz-options-bar');
+    if (optionsBar) optionsBar.style.display = (mode === 'quiz') ? 'block' : 'none';
+
+    navigateTo('view-chapters');
     loadChapters();
 }
 
-// Étape 3 : Charger la liste des chapitres depuis Supabase
+function backFromChapters() {
+    navigateTo('view-mode');
+}
+
+// Charge la liste des chapitres disponibles pour la matière/mode courant
 async function loadChapters() {
+    showLoading('chapters-grid', 'Recherche des chapitres...');
+
+    // La table source dépend du mode choisi
+    const tableByMode = {
+        lesson:    'lessons',
+        quiz:      'quizzes',
+        fiche:     'lessons',
+        exercise:  'exercises',
+        flashcard: 'flashcards'
+    };
+    const table = tableByMode[state.currentMode] || 'lessons';
+
     const { data, error } = await sb
-        .from('lessons')
-        .select('chapter_number, content')
+        .from(table)
+        .select('chapter_number')
         .eq('class_id', state.currentClassCode)
         .eq('subject_id', state.currentSubject.toLowerCase())
         .order('chapter_number', { ascending: true });
 
     if (error || !data || data.length === 0) {
-        return alert("Contenu bientôt disponible pour cette matière !");
+        document.getElementById('chapters-grid').innerHTML =
+            `<p style="grid-column:1/-1; text-align:center; color:#888; padding:2rem;">
+                Contenu bientôt disponible pour cette matière ! 🚧</p>`;
+        return; // l'utilisateur reste sur view-chapters, sans blocage
     }
-    
-    renderChaptersGrid(data);
+
+    // Chapitres uniques
+    const chapters = [...new Set(data.map(d => d.chapter_number))].sort((a, b) => a - b);
+    renderChaptersGrid(chapters);
 }
 
-// Étape 4 : Afficher les tuiles des chapitres
-function renderChaptersGrid(chaptersList) {
+function renderChaptersGrid(chapters) {
     const grid = document.getElementById('chapters-grid');
-    const quizBar = document.getElementById('quiz-options-bar');
-    if (!grid) return;
-    
     grid.innerHTML = '';
-    
-    if (quizBar) {
-        quizBar.style.display = (state.currentMode === 'quiz') ? 'block' : 'none';
-        document.getElementById('toggle-multi-mode').checked = false;
-        document.getElementById('multi-validate-area').style.display = 'none';
-    }
 
-chaptersList.forEach(l => {
-        const temp = document.createElement('div'); 
-        temp.innerHTML = l.content;
-        const title = temp.querySelector('h1')?.innerText || "Chapitre " + l.chapter_number;
-        
+    chapters.forEach(num => {
         const card = document.createElement('div');
-        card.className = 'card chapter-card-interactive';
-        card.dataset.chapterId = l.chapter_number; // Important pour la sélection multiple
-
+        card.className = 'chapter-card-interactive';
+        card.dataset.chapter = num;
         card.innerHTML = `
             <div class="chapter-badge-selection"></div>
-            <p style="color:#aaa; font-size:0.75rem; font-weight:700; text-transform:uppercase; margin:0 0 8px 0; letter-spacing:1px;">
-                Chapitre ${l.chapter_number}
-            </p>
-            <h3 style="margin:0; font-size:1.1rem; line-height:1.3; color:var(--text-dark);">
-                ${title}
-            </h3>
-        `;
-        
-        card.onclick = () => {
-            const multiActive = document.getElementById('toggle-multi-mode').checked;
-            if (multiActive) {
-                // On allume/éteint la carte
-                card.classList.toggle('selected');
-            } else {
-                // Mode normal : lancement direct
-                if (state.currentMode === 'quiz') openQuiz(l.chapter_number);
-                else if (state.currentMode === 'exercise') openExercises(l.chapter_number);
-                else if (state.currentMode === 'flashcard') openFlashcards(l.chapter_number);
-                else if (state.currentMode === 'fiche') openFicheRecap(l.chapter_number);
-                else if (state.currentMode === 'recite') openRecitation(l.chapter_number);
-                else displayLesson(l.chapter_number);
-            }
-        };
+            <span style="font-size:2.5rem;">📂</span>
+            <h3 style="margin-top:10px;">Chapitre ${num}</h3>`;
+        card.onclick = () => onChapterClick(card, num);
         grid.appendChild(card);
     });
-
-    navigateTo('view-chapters');
 }
 
-async function prepareMultiQuiz() {
-    // 1. On récupère les cartes sélectionnées
-    const selectedCards = document.querySelectorAll('.chapter-card-interactive.selected');
-    const selectedChapters = Array.from(selectedCards).map(card => parseInt(card.dataset.chapterId));
-
-    // 2. Sécurité : Vérifier qu'il y a au moins DEUX chapitres
-    if (selectedChapters.length < 2) {
-        return alert("Sélectionne au moins 2 chapitres pour ce mode.");
+// Clic sur un chapitre : comportement selon le mode (et la sélection multiple)
+function onChapterClick(card, num) {
+    if (state.currentMode === 'quiz' && multiSelectMode) {
+        card.classList.toggle('selected');
+        return;
     }
 
-    // 3. Appel Supabase
+    state.currentChapter = num;
+    switch (state.currentMode) {
+        case 'lesson':    openLesson(num); break;
+        case 'quiz':      openQuiz(num); break;
+        case 'fiche':     openFiche(num); break;
+        case 'exercise':  openExercises(num); break;
+        case 'flashcard': openFlashcards(num); break;
+        default:          openLesson(num);
+    }
+}
+
+/* =============================================================================
+   5. LEÇON & FICHE RÉCAP
+   ============================================================================= */
+async function openLesson(chapterNum) {
+    navigateTo('view-lesson');
+    showLoading('lesson-container', 'Chargement de la leçon...');
+
     const { data, error } = await sb
-        .from('quizzes') 
-        .select('*')
-        .in('chapter_number', selectedChapters)
+        .from('lessons')
+        .select('content')
+        .eq('class_id', state.currentClassCode)
+        .eq('subject_id', state.currentSubject.toLowerCase())
+        .eq('chapter_number', chapterNum)
+        .maybeSingle();
+
+    const container = document.getElementById('lesson-container');
+    if (error || !data || !data.content) {
+        container.innerHTML = `<p style="text-align:center; color:#888;">Leçon indisponible pour ce chapitre.</p>`;
+        return;
+    }
+
+    // Contenu issu de la BDD (contrôlée). Voir note sécurité dans le README.
+    container.innerHTML = data.content;
+    typesetMath();
+}
+
+async function openFiche(chapterNum) {
+    navigateTo('view-fiche');
+    showLoading('fiche-content', 'Chargement de la fiche...');
+    document.getElementById('fiche-header').innerHTML = '';
+
+    const { data, error } = await sb
+        .from('lessons')
+        .select('recap, content')
+        .eq('class_id', state.currentClassCode)
+        .eq('subject_id', state.currentSubject.toLowerCase())
+        .eq('chapter_number', chapterNum)
+        .maybeSingle();
+
+    const header = document.getElementById('fiche-header');
+    const content = document.getElementById('fiche-content');
+
+    if (error || !data || !data.recap) {
+        header.innerHTML = `<h2 style="-webkit-text-stroke:0; color:var(--brand-school);">Chapitre ${chapterNum}</h2>`;
+        content.innerHTML = `<p style="text-align:center; color:#888;">Fiche récap bientôt disponible. 📝</p>`;
+        return;
+    }
+
+    header.innerHTML = `<h2 style="-webkit-text-stroke:0; color:var(--brand-school); margin:0;">
+        📝 Fiche récap — Chapitre ${chapterNum}</h2>
+        <p style="color:var(--text-muted); margin-top:0.5rem;">${state.currentSubject} · ${state.currentClassLabel}</p>`;
+    content.innerHTML = data.recap;
+    typesetMath();
+}
+
+/* =============================================================================
+   6. QUIZ (normal + survie) & NAVIGATION CLAVIER
+   ============================================================================= */
+// État du quiz encapsulé pour éviter les conflits avec la récitation
+const quizState = {
+    data: [],
+    backup: [],
+    step: 0,
+    answers: {},
+    isTimeAttack: false,
+    timer: null,
+    timeLeft: 60,
+    reset() {
+        if (this.timer) clearInterval(this.timer);
+        this.timer = null;
+        this.data = [];
+        this.step = 0;
+        this.answers = {};
+        this.isTimeAttack = false;
+        this.timeLeft = 60;
+    }
+};
+
+let multiSelectMode = false;
+
+function toggleMultiSelectionMode() {
+    multiSelectMode = document.getElementById('toggle-multi-mode').checked;
+    document.getElementById('multi-validate-area').style.display = multiSelectMode ? 'block' : 'none';
+    // Réinitialise les sélections visuelles
+    document.querySelectorAll('.chapter-card-interactive.selected').forEach(c => c.classList.remove('selected'));
+}
+
+// Lance un quiz multi-chapitres à partir des cartes sélectionnées
+function prepareMultiQuiz() {
+    const selected = [...document.querySelectorAll('.chapter-card-interactive.selected')]
+        .map(c => parseInt(c.dataset.chapter));
+    if (selected.length === 0) {
+        showToast("Sélectionne au moins un chapitre.", "error");
+        return;
+    }
+    openQuiz(selected);
+}
+
+// Récupère les questions d'un (ou plusieurs) chapitre(s)
+async function fetchQuizQuestions(chapterNumOrList) {
+    let query = sb.from('quizzes')
+        .select('question, options, correct_index, chapter_number')
+        .eq('class_id', state.currentClassCode)
+        .eq('subject_id', state.currentSubject.toLowerCase());
+
+    if (Array.isArray(chapterNumOrList)) {
+        query = query.in('chapter_number', chapterNumOrList);
+    } else {
+        query = query.eq('chapter_number', chapterNumOrList);
+    }
+
+    const { data, error } = await query;
+    if (error || !data) return [];
+    return data;
+}
+
+async function openQuiz(chapterNumOrList) {
+    navigateTo('view-quiz');
+    showLoading('quiz-container', 'Préparation des questions...');
+    quizState.reset();
+
+    const questions = await fetchQuizQuestions(chapterNumOrList);
+    if (questions.length === 0) {
+        document.getElementById('quiz-container').innerHTML =
+            `<p style="text-align:center; color:#888; padding:3rem;">Aucune question pour ce chapitre. 🚧</p>`;
+        return;
+    }
+
+    // Mélange les questions
+    quizState.data = [...questions].sort(() => Math.random() - 0.5);
+    quizState.backup = [...quizState.data];
+    quizState.step = 0;
+    quizState.isTimeAttack = false;
+
+    document.getElementById('quiz-page-title').textContent = "Quiz";
+    // Rebuild conteneur (showLoading l'a vidé)
+    rebuildQuizContainer();
+    renderQuizSlide();
+}
+
+// Reconstruit le squelette du conteneur de quiz (overlay décompte inclus)
+function rebuildQuizContainer() {
+    const container = document.getElementById('quiz-container');
+    container.classList.remove('survival-mode');
+    container.innerHTML = `<div id="countdown-overlay"></div>
+        <div id="quiz-slide"></div>`;
+}
+
+// Affiche la question courante
+function renderQuizSlide() {
+    const slide = document.getElementById('quiz-slide');
+    if (!slide) { rebuildQuizContainer(); }
+    const target = document.getElementById('quiz-slide');
+
+    const q = quizState.data[quizState.step];
+    if (!q) { finishQuiz(); return; }
+
+    const total = quizState.data.length;
+    const selectedIdx = quizState.answers[quizState.step];
+
+    let optionsHtml = '';
+    (q.options || []).forEach((opt, i) => {
+        const cls = (selectedIdx === i) ? 'quiz-option selected' : 'quiz-option';
+        optionsHtml += `<div class="${cls}" onclick="selectOption(${i})">${i + 1}. ${opt}</div>`;
+    });
+
+    const timerHtml = quizState.isTimeAttack
+        ? `<div id="quiz-timer-display" style="display:block; text-align:center; margin-bottom:15px;">
+               ⏱️ <span class="${quizState.timeLeft <= 10 ? 'low-time' : ''}">${quizState.timeLeft}</span>s
+           </div>`
+        : '';
+
+    target.innerHTML = `
+        ${timerHtml}
+        <div class="quiz-question-card">
+            <div style="text-align:center; color:var(--text-muted); font-size:0.85rem; margin-bottom:10px;">
+                Question ${quizState.step + 1} / ${total}
+            </div>
+            <div class="quiz-question-text">${q.question}</div>
+            <div id="options-box">${optionsHtml}</div>
+        </div>
+        <div class="quiz-navigation">
+            <button class="btn-nav" onclick="changeSlide(-1)"
+                style="${quizState.step === 0 ? 'visibility:hidden;' : ''}">‹ Précédent</button>
+            ${quizState.step === total - 1
+                ? `<button class="btn-nav" onclick="finishQuiz()">Terminer ✓</button>`
+                : `<button class="btn-nav" onclick="changeSlide(1)">Suivant ›</button>`}
+        </div>`;
+
+    typesetMath();
+}
+
+// Sélection d'une réponse
+function selectOption(idx) {
+    quizState.answers[quizState.step] = idx;
+    const q = quizState.data[quizState.step];
+
+    // Retour visuel immédiat
+    const options = document.querySelectorAll('#options-box .quiz-option');
+    options.forEach((o, i) => {
+        o.classList.remove('selected', 'correct', 'wrong');
+        if (i === q.correct_index) o.classList.add('correct');
+        if (i === idx && idx !== q.correct_index) o.classList.add('wrong');
+    });
+
+    // En mode survie : enchaîne vite et compte les bonnes réponses
+    if (quizState.isTimeAttack) {
+        setTimeout(() => {
+            if (quizState.step < quizState.data.length - 1) {
+                quizState.step++;
+                renderQuizSlide();
+            } else {
+                finishQuiz();
+            }
+        }, 350);
+    }
+}
+
+function changeSlide(dir) {
+    const next = quizState.step + dir;
+    if (next < 0 || next >= quizState.data.length) return;
+    quizState.step = next;
+    renderQuizSlide();
+}
+
+function finishQuiz() {
+    if (quizState.timer) { clearInterval(quizState.timer); quizState.timer = null; }
+
+    let score = 0;
+    quizState.data.forEach((q, i) => {
+        if (quizState.answers[i] === q.correct_index) score++;
+    });
+    const total = quizState.data.length;
+    const pct = total ? Math.round((score / total) * 100) : 0;
+
+    let msg = "Continue de t'entraîner ! 💪";
+    if (pct === 100) msg = "Parfait ! 🏆";
+    else if (pct >= 70) msg = "Très bien ! 🎉";
+    else if (pct >= 50) msg = "Pas mal, encore un effort. 👍";
+
+    const container = document.getElementById('quiz-container');
+    container.classList.remove('survival-mode');
+    container.innerHTML = `
+        <div class="quiz-result-box">
+            <p style="font-size:1.1rem; color:var(--text-muted);">Ton score</p>
+            <div class="quiz-score">${score} / ${total}</div>
+            <p style="font-weight:bold; margin-bottom:1rem;">${msg}</p>
+            <button class="btn-restart" onclick="openQuiz(state.currentChapter)">↻ Recommencer</button>
+            <button class="btn-restart" onclick="navigateTo('view-chapters')"
+                style="border-style:solid;">Retour aux chapitres</button>
+        </div>`;
+}
+
+// --- Mode survie / défi chronométré ---
+function launchSurvieLogic(chapterNum) {
+    quizState.reset();
+    quizState.isTimeAttack = true;
+    quizState.timeLeft = 60;
+    quizState.step = 0;
+
+    // Réutilise le backup si déjà chargé, sinon il sera (re)chargé par openQuiz
+    if (quizState.backup.length > 0) {
+        quizState.data = [...quizState.backup].sort(() => Math.random() - 0.5);
+    }
+
+    navigateTo('view-quiz');
+
+    // 1. D'abord render la slide (qui crée #quiz-timer-display)
+    rebuildQuizContainer();
+    renderQuizSlide();
+
+    // 2. PUIS démarrer le timer (l'élément existe désormais)
+    const container = document.getElementById('quiz-container');
+    if (container) container.classList.add('survival-mode');
+    startGlobalTimer(chapterNum);
+}
+
+function startGlobalTimer() {
+    if (quizState.timer) clearInterval(quizState.timer);
+    quizState.timer = setInterval(() => {
+        quizState.timeLeft--;
+        const disp = document.getElementById('quiz-timer-display');
+        if (disp) {
+            disp.innerHTML = `⏱️ <span class="${quizState.timeLeft <= 10 ? 'low-time' : ''}">${quizState.timeLeft}</span>s`;
+        }
+        if (quizState.timeLeft <= 0) {
+            clearInterval(quizState.timer);
+            quizState.timer = null;
+            finishQuiz();
+        }
+    }, 1000);
+}
+
+// Navigation clavier dans le quiz (touches 1-4 + flèches)
+function handleQuizKeyboard(e) {
+    const quizActive = document.getElementById('view-quiz')?.classList.contains('active');
+    if (!quizActive) return;
+
+    if (['1', '2', '3', '4'].includes(e.key)) {
+        const idx = parseInt(e.key) - 1;
+        const options = document.querySelectorAll('#options-box .quiz-option');
+        if (options[idx]) options[idx].click();
+    }
+    if (e.key === 'ArrowRight') {
+        document.querySelector('.btn-nav[onclick*="changeSlide(1"]')?.click();
+    }
+    if (e.key === 'ArrowLeft') {
+        document.querySelector('.btn-nav[onclick*="changeSlide(-1"]')?.click();
+    }
+}
+
+/* =============================================================================
+   7. FLASHCARDS
+   ============================================================================= */
+async function openFlashcards(chapterNum) {
+    navigateTo('view-flashcards');
+    showLoading('flashcards-grid-container', 'Chargement des cartes...');
+    document.getElementById('flashcards-page-title').textContent = `Flashcards — Chapitre ${chapterNum}`;
+
+    const { data, error } = await sb
+        .from('flashcards')
+        .select('front, back')
+        .eq('class_id', state.currentClassCode)
+        .eq('subject_id', state.currentSubject.toLowerCase())
+        .eq('chapter_number', chapterNum);
+
+    const container = document.getElementById('flashcards-grid-container');
+    if (error || !data || data.length === 0) {
+        container.innerHTML = `<p style="text-align:center; color:#888; padding:2rem;">
+            Pas encore de flashcards pour ce chapitre. 📄</p>`;
+        return;
+    }
+
+    renderFlashcards(data);
+}
+
+function renderFlashcards(cards) {
+    const container = document.getElementById('flashcards-grid-container');
+    container.innerHTML = '';
+
+    // Regroupe les cartes par rangées de 3
+    let row = null;
+    cards.forEach((card, i) => {
+        if (i % 3 === 0) {
+            row = document.createElement('div');
+            row.className = 'flashcards-grid-row';
+            container.appendChild(row);
+        }
+        const el = document.createElement('div');
+        el.className = 'flashcard';
+        el.innerHTML = `
+            <div class="flashcard-inner">
+                <div class="flashcard-front">
+                    <span class="flashcard-hint">Question</span>
+                    <div class="flash-txt">${card.front}</div>
+                </div>
+                <div class="flashcard-back">
+                    <span class="flashcard-hint">Réponse</span>
+                    <div class="flash-txt">${card.back}</div>
+                </div>
+            </div>`;
+        el.onclick = () => el.classList.toggle('flipped');
+        row.appendChild(el);
+    });
+
+    typesetMath();
+}
+
+/* =============================================================================
+   8. EXERCICES
+   ============================================================================= */
+async function openExercises(chapterNum) {
+    navigateTo('view-final-exercises');
+    showLoading('final-exercise-list', 'Chargement des exercices...');
+
+    const { data, error } = await sb
+        .from('exercises')
+        .select('enunciated, correction, difficulty, estimated_time')
+        .eq('class_id', state.currentClassCode)
+        .eq('subject_id', state.currentSubject.toLowerCase())
+        .eq('chapter_number', chapterNum);
+
+    const list = document.getElementById('final-exercise-list');
+    if (error || !data || data.length === 0) {
+        list.innerHTML = `<p style="text-align:center; color:#888; padding:2rem;">
+            Pas encore d'exercices pour ce chapitre. 🧠</p>`;
+        return;
+    }
+
+    renderExercises(data);
+}
+
+function renderExercises(exercises) {
+    const list = document.getElementById('final-exercise-list');
+    list.innerHTML = '';
+
+    exercises.forEach((ex, i) => {
+        const stars = '★'.repeat(ex.difficulty || 1) + '☆'.repeat(Math.max(0, 3 - (ex.difficulty || 1)));
+        const card = document.createElement('div');
+        card.className = 'exercise-card';
+        card.innerHTML = `
+            <div class="exercise-header">
+                <span class="exercise-badge">Exercice ${i + 1}</span>
+                <div class="exercise-meta">
+                    <span class="difficulty-stars">${stars}</span>
+                    ${ex.estimated_time ? `<span class="estimated-time">⏱️ ${ex.estimated_time} min</span>` : ''}
+                </div>
+            </div>
+            <div class="exercise-enunciated">${ex.enunciated}</div>
+            <button class="btn-reveal" onclick="toggleCorrection(this)">👁️ Voir la correction</button>
+            <div class="correction-box" style="display:none;">
+                <span class="correction-title">Correction</span>
+                <div>${ex.correction || "Correction bientôt disponible."}</div>
+            </div>`;
+        list.appendChild(card);
+    });
+
+    typesetMath();
+}
+
+function toggleCorrection(btn) {
+    const box = btn.parentElement.querySelector('.correction-box');
+    if (!box) return;
+    const visible = box.style.display !== 'none';
+    box.style.display = visible ? 'none' : 'block';
+    btn.innerHTML = visible ? '👁️ Voir la correction' : '🙈 Masquer la correction';
+    if (!visible) typesetMath();
+}
+
+/* =============================================================================
+   9. RÉCITATION (MathLive) & DÉFI 1 MINUTE
+   ============================================================================= */
+const reciteState = {
+    questions: [],
+    index: 0,
+    score: 0,
+    isSpeedRun: false,
+    timer: null,
+    timeLeft: 60
+};
+
+async function loadReciteQuestions() {
+    navigateTo('view-recite');
+    // Réutilise la table quizzes comme base de formules à réciter
+    const { data, error } = await sb
+        .from('quizzes')
+        .select('question, options, correct_index')
         .eq('class_id', state.currentClassCode)
         .eq('subject_id', state.currentSubject.toLowerCase());
 
     if (error || !data || data.length === 0) {
-        return alert("Aucune question trouvée pour ces chapitres.");
-    }
-
-    // --- LOGIQUE DE MÉMOIRE POUR LE MODE SURVIE ---
-    // On stocke TOUTES les questions récupérées dans le backup
-    allQuestionsBackup = data;
-
-    // --- LOGIQUE DE LIMITATION POUR LE MODE NORMAL ---
-    // 1. On mélange
-    let shuffledData = [...data].sort(() => 0.5 - Math.random());
-
-    // 2. On définit la limite à 10 pour le multi-chapitres
-    quizData = shuffledData.slice(0, 10);
-    
-    // Initialisation
-    currentStep = 0;
-    userAnswers = {};
-    isTimeAttack = false; // Sécurité : on s'assure que le mode survie est OFF au début
-
-    // CORRECTION ICI : Le nom de la fonction était coupé
-    renderQuizSlide(selectedChapters[0]); 
-    navigateTo('view-quiz');
-}
-
-function toggleMultiSelectionMode() {
-    const isMulti = document.getElementById('toggle-multi-mode').checked;
-    const badges = document.querySelectorAll('.chapter-badge-selection');
-    const validateArea = document.getElementById('multi-validate-area');
-    const cards = document.querySelectorAll('.chapter-card-interactive');
-
-    // On affiche ou cache les petits badges ronds
-    badges.forEach(b => b.style.display = isMulti ? 'flex' : 'none');
-
-    // Si on désactive le mode multi, on enlève le violet de toutes les cartes
-    if (!isMulti) {
-        cards.forEach(c => {
-            c.classList.remove('selected');
-        });
-    }
-
-    validateArea.style.display = isMulti ? 'block' : 'none';
-}
-
-function startSurvivalMode(chapterNum) {
-    // 1. On affiche la vue du quiz immédiatement
-    navigateTo('view-quiz');
-
-    // 2. On attend un court instant pour que le navigateur "dessine" le container
-    setTimeout(() => {
-        const container = document.getElementById('quiz-container');
-        let overlay = document.getElementById('countdown-overlay');
-
-        // SÉCURITÉ : Si l'overlay n'est vraiment pas là, on le crée
-        if (!overlay && container) {
-            overlay = document.createElement('div');
-            overlay.id = 'countdown-overlay';
-            container.appendChild(overlay);
-        }
-
-        if (!overlay) return; // Si toujours rien, on arrête
-
-        // 3. On cache les éléments du quiz pour laisser la place au décompte
-        Array.from(container.children).forEach(child => {
-            if (child.id !== 'countdown-overlay') child.style.display = 'none';
-        });
-
-        // 4. Lancement de l'animation
-        overlay.style.display = 'flex';
-        let count = 3;
-        overlay.innerHTML = `<div class="countdown-animate">${count}</div>`;
-
-        const interval = setInterval(() => {
-            count--;
-            if (count > 0) {
-                overlay.innerHTML = `<div class="countdown-animate">${count}</div>`;
-            } else if (count === 0) {
-                overlay.innerHTML = `<div class="countdown-animate go-text">GO !</div>`;
-            } else {
-                clearInterval(interval);
-                overlay.style.display = 'none';
-                overlay.innerHTML = '';
-                
-                // 5. On appelle la logique de survie
-                launchSurvieLogic(chapterNum);
-            }
-        }, 1000);
-    }, 100); // 100ms suffisent pour stabiliser le DOM
-}
-
-function launchSurvieLogic(chapterNum) {
-    isTimeAttack = true;
-    timeLeft = 60;
-    currentStep = 0;
-    userAnswers = {};
-
-    // QUESTIONS ILLIMITÉES : On mélange tout le stock du chapitre
-    if (allQuestionsBackup.length > 0) {
-        quizData = [...allQuestionsBackup].sort(() => Math.random() - 0.5);
-    }
-
-    const container = document.getElementById('quiz-container');
-    if (container) container.classList.add('survival-mode');
-    
-    // NAVIGATION : On bascule sur la vue quiz
-    navigateTo('view-quiz');
-    
-    // ON FORCE L'AFFICHAGE DU TIMER
-    const timerDisplay = document.getElementById('quiz-timer-display');
-    if (timerDisplay) {
-        timerDisplay.style.display = 'block';
-        timerDisplay.innerText = `⏱️ ${timeLeft}s`;
-    }
-
-    startGlobalTimer(chapterNum);
-    renderQuizSlide(chapterNum);
-}
-
-function startGlobalTimer(chapterNum) {
-    if (quizTimer) clearInterval(quizTimer);
-    
-    quizTimer = setInterval(() => {
-        timeLeft--;
-        const timerDisplay = document.getElementById('quiz-timer-display');
-        
-        if (timerDisplay) {
-            timerDisplay.innerText = `⏱️ ${timeLeft}s`;
-            if (timeLeft <= 10) {
-                timerDisplay.classList.add('low-time');
-            }
-        }
-
-        if (timeLeft <= 0) {
-            clearInterval(quizTimer);
-            finishQuiz(chapterNum);
-        }
-    }, 1000);
-}
-
-function openChaptersPage(list) {
-    const grid = document.getElementById('chapters-grid');
-    grid.innerHTML = '';
-    list.forEach(l => {
-        const temp = document.createElement('div'); temp.innerHTML = l.content;
-        const title = temp.querySelector('h1')?.innerText || "Chapitre " + l.chapter_number;
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `<p style="color:#888; font-size:0.8rem;">CHAPITRE ${l.chapter_number}</p><h3>${title}</h3>`;
-        card.onclick = () => displayLesson(l.chapter_number);
-        grid.appendChild(card);
-    });
-    navigateTo('view-chapters');
-}
-
-async function displayLesson(num) {
-    const { data } = await sb.from('lessons').select('content').eq('chapter_number', num).eq('class_id', state.currentClassCode).eq('subject_id', state.currentSubject.toLowerCase()).single();
-    if (data) {
-        document.getElementById('lesson-container').innerHTML = data.content;
-        if (window.MathJax) MathJax.typesetPromise();
-        navigateTo('view-lesson');
-    }
-}
-
-// --- FONCTION POUR MÉLANGER LES RÉPONSES ---
-function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-}
-
-// --- FONCTION POUR CHARGER LE QUIZ DEPUIS SUPABASE ---
-
-async function openQuiz(chapterNum) {
-    console.log("DÉMARRAGE DU QUIZ - CHAPITRE UNIQUE :", chapterNum);
-    
-    // 1. Reset des variables et masquage du timer
-    if (quizTimer) clearInterval(quizTimer);
-    isTimeAttack = false;
-    timeLeft = 60;
-
-    // IMPORTANT : On cache le chrono au démarrage du mode normal
-    const timerDisplay = document.getElementById('quiz-timer-display');
-    if (timerDisplay) timerDisplay.style.display = 'none';
-
-    const { data, error } = await sb
-        .from('quizzes') 
-        .select('*')
-        .eq('class_id', state.currentClassCode)
-        .eq('subject_id', state.currentSubject.toLowerCase())
-        .eq('chapter_number', chapterNum);
-
-    if (error || !data || data.length === 0) {
-        return alert("Pas de quiz disponible pour ce chapitre.");
-    }
-
-    // 2. Stockage du réservoir complet pour le futur "Défi 1 minute"
-    allQuestionsBackup = data;
-
-    // 3. MODE NORMAL : Limité à 5 questions
-    quizData = [...data].sort(() => 0.5 - Math.random()).slice(0, 5);
-    
-    currentStep = 0;
-    userAnswers = {};
-
-    // 4. Affichage
-    renderQuizSlide(chapterNum);
-    navigateTo('view-quiz');
-}
-
-function renderQuizSlide(chapterNum) {
-    const container = document.getElementById('quiz-container');
-    const q = quizData[currentStep];
-    const isLast = currentStep === quizData.length - 1;
-
-    // On ajoute la classe 'rendering' pour cacher le flash de texte brut
-    container.classList.add('rendering');
-    
-    // On s'assure que le style survie est maintenu si le mode est actif
-    if (isTimeAttack) {
-        container.classList.add('survival-mode');
-    } else {
-        container.classList.remove('survival-mode');
-    }
-
-    container.innerHTML = `
-         <div class="quiz-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:#f9f9f9; padding:10px; border-radius:12px;">
-              <div style="display:flex; align-items:center; gap:12px;">
-                  <span id="quiz-timer-display" style="display: ${isTimeAttack ? 'block' : 'none'}; font-weight:bold; font-size:1.1rem; color:var(--brand-school);">
-                      ⏱️ ${timeLeft}s
-                  </span>
-                  
-                  ${!isTimeAttack ? `
-                      <button class="btn-sablier" onclick="startSurvivalMode(${chapterNum})">
-                          <span>⏳</span>
-                      </button>
-                  ` : ''}
-              </div>
-              
-              <span style="color:#888; font-weight:600;">
-                  ${isTimeAttack ? `Question ${currentStep + 1}` : `Question ${currentStep + 1} / ${quizData.length}`}
-              </span>
-         </div>
-
-         <div class="quiz-question-card">
-                  <div class="quiz-question-text" style="font-size:1.15rem; line-height:1.5; margin-bottom:20px;">
-                      ${q.question}
-                  </div>
-                  <div id="options-box"></div>
-                  
-                  <div class="quiz-navigation" style="margin-top:20px; display:flex; justify-content:space-between;">
-                      <button class="btn-nav" onclick="changeSlide(-1, ${chapterNum})" ${currentStep === 0 ? 'style="visibility:hidden"' : ''}>
-                          <span>‹</span> Précédent
-                      </button>
-                      
-                      ${isLast ? 
-                          `<button class="btn-nav" onclick="finishQuiz(${chapterNum})">Terminer <span>✓</span></button>` : 
-                          `<button class="btn-nav" onclick="changeSlide(1, ${chapterNum})">Suivant <span>›</span></button>`
-                      }
-                  </div>
-            </div>
-    `;
-
-    const optionsBox = container.querySelector('#options-box');
-    q.options.forEach((opt, idx) => {
-        const btn = document.createElement('div');
-        btn.className = 'quiz-option';
-        
-        if (userAnswers[currentStep] === idx) {
-            btn.classList.add('selected');
-        }
-
-        btn.innerHTML = opt;
-        btn.onclick = () => {
-            userAnswers[currentStep] = idx;
-
-            if (isTimeAttack) {
-                const allBtns = optionsBox.querySelectorAll('.quiz-option');
-                allBtns.forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-
-                setTimeout(() => {
-                    if (currentStep < quizData.length - 1) {
-                        currentStep++;
-                        renderQuizSlide(chapterNum);
-                    } else {
-                        finishQuiz(chapterNum);
-                    }
-                }, 150); 
-            } else {
-                const allBtns = optionsBox.querySelectorAll('.quiz-option');
-                allBtns.forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-            }
-        };
-        optionsBox.appendChild(btn);
-    });
-
-    if (window.MathJax) {
-        setTimeout(() => {
-            MathJax.typesetClear([container]);
-            MathJax.typesetPromise([container]).then(() => {
-                container.classList.remove('rendering');
-            });
-        }, 10);
-    } else {
-        container.classList.remove('rendering');
-    }
-}
-
-function changeSlide(direction, chapterNum) {
-    currentStep += direction;
-    renderQuizSlide(chapterNum);
-}
-
-function finishQuiz(chapterNum) {
-    // 1. ARRÊT DU SYSTÈME DE CHRONO
-    if (quizTimer) {
-        clearInterval(quizTimer);
-        quizTimer = null;
-    }
-    
-    // 2. NETTOYAGE VISUEL
-    const container = document.getElementById('quiz-container');
-    container.classList.remove('survival-mode'); // Retire la bordure rouge animée
-    container.classList.add('rendering');
-
-    // Réinitialisation du style du timer
-    const timerDisplay = document.getElementById('quiz-timer-display');
-    if (timerDisplay) {
-        timerDisplay.classList.remove('low-time');
-        timerDisplay.style.color = ""; 
-        timerDisplay.style.fontSize = "";
-        // On le cache systématiquement à la fin
-        timerDisplay.style.display = "none";
-    }
-
-    let finalScore = 0;
-    let questionsRepondues = 0;
-
-    // 3. CALCUL DU SCORE RÉEL
-    quizData.forEach((q, idx) => {
-        if (userAnswers[idx] !== undefined) {
-            questionsRepondues++;
-            if (userAnswers[idx] === q.correct_index) finalScore++;
-        }
-    });
-
-    // 4. GÉNÉRATION DE LA CORRECTION
-    container.innerHTML = '<h2 style="text-align:center; margin-bottom:20px; color:var(--brand-school);">Correction détaillée</h2>';
-    
-    quizData.forEach((q, idx) => {
-        // On n'affiche la correction que pour les questions répondues (important en mode survie)
-        // ou pour toutes les questions si on est en mode normal
-        if (userAnswers[idx] !== undefined || !isTimeAttack) {
-            const card = document.createElement('div');
-            card.className = 'quiz-question-card';
-            card.style.marginBottom = "20px";
-            card.innerHTML = `<div class="quiz-question-text">Question ${idx + 1} : ${q.question}</div>`;
-            
-            const optionsBox = document.createElement('div');
-            q.options.forEach((opt, optIdx) => {
-                const btn = document.createElement('div');
-                btn.className = 'quiz-option';
-                btn.innerHTML = opt;
-
-                if (optIdx === q.correct_index) {
-                    btn.classList.add('correct'); 
-                    if (userAnswers[idx] === optIdx) btn.innerHTML += " ✅";
-                } else if (userAnswers[idx] === optIdx) {
-                    btn.classList.add('wrong'); 
-                    btn.innerHTML += " ❌";
-                }
-                optionsBox.appendChild(btn);
-            });
-            
-            card.appendChild(optionsBox);
-            container.appendChild(card);
-        }
-    });
-
-    // --- LOGIQUE DE SCORE DYNAMIQUE ---
-    // En mode survie, on note sur le nombre de questions traitées.
-    // En mode normal, on note sur le nombre total de questions du quiz.
-    const totalQuestionsComptees = isTimeAttack ? questionsRepondues : quizData.length;
-
-    // On affiche le résultat (on passe isTimeAttack pour le label personnalisé)
-    showQuizResult(finalScore, totalQuestionsComptees, container, chapterNum);
-
-    // 5. RESET DE L'ÉTAT ET TRAITEMENT FINAL
-    isTimeAttack = false; 
-
-    if (window.MathJax) {
-        setTimeout(() => {
-            MathJax.typesetClear([container]);
-            MathJax.typesetPromise([container]).then(() => {
-                container.classList.remove('rendering');
-            });
-        }, 10);
-    } else {
-        container.classList.remove('rendering');
-    }
-
-    setTimeout(() => {
-        const resultBox = container.querySelector('.quiz-result-box');
-        if(resultBox) resultBox.scrollIntoView({ behavior: 'smooth' });
-    }, 300);
-}
-
-function showQuizResult(score, total, container, chapterNum) {
-    const resultDiv = document.createElement('div');
-    resultDiv.className = 'quiz-result-box';
-    
-    // Détermination du titre et des messages selon le mode
-    // Note : On utilise l'état global isTimeAttack qui est encore à true au moment de l'appel dans finishQuiz
-    const isSurvie = isTimeAttack; 
-    const title = isSurvie ? "🔥 Score de Survie" : "Résultat du Quiz";
-    
-    let message = "";
-    let percentage = total > 0 ? (score / total) * 100 : 0;
-
-    if (isSurvie) {
-        if (percentage === 100 && total >= 10) message = "🏆 INCROYABLE ! Vitesse et précision absolues !";
-        else if (percentage >= 80) message = "⚡ Quelle rapidité ! Tu maîtrises le sujet sous pression !";
-        else if (percentage >= 50) message = "👍 Bien joué ! Essaye d'aller encore plus vite la prochaine fois !";
-        else message = "💪 La survie c'est dur, mais tu progresses ! Continue !";
-    } else {
-        if (percentage === 100) message = "🏆 Excellent ! Un sans faute !";
-        else if (percentage >= 80) message = "😎 Très bien joué !";
-        else if (percentage >= 50) message = "👍 Pas mal, continue comme ça !";
-        else message = "💪 Tu peux faire mieux, réessaie !";
-    }
-
-    resultDiv.innerHTML = `
-        <h3 style="margin-bottom:10px;">${title}</h3>
-        <div class="quiz-score">${score} / ${total}</div>
-        
-        ${isSurvie ? `<p style="font-size: 0.9rem; color: var(--brand-school); font-weight: bold; margin-bottom: 10px;">Questions répondues : ${total}</p>` : ''}
-        
-        <p style="margin-bottom:20px;">${message}</p>
-        
-        <button class="btn-restart" id="btn-restart-quiz">🔄 Recommencer</button>
-        
-        <div class="quick-nav-footer">
-            <button class="btn-nav-quick" onclick="chooseMode('lesson'); displayLesson(${chapterNum})">
-                📖 Revoir la Leçon
-            </button>
-            <button class="btn-nav-quick primary" onclick="alert('Bientôt disponible !')">
-                🧠 Faire les Exercices
-            </button>
-        </div>
-    `;
-
-    container.appendChild(resultDiv);
-
-    // Bouton recommencer
-    document.getElementById('btn-restart-quiz').onclick = function() {
-        document.querySelector('main').scrollTop = 0;
-        // On relance le quiz normal ou survie selon le dernier mode joué
-        if (isSurvie) {
-            startSurvivalMode(chapterNum);
-        } else {
-            openQuiz(chapterNum);
-        }
-    };
-
-    setTimeout(() => {
-        resultDiv.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-}
-
-// Flashcards 
-
-async function openFlashcards(chapterNum) {
-    const container = document.getElementById('flashcards-grid-container');
-    if (!container) return;
-
-    // On ne vide pas le container avec un message texte pour éviter l'effet de "saut"
-    const { data, error } = await sb
-        .from('flashcards')
-        .select('*')
-        .eq('class_id', state.currentClassCode.trim())
-        .eq('subject_id', state.currentSubject.toLowerCase().trim())
-        .eq('chapter_number', chapterNum);
-
-    if (error || !data || data.length === 0) return alert("Pas de flashcards.");
-
-    let shuffled = [...data].sort(() => 0.5 - Math.random());
-    const cardsToShow = shuffled.slice(0, 3);
-
-    container.innerHTML = ''; // On ne vide qu'ici, juste avant d'injecter
-    const gridRow = document.createElement('div');
-    gridRow.className = 'flashcards-grid-row';
-
-    cardsToShow.forEach((cardData) => {
-        const cardEl = document.createElement('div');
-        cardEl.className = 'flashcard';
-        cardEl.onclick = function() { this.classList.toggle('flipped'); };
-        cardEl.innerHTML = `
-            <div class="flashcard-inner">
-                <div class="flashcard-front">
-                    <span class="flashcard-hint">Question</span>
-                    <div class="flash-txt">${cardData.front}</div>
-                </div>
-                <div class="flashcard-back">
-                    <span class="flashcard-hint">Réponse</span>
-                    <div class="flash-txt">${cardData.back}</div>
-                </div>
-            </div>
-        `;
-        gridRow.appendChild(cardEl);
-    });
-    container.appendChild(gridRow);
-
-    const flashView = document.getElementById('view-flashcards');
-    const oldToolbar = flashView.querySelector('.actions-toolbar');
-    if (oldToolbar) oldToolbar.remove();
-
-    const toolbar = document.createElement('div');
-    toolbar.className = 'actions-toolbar';
-    toolbar.innerHTML = `
-        <button class="btn-nav-quick btn-piocher" onclick="openFlashcards(${chapterNum})">🎲 Autre tirage</button>
-        <div class="separator-v"></div>
-        <button class="btn-nav-quick" onclick="displayLesson(${chapterNum})">📖 Cours</button>
-        <button class="btn-nav-quick" onclick="openQuiz(${chapterNum})">✍️ Quiz</button>
-        <button class="btn-nav-quick" onclick="openExercises(${chapterNum})">🧠 Exos</button>
-        <button class="btn-nav-quick" onclick="openFicheRecap(${chapterNum})">📝 Fiche</button>
-    `;
-    flashView.appendChild(toolbar);
-
-    if(window.MathJax) MathJax.typesetPromise([container]);
-    navigateTo('view-flashcards');
-}
-
-// Exercice
-
-async function openExercises(chapterNum) {
-    const container = document.getElementById('final-exercise-list');
-    
-    // Sécurité anti-null
-    if (!container) {
-        console.error("❌ L'élément 'final-exercise-list' est introuvable dans le HTML");
+        document.getElementById('recite-question').textContent = "Pas encore de questions pour cette matière.";
         return;
     }
 
-    container.innerHTML = '<p style="text-align:center; padding:20px;">Chargement des exercices...</p>';
+    // Transforme en {q, answer}
+    reciteState.questions = data
+        .filter(d => Array.isArray(d.options) && d.options[d.correct_index] != null)
+        .map(d => ({ q: d.question, answer: String(d.options[d.correct_index]) }))
+        .sort(() => Math.random() - 0.5);
+
+    reciteState.index = 0;
+    reciteState.score = 0;
+    reciteState.isSpeedRun = false;
 
-    // 1. Récupération Supabase
-    const { data, error } = await sb
-        .from('exercises')
-        .select('*')
-        .eq('class_id', state.currentClassCode.trim())
-        .eq('subject_id', state.currentSubject.toLowerCase().trim())
-        .eq('chapter_number', chapterNum);
-
-    if (error || !data || data.length === 0) {
-        container.innerHTML = `<p style="text-align:center; padding:20px;">Pas d'exercices disponibles pour le chapitre ${chapterNum}.</p>`;
-        return;
-    }
-
-    container.innerHTML = ''; // On vide le message de chargement
-
-    // 2. Affichage avec ton design favori
-    data.forEach((ex, idx) => {
-        const card = document.createElement('div');
-        card.className = 'exercise-card';
-        
-        const corrId = `corr-final-${chapterNum}-${idx}`;
-        
-        // Calcul des étoiles
-        let stars = "";
-        for(let i=0; i<5; i++) {
-            stars += (i < ex.difficulty) ? "★" : "☆";
-        }
-        
-        card.innerHTML = `
-            <div class="exercise-header">
-                <span class="exercise-badge">Exercice ${idx + 1}</span>
-                <div class="exercise-meta">
-                    <span class="difficulty-stars">${stars}</span>
-                    <span class="estimated-time">⏱️ ${ex.estimated_time}</span>
-                </div>
-            </div>
-
-            <div class="exercise-body" style="color: black !important; margin-bottom: 1rem;">
-                ${ex.enunciated}
-            </div>
-            
-            <button class="btn-reveal" onclick="toggleCorrection('${corrId}')">
-                <span>👁️</span> Voir la correction
-            </button>
-            
-            <div id="${corrId}" class="correction-box" style="display:none">
-                <span class="correction-title">✅ Correction détaillée</span>
-                <div style="color: #333;">${ex.correction}</div>
-            </div>
-        `;
-        container.appendChild(card);
-    });
-
-    // 3. Navigation et Rendu Mathématique
-    if (window.MathJax) MathJax.typesetPromise();
-    navigateTo('view-final-exercises');
-}
-
-// Fonction pour afficher/cacher la correction (avec ton style d'ID)
-function toggleCorrection(id) {
-    const div = document.getElementById(id);
-    const btn = div.previousElementSibling; 
-    
-    if (div.style.display === 'none') {
-        div.style.display = 'block';
-        btn.innerHTML = '<span>🙈</span> Cacher la correction';
-    } else {
-        div.style.display = 'none';
-        btn.innerHTML = '<span>👁️</span> Voir la correction';
-    }
-}
-
-// Fiche Récapitulative 
-
-async function openFicheRecap(chapterNum) {
-    const header = document.getElementById('fiche-header');
-    const contentBox = document.getElementById('fiche-content');
-    
-    if (!header || !contentBox) return;
-
-    // Animation de chargement
-    contentBox.innerHTML = '<p style="text-align:center; padding:20px;">✨ Préparation de ta fiche...</p>';
-
-    // 1. On demande spécifiquement la colonne 'recap'
-    const { data, error } = await sb
-        .from('lessons')
-        .select('recap') // <-- Changement ici
-        .eq('class_id', state.currentClassCode.trim())
-        .eq('subject_id', state.currentSubject.toLowerCase().trim())
-        .eq('chapter_number', chapterNum)
-        .single();
-
-    if (error || !data || !data.recap) {
-        console.error("Erreur Supabase:", error);
-        contentBox.innerHTML = "<p style='text-align:center;'>Fiche en cours de rédaction pour ce chapitre ! ✍️</p>";
-        navigateTo('view-fiche');
-        return;
-    }
-
-    // 2. Traitement du contenu HTML stocké dans 'recap'
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = data.recap; // Utilisation de data.recap
-    
-    // Extraction du titre H1 pour le mettre dans le header jaune
-    const titleFound = tempDiv.querySelector('h1')?.innerText || "Synthèse";
-    if(tempDiv.querySelector('h1')) tempDiv.querySelector('h1').remove();
-
-    // 3. Injection dans les éléments de la page
-    header.innerHTML = `
-        <p style="color:var(--brand-school); font-weight:800; text-transform:uppercase; font-size:0.8rem; letter-spacing:2px; margin-bottom:10px;">✨ FICHE RÉCAP ✨</p>
-        <h1 style="margin:0; font-size:2.2rem; color:var(--text-dark);">${titleFound}</h1>
-    `;
-    
-    contentBox.innerHTML = tempDiv.innerHTML;
-
-    // 4. Navigation et affichage des formules MathJax
-    navigateTo('view-fiche');
-    
-    if (window.MathJax) {
-        // On demande à MathJax de transformer les $...$ en vraies formules dans contentBox
-        MathJax.typesetPromise([contentBox]).catch((err) => console.log(err));
-    }
-}
-
-/* =============================================================================
-   CALCUL MASSE MOLAIRE
-   ============================================================================= */
-        /* =================================================================
-        OUTIL : CALCULATEUR DE MASSE MOLAIRE (COMPLET)
-        Gère : Coefficients (2H2O), Parenthèses (Ca(OH)2), Détails
-        ================================================================= */
-
-        // 1. BASE DE DONNÉES DES MASSES ATOMIQUES (g/mol)
-        const atomMasses = {
-            H: 1.008, He: 4.003, Li: 6.941, Be: 9.012, B: 10.81, C: 12.01, N: 14.01, O: 16.00, F: 19.00, Ne: 20.18,
-            Na: 22.99, Mg: 24.31, Al: 26.98, Si: 28.09, P: 30.97, S: 32.06, Cl: 35.45, K: 39.10, Ca: 40.08,
-            Ti: 47.87, Fe: 55.85, Cu: 63.55, Zn: 65.38, Br: 79.90, Ag: 107.87, I: 126.90, Au: 196.97, Pb: 207.2
-        };
-
-        // Variable pour stocker la formule brute (ex: "Ca(OH)2")
-        let currentMolString = ""; 
-
-        // 2. FONCTION POUR AJOUTER UN CARACTÈRE (Liée aux boutons)
-                
-        function addMolChar(char) {
-            const display = document.getElementById('mol-display');
-            const placeholder = document.getElementById('mol-placeholder');
-
-            // Gestion visuelle des indices
-            if (!isNaN(char)) {
-                // Si c'est un chiffre...
-                if (currentMolString.length === 0) {
-                    // Premier caractère = Coefficient (Grand)
-                    display.innerHTML += `<span>${char}</span>`;
-                } else {
-                    // Caractère suivant = Indice (Petit en bas)
-                    // Note : On utilise <sub> qui est stylisé par le CSS
-                    display.innerHTML += `<sub>${char}</sub>`;
-                }
-            } else {
-                // Lettre ou parenthèse
-                display.innerHTML += char;
-            }
-            
-            currentMolString += char;
-            if(placeholder) placeholder.style.display = 'none';
-        }
-
-        // 3. FONCTION EFFACER (Liée au bouton rouge)
-        function deleteMolChar() {
-            currentMolString = "";
-            document.getElementById('mol-display').innerHTML = "";
-            document.getElementById('mol-placeholder').style.display = 'block';
-            document.getElementById('mol-result-box').style.display = 'none';
-        }
-
-        // 4. LE CERVEAU : CALCULATEUR AVEC PARENTHÈSES
-        function calculateComplexMass() {
-            if(!currentMolString) return;
-
-            let formula = currentMolString;
-            let multiplier = 1;
-
-            // A. GESTION DU COEFFICIENT STŒCHIOMÉTRIQUE (Le chiffre devant, ex: 2H2O)
-            // On regarde si la formule commence par un chiffre
-            const startMatch = formula.match(/^(\d+)(.*)/);
-            if (startMatch) {
-                multiplier = parseInt(startMatch[1]); // On récupère le chiffre (ex: 2)
-                formula = startMatch[2]; // On garde le reste (ex: H2O)
-            }
-
-            // B. ANALYSE DES PARENTHÈSES (Algorithme de la Pile)
-            // Regex qui découpe la formule en : Atome+Chiffre OU ( OU )
-            const regex = /([A-Z][a-z]?)(\d*)|(\()|(\))(\d*)/g;
-            
-            let stack = [ {} ]; // Une pile de "boîtes". On commence avec une boîte vide.
-            let match;
-
-            // On lit la formule morceau par morceau
-            while ((match = regex.exec(formula)) !== null) {
-                
-                // Cas 1 : Parenthèse Ouvrante "("
-                if (match[3]) {
-                    stack.push({}); // On ouvre une nouvelle boîte vide par-dessus la précédente
-                } 
-                
-                // Cas 2 : Parenthèse Fermante ")"
-                else if (match[4]) {
-                    let closingCount = match[5] === '' ? 1 : parseInt(match[5]); // Chiffre après la parenthèse
-                    let currentGroup = stack.pop(); // On récupère la boîte du dessus (celle qui se ferme)
-                    let parentGroup = stack[stack.length - 1]; // La boîte d'en dessous (qui reçoit le contenu)
-
-                    // On vide le contenu de la boîte fermée dans la boîte parente en multipliant
-                    for (let atom in currentGroup) {
-                        if (!parentGroup[atom]) parentGroup[atom] = 0;
-                        parentGroup[atom] += currentGroup[atom] * closingCount;
-                    }
-                } 
-                
-                // Cas 3 : C'est un Atome (Ex: C6)
-                else if (match[1]) {
-                    let atom = match[1];
-                    let count = match[2] === '' ? 1 : parseInt(match[2]);
-                    let currentGroup = stack[stack.length - 1]; // On met ça dans la boîte active
-
-                    if (atomMasses[atom]) {
-                        if (!currentGroup[atom]) currentGroup[atom] = 0;
-                        currentGroup[atom] += count;
-                    } else {
-                        alert("Erreur : Atome inconnu (" + atom + ")");
-                        return;
-                    }
-                }
-            }
-
-            // À la fin, tous les atomes sont redescendus dans la première boîte (stack[0])
-            let finalCounts = stack[0];
-            
-            // C. GÉNÉRATION DE L'AFFICHAGE HTML
-            let totalMass = 0;
-            // En-tête du résultat
-            let detailsHTML = `<h4 style="margin:0 0 15px 0; color:#333;">Détail du calcul :</h4>`;
-
-            // On boucle sur chaque atome trouvé pour afficher la ligne de calcul
-            for (let atom in finalCounts) {
-                let count = finalCounts[atom];
-                let mass = atomMasses[atom];
-                let subTotal = count * mass;
-                
-                totalMass += subTotal;
-
-                // Ligne de détail (Ex: C : 6 x 12.01 = 72.06)
-                detailsHTML += `
-                <div class="step-line">
-                    <span style="font-weight:bold; width:30px; display:inline-block; color:var(--brand-school);">${atom}</span> : 
-                    ${count} <small>atomes</small> &times; ${mass} = <b>${subTotal.toFixed(2)}</b>
-                </div>`;
-            }
-
-            // Calcul final avec le coefficient multiplicateur
-            let grandTotal = totalMass * multiplier;
-
-            // Si on avait un coefficient (ex: 2 molécules), on l'affiche
-            if(multiplier > 1) {
-                detailsHTML += `<div style="border-top:1px dashed #ccc; margin-top:10px; padding-top:10px; color:#555;">
-                    Masse d'une molécule : ${totalMass.toFixed(2)}<br>
-                    Multiplicateur (x${multiplier}) : <b>${grandTotal.toFixed(2)}</b>
-                </div>`;
-            }
-
-            // Total final en gros
-            detailsHTML += `<div class="step-total">M = ${grandTotal.toFixed(2)} g/mol</div>`;
-
-            // Affichage dans la boîte de résultat
-            const resBox = document.getElementById('mol-result-box');
-            if(resBox) {
-                resBox.innerHTML = detailsHTML;
-                resBox.style.display = 'block';
-            }
-        }
- 
-        /* =========================================
-            CALCULATRICE GRAPHIQUE (TRACEUR)
-           ========================================= */
-        let graphCanvas = document.getElementById('graphCanvas');
-        let gCtx = graphCanvas ? graphCanvas.getContext('2d') : null;
-        let graphScale = 40; // Pixels par unité
-
-        function initGraph() {
-            // Initialisation au premier chargement
-            drawGraph();
-        }
-
-        function updateZoom(val) {
-            graphScale = parseInt(val);
-            document.getElementById('zoom-val').innerText = val;
-            drawGraph();
-        }
-
-        function drawGraph() {
-            if(!gCtx) return;
-            const w = graphCanvas.width;
-            const h = graphCanvas.height;
-            const cx = w / 2; // Centre X
-            const cy = h / 2; // Centre Y
-
-            // 1. Nettoyer
-            gCtx.clearRect(0, 0, w, h);
-
-            // 2. Dessiner la grille et les axes
-            gCtx.lineWidth = 1;
-            
-            // Grille légère
-            gCtx.beginPath();
-            gCtx.strokeStyle = '#eee';
-            for(let x = cx % graphScale; x < w; x += graphScale) { gCtx.moveTo(x, 0); gCtx.lineTo(x, h); }
-            for(let y = cy % graphScale; y < h; y += graphScale) { gCtx.moveTo(0, y); gCtx.lineTo(w, y); }
-            gCtx.stroke();
-
-            // Axes principaux
-            gCtx.beginPath();
-            gCtx.strokeStyle = '#333';
-            gCtx.lineWidth = 2;
-            gCtx.moveTo(0, cy); gCtx.lineTo(w, cy); // Axe X
-            gCtx.moveTo(cx, 0); gCtx.lineTo(cx, h); // Axe Y
-            gCtx.stroke();
-
-            // 3. Récupérer et préparer la fonction
-            let expr = document.getElementById('func-input').value.toLowerCase();
-            
-            // "Traduction" mathématique pour que JS comprenne (ex: x^2 -> x**2, sin -> Math.sin)
-            // On remplace d'abord les puissances ^ par **
-            expr = expr.replace(/\^/g, '**');
-            // On ajoute 'Math.' devant les fonctions usuelles si elles ne l'ont pas déjà
-            ['sin', 'cos', 'tan', 'sqrt', 'log', 'exp', 'abs'].forEach(fn => {
-                // Regex pour remplacer "sin(" par "Math.sin(" sans casser "Math.sin(" si déjà présent
-                let regex = new RegExp(`\\b${fn}\\(`, 'g');
-                expr = expr.replace(regex, `Math.${fn}(`);
-            });
-
-            // 4. Tracer la courbe pixel par pixel
-            gCtx.beginPath();
-            gCtx.strokeStyle = '#6C63FF'; // Couleur Schoolizy
-            gCtx.lineWidth = 2;
-
-            let firstPoint = true;
-
-            // On parcourt chaque pixel de l'écran en largeur
-            for (let px = 0; px <= w; px++) {
-                // On convertit le pixel écran en coordonnée mathématique X
-                // (pixel - centre) / echelle
-                let x = (px - cx) / graphScale;
-                
-                try {
-                    // Évaluation sécurisée de la fonction
-                    // On crée une petite fonction temporaire JS qui retourne le résultat
-                    let yMath = new Function('x', `try { return ${expr}; } catch(e) { return NaN; }`)(x);
-                    
-                    if (isNaN(yMath) || !isFinite(yMath)) {
-                        firstPoint = true; // Si erreur (ex: racine de négatif), on lève le crayon
-                        continue;
-                    }
-
-                    // On convertit le Y mathématique en pixel écran
-                    // Attention : en canvas, Y descend, donc on inverse (-yMath)
-                    let py = cy - (yMath * graphScale);
-
-                    if (firstPoint) {
-                        gCtx.moveTo(px, py);
-                        firstPoint = false;
-                    } else {
-                        gCtx.lineTo(px, py);
-                    }
-                } catch (e) {
-                    // Erreur de syntaxe (ex: utilisateur en train de taper)
-                    // On ignore silencieusement
-                }
-            }
-            gCtx.stroke();
-        }
-
-/* =============================================================================
-   CERCLE TRIGO
-   ============================================================================= */
-function initTrigo() {
-    const canvas = document.getElementById('trigoCanvas');
-    if(!canvas) return;
-    const ctx = canvas.getContext('2d');
-    
-    function draw(angle) {
-        ctx.clearRect(0, 0, 400, 400);
-        // Axes
-        ctx.strokeStyle = '#ccc';
-        ctx.beginPath(); ctx.moveTo(0, 200); ctx.lineTo(400, 200); ctx.moveTo(200, 0); ctx.lineTo(200, 400); ctx.stroke();
-        // Cercle
-        ctx.strokeStyle = '#333';
-        ctx.beginPath(); ctx.arc(200, 200, 150, 0, Math.PI * 2); ctx.stroke();
-        
-        let x = 200 + 150 * Math.cos(angle);
-        let y = 200 - 150 * Math.sin(angle);
-        
-        // Rayon
-        ctx.strokeStyle = 'purple';
-        ctx.beginPath(); ctx.moveTo(200, 200); ctx.lineTo(x, y); ctx.stroke();
-        
-        document.getElementById('val-cos').innerText = Math.cos(angle).toFixed(3);
-        document.getElementById('val-sin').innerText = Math.sin(angle).toFixed(3);
-    }
-
-    canvas.onmousedown = (e) => {
-        let rect = canvas.getBoundingClientRect();
-        let angle = Math.atan2(-(e.clientY - rect.top - 200), e.clientX - rect.left - 200);
-        draw(angle);
-    };
-    draw(0);
-}
-
-/* =============================================================================
-   4. TABLEAU PÉRIODIQUE (COMPLET)
-   ============================================================================= */
-        /* 3. TABLEAU PÉRIODIQUE */
-        const fullElements = [
-        // --- Période 1 ---
-        {z:1, s:"H", n:"Hydrogène", a:1.008, x:1, y:1},
-        {z:2, s:"He", n:"Hélium", a:4.003, x:18, y:1},
-
-        // --- Période 2 ---
-        {z:3, s:"Li", n:"Lithium", a:6.941, x:1, y:2},
-        {z:4, s:"Be", n:"Béryllium", a:9.012, x:2, y:2},
-        {z:5, s:"B", n:"Bore", a:10.81, x:13, y:2},
-        {z:6, s:"C", n:"Carbone", a:12.01, x:14, y:2},
-        {z:7, s:"N", n:"Azote", a:14.01, x:15, y:2},
-        {z:8, s:"O", n:"Oxygène", a:16.00, x:16, y:2},
-        {z:9, s:"F", n:"Fluor", a:19.00, x:17, y:2},
-        {z:10, s:"Ne", n:"Néon", a:20.18, x:18, y:2},
-
-        // --- Période 3 ---
-        {z:11, s:"Na", n:"Sodium", a:22.99, x:1, y:3},
-        {z:12, s:"Mg", n:"Magnésium", a:24.31, x:2, y:3},
-        {z:13, s:"Al", n:"Aluminium", a:26.98, x:13, y:3},
-        {z:14, s:"Si", n:"Silicium", a:28.09, x:14, y:3},
-        {z:15, s:"P", n:"Phosphore", a:30.97, x:15, y:3},
-        {z:16, s:"S", n:"Soufre", a:32.06, x:16, y:3},
-        {z:17, s:"Cl", n:"Chlore", a:35.45, x:17, y:3},
-        {z:18, s:"Ar", n:"Argon", a:39.95, x:18, y:3},
-
-        // --- Période 4 ---
-        {z:19, s:"K", n:"Potassium", a:39.10, x:1, y:4},
-        {z:20, s:"Ca", n:"Calcium", a:40.08, x:2, y:4},
-        {z:21, s:"Sc", n:"Scandium", a:44.96, x:3, y:4},
-        {z:22, s:"Ti", n:"Titane", a:47.87, x:4, y:4},
-        {z:23, s:"V", n:"Vanadium", a:50.94, x:5, y:4},
-        {z:24, s:"Cr", n:"Chrome", a:52.00, x:6, y:4},
-        {z:25, s:"Mn", n:"Manganèse", a:54.94, x:7, y:4},
-        {z:26, s:"Fe", n:"Fer", a:55.85, x:8, y:4},
-        {z:27, s:"Co", n:"Cobalt", a:58.93, x:9, y:4},
-        {z:28, s:"Ni", n:"Nickel", a:58.69, x:10, y:4},
-        {z:29, s:"Cu", n:"Cuivre", a:63.55, x:11, y:4},
-        {z:30, s:"Zn", n:"Zinc", a:65.38, x:12, y:4},
-        {z:31, s:"Ga", n:"Gallium", a:69.72, x:13, y:4},
-        {z:32, s:"Ge", n:"Germanium", a:72.63, x:14, y:4},
-        {z:33, s:"As", n:"Arsenic", a:74.92, x:15, y:4},
-        {z:34, s:"Se", n:"Sélénium", a:78.96, x:16, y:4},
-        {z:35, s:"Br", n:"Brome", a:79.90, x:17, y:4},
-        {z:36, s:"Kr", n:"Krypton", a:83.80, x:18, y:4},
-
-        // --- Période 5 ---
-        {z:37, s:"Rb", n:"Rubidium", a:85.47, x:1, y:5},
-        {z:38, s:"Sr", n:"Strontium", a:87.62, x:2, y:5},
-        {z:39, s:"Y", n:"Yttrium", a:88.91, x:3, y:5},
-        {z:40, s:"Zr", n:"Zirconium", a:91.22, x:4, y:5},
-        {z:41, s:"Nb", n:"Niobium", a:92.91, x:5, y:5},
-        {z:42, s:"Mo", n:"Molybdène", a:95.94, x:6, y:5},
-        {z:43, s:"Tc", n:"Technétium", a:98, x:7, y:5},
-        {z:44, s:"Ru", n:"Ruthénium", a:101.07, x:8, y:5},
-        {z:45, s:"Rh", n:"Rhodium", a:102.91, x:9, y:5},
-        {z:46, s:"Pd", n:"Palladium", a:106.42, x:10, y:5},
-        {z:47, s:"Ag", n:"Argent", a:107.87, x:11, y:5},
-        {z:48, s:"Cd", n:"Cadmium", a:112.41, x:12, y:5},
-        {z:49, s:"In", n:"Indium", a:114.82, x:13, y:5},
-        {z:50, s:"Sn", n:"Étain", a:118.71, x:14, y:5},
-        {z:51, s:"Sb", n:"Antimoine", a:121.76, x:15, y:5},
-        {z:52, s:"Te", n:"Tellure", a:127.60, x:16, y:5},
-        {z:53, s:"I", n:"Iode", a:126.90, x:17, y:5},
-        {z:54, s:"Xe", n:"Xénon", a:131.29, x:18, y:5},
-
-        // --- Période 6 ---
-        {z:55, s:"Cs", n:"Césium", a:132.91, x:1, y:6},
-        {z:56, s:"Ba", n:"Baryum", a:137.33, x:2, y:6},
-        // Lanthanides (voir plus bas)
-        {z:72, s:"Hf", n:"Hafnium", a:178.49, x:4, y:6},
-        {z:73, s:"Ta", n:"Tantale", a:180.95, x:5, y:6},
-        {z:74, s:"W", n:"Tungstène", a:183.84, x:6, y:6},
-        {z:75, s:"Re", n:"Rhénium", a:186.21, x:7, y:6},
-        {z:76, s:"Os", n:"Osmium", a:190.23, x:8, y:6},
-        {z:77, s:"Ir", n:"Iridium", a:192.22, x:9, y:6},
-        {z:78, s:"Pt", n:"Platine", a:195.08, x:10, y:6},
-        {z:79, s:"Au", n:"Or", a:196.97, x:11, y:6},
-        {z:80, s:"Hg", n:"Mercure", a:200.59, x:12, y:6},
-        {z:81, s:"Tl", n:"Thallium", a:204.38, x:13, y:6},
-        {z:82, s:"Pb", n:"Plomb", a:207.20, x:14, y:6},
-        {z:83, s:"Bi", n:"Bismuth", a:208.98, x:15, y:6},
-        {z:84, s:"Po", n:"Polonium", a:209, x:16, y:6},
-        {z:85, s:"At", n:"Astate", a:210, x:17, y:6},
-        {z:86, s:"Rn", n:"Radon", a:222, x:18, y:6},
-
-        // --- Période 7 ---
-        {z:87, s:"Fr", n:"Francium", a:223, x:1, y:7},
-        {z:88, s:"Ra", n:"Radium", a:226, x:2, y:7},
-        // Actinides (voir plus bas)
-        {z:104, s:"Rf", n:"Rutherfordium", a:267, x:4, y:7},
-        {z:105, s:"Db", n:"Dubnium", a:268, x:5, y:7},
-        {z:106, s:"Sg", n:"Seaborgium", a:271, x:6, y:7},
-        {z:107, s:"Bh", n:"Bohrium", a:272, x:7, y:7},
-        {z:108, s:"Hs", n:"Hassium", a:270, x:8, y:7},
-        {z:109, s:"Mt", n:"Meitnerium", a:276, x:9, y:7},
-        {z:110, s:"Ds", n:"Darmstadtium", a:281, x:10, y:7},
-        {z:111, s:"Rg", n:"Roentgenium", a:280, x:11, y:7},
-        {z:112, s:"Cn", n:"Copernicium", a:285, x:12, y:7},
-        {z:113, s:"Nh", n:"Nihonium", a:284, x:13, y:7},
-        {z:114, s:"Fl", n:"Flérovium", a:289, x:14, y:7},
-        {z:115, s:"Mc", n:"Moscovium", a:288, x:15, y:7},
-        {z:116, s:"Lv", n:"Livermorium", a:293, x:16, y:7},
-        {z:117, s:"Ts", n:"Tennesse", a:294, x:17, y:7},
-        {z:118, s:"Og", n:"Oganesson", a:294, x:18, y:7},
-
-        // --- Lanthanides (Affichés en bas, ligne 9 fictive pour CSS) ---
-        {z:57, s:"La", n:"Lanthane", a:138.91, x:3, y:9}, // Décalage pour affichage
-        {z:58, s:"Ce", n:"Cérium", a:140.12, x:4, y:9},
-        {z:59, s:"Pr", n:"Braséodyme", a:140.91, x:5, y:9},
-        {z:60, s:"Nd", n:"Néodyme", a:144.24, x:6, y:9},
-        {z:61, s:"Pm", n:"Prométhium", a:145, x:7, y:9},
-        {z:62, s:"Sm", n:"Samarium", a:150.36, x:8, y:9},
-        {z:63, s:"Eu", n:"Europium", a:151.96, x:9, y:9},
-        {z:64, s:"Gd", n:"Gadolinium", a:157.25, x:10, y:9},
-        {z:65, s:"Tb", n:"Terbium", a:158.93, x:11, y:9},
-        {z:66, s:"Dy", n:"Dysprosium", a:162.50, x:12, y:9},
-        {z:67, s:"Ho", n:"Holmium", a:164.93, x:13, y:9},
-        {z:68, s:"Er", n:"Erbium", a:167.26, x:14, y:9},
-        {z:69, s:"Tm", n:"Thulium", a:168.93, x:15, y:9},
-        {z:70, s:"Yb", n:"Ytterbium", a:173.04, x:16, y:9},
-        {z:71, s:"Lu", n:"Lutécium", a:174.97, x:17, y:9},
-
-        // --- Actinides (Affichés en bas, ligne 10 fictive pour CSS) ---
-        {z:89, s:"Ac", n:"Actinium", a:227, x:3, y:10},
-        {z:90, s:"Th", n:"Thorium", a:232.04, x:4, y:10},
-        {z:91, s:"Pa", n:"Protactinium", a:231.04, x:5, y:10},
-        {z:92, s:"U", n:"Uranium", a:238.03, x:6, y:10},
-        {z:93, s:"Np", n:"Neptunium", a:237, x:7, y:10},
-        {z:94, s:"Pu", n:"Plutonium", a:244, x:8, y:10},
-        {z:95, s:"Am", n:"Américium", a:243, x:9, y:10},
-        {z:96, s:"Cm", n:"Curium", a:247, x:10, y:10},
-        {z:97, s:"Bk", n:"Berkélium", a:247, x:11, y:10},
-        {z:98, s:"Cf", n:"Californium", a:251, x:12, y:10},
-        {z:99, s:"Es", n:"Einsteinium", a:252, x:13, y:10},
-        {z:100, s:"Fm", n:"Fermium", a:257, x:14, y:10},
-        {z:101, s:"Md", n:"Mendélévium", a:258, x:15, y:10},
-        {z:102, s:"No", n:"Nobélium", a:259, x:16, y:10},
-        {z:103, s:"Lr", n:"Lawrencium", a:262, x:17, y:10}
-        ];
-        
-function initTableau() {
-            const grid = document.getElementById('periodic-grid');
-            if(!grid) return; // Sécurité si l'élément n'est pas trouvé
-            
-            grid.innerHTML = '';
-            // On s'assure que la grille est bien configurée
-            grid.style.display = 'grid';
-            grid.style.gridTemplateColumns = 'repeat(18, 1fr)';
-            grid.style.gap = '2px';
-
-            // Création de la map pour positionner les éléments
-            const tableMap = {};
-            fullElements.forEach(el => {
-                tableMap[`${el.x}-${el.y}`] = el;
-            });
-
-            // Boucle sur les 10 lignes (7 périodes + vide + 2 familles rares)
-            for (let y = 1; y <= 10; y++) {
-                
-                // Ligne 8 sert d'espace vide
-                if(y === 8) {
-                    for(let k=0; k<18; k++) createEmpty(grid);
-                    continue;
-                }
-            
-                for (let x = 1; x <= 18; x++) {
-                    const data = tableMap[`${x}-${y}`];
-                    if (data) {
-                        createCell(grid, data);
-                    } else {
-                        createEmpty(grid);
-                    }
-                }
-            }
-        }
-
-// Fonction pour déterminer la famille (couleur)
-        function getFamilyClass(data) {
-            const { x, y, z } = data;
-
-            // Cas spéciaux (Lignes du bas)
-            if (y === 9) return 'fam-lanthanide';
-            if (y === 10) return 'fam-actinide';
-            
-            // Hydrogène (Non-métal mais colonne 1)
-            if (z === 1) return 'fam-nonmetal';
-
-            // Par Colonne
-            if (x === 1) return 'fam-alkali';
-            if (x === 2) return 'fam-alkaline';
-            if (x >= 3 && x <= 12) return 'fam-transition';
-            if (x === 17) return 'fam-halogen';
-            if (x === 18) return 'fam-noble';
-
-            // Zone complexe à droite (Escalier Métalloïdes / Métaux pauvres / Non métaux)
-            // Simplification pour l'affichage :
-            if (x >= 13 && x <= 16) {
-                // Al, Ga, In, Sn, Tl, Pb, Bi, Po (Métaux pauvres - approximation visuelle)
-                const isPostTransition = [13, 31, 49, 50, 81, 82, 83, 84, 113, 114, 115, 116].includes(z);
-                // B, Si, Ge, As, Sb, Te, At (Métalloïdes)
-                const isMetalloid = [5, 14, 32, 33, 51, 52, 85].includes(z);
-                
-                if (isMetalloid) return 'fam-metalloid';
-                if (isPostTransition) return 'fam-post-trans';
-                return 'fam-nonmetal'; // C, N, O, P, S, Se
-            }
-
-            return ''; // Défaut
-        }
-
-        function createCell(container, data) {
-            const div = document.createElement('div');
-            // On récupère la classe de couleur
-            const colorClass = getFamilyClass(data);
-            
-            div.className = `element-card ${colorClass}`;
-            
-            // Nouvelle structure HTML pour éviter le chevauchement
-            div.innerHTML = `
-                <div class="elem-header">
-                    <span class="element-number">${data.z}</span>
-                </div>
-                <div class="elem-body">
-                    <span class="element-symbol">${data.s}</span>
-                </div>
-                <div class="elem-footer">
-                    <span class="element-molar">${data.a}</span>
-                </div>
-            `;
-            
-            div.onmouseover = () => {
-                const details = document.getElementById('periodic-details');
-                if(details) {
-                    // On détermine le nom de la famille pour l'affichage
-                    let familyName = "Élément";
-                    if(colorClass === 'fam-alkali') familyName = "Métal Alcalin";
-                    if(colorClass === 'fam-alkaline') familyName = "Métal Alcalino-terreux";
-                    if(colorClass === 'fam-transition') familyName = "Métal de Transition";
-                    if(colorClass === 'fam-halogen') familyName = "Halogène";
-                    if(colorClass === 'fam-noble') familyName = "Gaz Noble";
-                    if(colorClass === 'fam-lanthanide') familyName = "Lanthanide";
-                    if(colorClass === 'fam-actinide') familyName = "Actinide";
-                    if(colorClass === 'fam-nonmetal') familyName = "Non-métaux";
-                    if(colorClass === 'fam-metalloid') familyName = "Métalloïde";
-                    if(colorClass === 'fam-post-trans') familyName = "Métaux pauvres";
-                    
-                    details.innerHTML = `
-                        <div style="font-size:1.4rem; color:var(--brand-school)"><strong>${data.n} (${data.s})</strong></div>
-                        <div style="margin-top:5px;">${familyName}</div>
-                        <div style="font-size:0.9rem; color:#666; margin-top:5px;">
-                            Numéro atomique (Z) : <strong>${data.z}</strong> &nbsp;|&nbsp; 
-                            Masse molaire : <strong>${data.a}</strong> g/mol
-                        </div>
-                    `;
-                }
-            };
-            container.appendChild(div);
-        }
-
-        function createEmpty(container) {
-            const div = document.createElement('div'); 
-            div.className = 'empty-cell'; 
-            container.appendChild(div);
-        }
-
-        /* =========================================
-           4. CONVERTISSEUR UNIVERSEL
-           ========================================= */
-        const convData = {
-            'length': {
-                name: 'Longueur',
-                units: {
-                    'km': 1000, 'hm': 100, 'dam': 10, 'm': 1, 
-                    'dm': 0.1, 'cm': 0.01, 'mm': 0.001, 
-                    'mi': 1609.34 // Mile
-                }
-            },
-            'mass': {
-                name: 'Masse',
-                units: {
-                    't': 1000000, 'kg': 1000, 'hg': 100, 'dag': 10, 'g': 1,
-                    'dg': 0.1, 'cg': 0.01, 'mg': 0.001
-                }
-            },
-            'time': {
-                name: 'Temps',
-                units: {
-                    'an': 31536000, 'j': 86400, 'h': 3600, 'min': 60, 's': 1, 'ms': 0.001
-                }
-            },
-            'speed': {
-                name: 'Vitesse',
-                units: {
-                    'km/h': 1/3.6, // Base est m/s. 1 km/h = 1/3.6 m/s
-                    'm/s': 1,
-                    'mph': 0.44704
-                }
-            },
-            'volume': {
-                name: 'Volume',
-                units: {
-                    'm³': 1000, 'dm³': 1, 'cm³': 0.001, // Base est le Litre
-                    'L': 1, 'dL': 0.1, 'cL': 0.01, 'mL': 0.001,
-                    'hL': 100
-                }
-            },
-            'data': {
-                name: 'Données',
-                units: {
-                    'To': 1000000000000, 'Go': 1000000000, 'Mo': 1000000, 'Ko': 1000, 'o': 1
-                }
-            }
-        };
-
-        let currentCategory = 'length';
-
-        function initConverter() {
-            setConvCategory('length');
-        }
-
-        function setConvCategory(cat) {
-            currentCategory = cat;
-            
-            // Mise à jour visuelle des onglets
-            document.querySelectorAll('.conv-tab').forEach(b => b.classList.remove('active'));
-            // Astuce : on trouve le bouton qui a le onclick correspondant
-            const tabs = document.querySelectorAll('.conv-tab');
-            for(let t of tabs) {
-                if(t.getAttribute('onclick').includes(cat)) t.classList.add('active');
-            }
-
-            // Remplir les Selects
-            const units = convData[cat].units;
-            const select1 = document.getElementById('conv-unit-1');
-            const select2 = document.getElementById('conv-unit-2');
-            
-            select1.innerHTML = ''; select2.innerHTML = '';
-            
-            for (let [u, val] of Object.entries(units)) {
-                let opt1 = document.createElement('option'); opt1.value = val; opt1.innerText = u;
-                let opt2 = document.createElement('option'); opt2.value = val; opt2.innerText = u;
-                select1.appendChild(opt1);
-                select2.appendChild(opt2);
-            }
-
-            // Sélection par défaut intelligente
-            if(cat === 'length') { select1.value = 1000; select2.value = 1; } // km -> m
-            if(cat === 'speed') { select1.value = 1/3.6; select2.value = 1; } // km/h -> m/s
-            if(cat === 'time') { select1.value = 3600; select2.value = 60; } // h -> min
-
-            calculateConv(1);
-        }
-
-        function calculateConv(sourceParams) {
-            const input1 = document.getElementById('conv-input-1');
-            const input2 = document.getElementById('conv-input-2');
-            const unit1 = parseFloat(document.getElementById('conv-unit-1').value);
-            const unit2 = parseFloat(document.getElementById('conv-unit-2').value);
-            
-            // sourceParams = 1 si on écrit dans input 1, 2 si on écrit dans input 2
-            let val;
-
-            if(sourceParams === 1) {
-                val = parseFloat(input1.value);
-                if(isNaN(val)) { input2.value = ''; return; }
-                
-                // Formule : Val * (Facteur Départ / Facteur Arrivée)
-                let res = val * (unit1 / unit2);
-                
-                // Arrondi propre pour éviter 0.30000000004
-                if(res < 0.000001) input2.value = res.toExponential(4);
-                else input2.value = parseFloat(res.toPrecision(10)); // Nettoie les décimales folles
-            } else {
-                val = parseFloat(input2.value);
-                if(isNaN(val)) { input1.value = ''; return; }
-                let res = val * (unit2 / unit1);
-                
-                if(res < 0.000001) input1.value = res.toExponential(4);
-                else input1.value = parseFloat(res.toPrecision(10));
-            }
-
-            // Affichage de la formule pour aider l'élève
-            const u1Name = document.getElementById('conv-unit-1').options[document.getElementById('conv-unit-1').selectedIndex].text;
-            const u2Name = document.getElementById('conv-unit-2').options[document.getElementById('conv-unit-2').selectedIndex].text;
-            
-            // Facteur explicatif
-            let factor = unit1 / unit2;
-            let operator = factor >= 1 ? '×' : '÷';
-            let displayFactor = factor >= 1 ? factor : (1/factor);
-            
-            // Affichage joli
-            displayFactor = parseFloat(displayFactor.toPrecision(6)); // Propre
-            
-            document.getElementById('conv-formula').innerText = 
-                `Pour passer de ${u1Name} à ${u2Name}, on multiplie par ${factor < 1 ? (1/factor).toFixed(4) : factor} (ou div par ${factor < 1 ? factor : (1/factor).toFixed(4)})`;
-        }
-
-/* LOGIQUE JS */
-        let pomoInterval = null;
-        let pomoTime = 25 * 60; 
-        let isPomoRunning = false;
-
-        function updatePomoDisplay() {
-            const minutes = Math.floor(pomoTime / 60);
-            const seconds = pomoTime % 60;
-            const displayMin = minutes < 10 ? '0' + minutes : minutes;
-            const displaySec = seconds < 10 ? '0' + seconds : seconds;
-            document.getElementById('pomo-timer').innerText = `${displayMin}:${displaySec}`;
-        }
-
-function togglePomodoro() {
-            const btn = document.getElementById('pomo-btn');
-            const container = document.getElementById('pomo-container');
-            
-            // Les dessins SVG (Codes bruts)
-            const iconPlay = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 5V19L19 12L8 5Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
-            
-            const iconPause = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 5V19" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M16 5V19" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>`;
-            
-            if (isPomoRunning) {
-                // --- PAUSE ---
-                clearInterval(pomoInterval);
-                isPomoRunning = false;
-                
-                btn.innerHTML = iconPlay; // On remet le dessin Play
-                container.classList.remove('running');
-                
-            } else {
-                // --- DÉMARRAGE ---
-                isPomoRunning = true;
-                
-                btn.innerHTML = iconPause; // On met le dessin Pause (barres arrondies)
-                container.classList.add('running');
-                
-                pomoInterval = setInterval(() => {
-                    if (pomoTime > 0) {
-                        pomoTime--;
-                        updatePomoDisplay();
-                    } else {
-                        clearInterval(pomoInterval);
-                        isPomoRunning = false;
-                        btn.innerHTML = iconPlay;
-                        container.classList.remove('running');
-                        alert("🔔 Ding Dong ! C'est la pause !");
-                    }
-                }, 1000);
-            }
-        }
-        
-        // Pensez aussi à mettre à jour le bouton Reset pour qu'il remette l'icone Play
-        function resetPomodoro() {
-            clearInterval(pomoInterval);
-            isPomoRunning = false;
-            pomoTime = 25 * 60; 
-            updatePomoDisplay();
-            
-            // On remet l'icône Play
-            const iconPlay = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 5V19L19 12L8 5Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
-            document.getElementById('pomo-btn').innerHTML = iconPlay;
-            
-            document.getElementById('pomo-container').classList.remove('running');
-        }
-
-      /* =========================================
-       REPÈRE INTERACTIF (Version Clic par Clic - CORRIGÉE)
-       ========================================= */
-    let repCanvas = document.getElementById('repereCanvas');
-    let rCtx = repCanvas ? repCanvas.getContext('2d') : null;
-    
-    let rObjects = { points: [], vectors: [] };
-    let rConfig = { pixelsPerUnit: 20, step: 1, cx: 200, cy: 200, mode: 'point' };
-    let rState = { dragging: null, vectorStart: null, currentMouse: {x:0, y:0}, hover: null };
-
-    function initRepere() {
-        rObjects = { points: [], vectors: [] };
-        if(repCanvas) {
-            rConfig.cx = repCanvas.width / 2;
-            rConfig.cy = repCanvas.height / 2;
-            setRepereMode('point'); 
-            drawRepere();
-        }
-    }
-
-    function setRepereMode(mode) {
-        rConfig.mode = mode;
-        rState.vectorStart = null; 
-        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-        const btn = document.getElementById('btn-mode-' + mode);
-        if(btn) btn.classList.add('active');
-        updateInstructions(); 
-        drawRepere();
-    }
-
-    function updateInstructions() {
-        const txt = document.getElementById('repere-instruction');
-        if(!txt) return;
-        if(rConfig.mode === 'point') txt.innerHTML = "<strong>Mode Point :</strong> Cliquez sur la grille pour placer un point (aimanté à 0,25).";
-        if(rConfig.mode === 'vector') {
-            if(rState.vectorStart) txt.innerHTML = "<strong style='color:var(--brand-school)'>Mode Vecteur :</strong> Cliquez sur le <strong>point d'arrivée</strong>.";
-            else txt.innerHTML = "<strong>Mode Vecteur :</strong> Cliquez d'abord sur le <strong>point de départ</strong>.";
-        }
-        if(rConfig.mode === 'move') txt.innerHTML = "<strong>Mode Déplacer :</strong> Maintenez le clic sur un point pour le bouger.";
-        if(rConfig.mode === 'delete') txt.innerHTML = "<strong>Mode Gomme :</strong> Cliquez sur un point ou un vecteur pour le supprimer.";
-    }
-
-    function drawRepere() {
-        if(!rCtx) return;
-        const w = repCanvas.width; const h = repCanvas.height;
-        rCtx.clearRect(0, 0, w, h);
-
-        const stepPx = rConfig.pixelsPerUnit * rConfig.step; 
-        rCtx.lineWidth = 1;
-        for(let x = rConfig.cx; x <= w; x += stepPx) drawGridLine(x, 0, x, h, x);
-        for(let x = rConfig.cx; x >= 0; x -= stepPx) drawGridLine(x, 0, x, h, x);
-        for(let y = rConfig.cy; y <= h; y += stepPx) drawGridLine(0, y, w, y, y);
-        for(let y = rConfig.cy; y >= 0; y -= stepPx) drawGridLine(0, y, w, y, y);
-
-        rCtx.strokeStyle = '#000'; rCtx.lineWidth = 2; rCtx.beginPath();
-        rCtx.moveTo(0, rConfig.cy); rCtx.lineTo(w, rConfig.cy);
-        rCtx.moveTo(rConfig.cx, 0); rCtx.lineTo(rConfig.cx, h);
-        rCtx.stroke();
-
-        rObjects.vectors.forEach(v => {
-            const p1 = rObjects.points.find(p => p.id === v.from);
-            const p2 = rObjects.points.find(p => p.id === v.to);
-            if(p1 && p2) drawArrow(rCtx, p1.x, p1.y, p2.x, p2.y, 'blue');
-        });
-
-        rObjects.points.forEach(p => {
-            rCtx.beginPath(); rCtx.arc(p.x, p.y, 5, 0, Math.PI*2);
-            if(rState.vectorStart === p) rCtx.fillStyle = '#2ecc71'; 
-            else if(rState.hover === p) rCtx.fillStyle = '#FFD700'; 
-            else rCtx.fillStyle = 'red'; 
-            rCtx.fill(); rCtx.strokeStyle = 'black'; rCtx.lineWidth = 1; rCtx.stroke();
-            rCtx.fillStyle = '#333'; rCtx.font = "11px Arial"; rCtx.fillText(`${p.name}`, p.x + 8, p.y - 8);
-        });
-
-        if(rConfig.mode === 'vector' && rState.vectorStart) {
-            rCtx.beginPath(); rCtx.strokeStyle = '#2ecc71'; rCtx.lineWidth = 2; rCtx.setLineDash([5, 3]);
-            rCtx.moveTo(rState.vectorStart.x, rState.vectorStart.y);
-            rCtx.lineTo(rState.currentMouse.x, rState.currentMouse.y);
-            rCtx.stroke(); rCtx.setLineDash([]);
-        }
-    }
-
-    function drawGridLine(x1, y1, x2, y2, val) {
-        rCtx.beginPath();
-        let dist = Math.abs(val - (x1 === x2 ? rConfig.cx : rConfig.cy));
-        let isUnit = Math.abs(dist % rConfig.pixelsPerUnit) < 1;
-        rCtx.strokeStyle = isUnit ? '#ccc' : '#f4f4f4';
-        rCtx.moveTo(x1, y1); rCtx.lineTo(x2, y2); rCtx.stroke();
-    }
-
-    function getSnappedPos(evt) {
-        const rect = repCanvas.getBoundingClientRect();
-        const scaleX = repCanvas.width / rect.width;
-        const scaleY = repCanvas.height / rect.height;
-        const mx = (evt.clientX - rect.left) * scaleX;
-        const my = (evt.clientY - rect.top) * scaleY;
-        let mathX = (mx - rConfig.cx) / rConfig.pixelsPerUnit;
-        let mathY = -(my - rConfig.cy) / rConfig.pixelsPerUnit;
-        mathX = Math.round(mathX / rConfig.step) * rConfig.step;
-        mathY = Math.round(mathY / rConfig.step) * rConfig.step;
-        return { 
-            pixelX: rConfig.cx + mathX * rConfig.pixelsPerUnit, 
-            pixelY: rConfig.cy - mathY * rConfig.pixelsPerUnit, 
-            mathX: mathX, 
-            mathY: mathY, 
-            rawX: mx, 
-            rawY: my 
-        };
-    }
-
-    function drawArrow(ctx, fromx, fromy, tox, toy, color) {
-        const headlen = 10; const dx = tox - fromx; const dy = toy - fromy; const angle = Math.atan2(dy, dx);
-        ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 2;
-        ctx.moveTo(fromx, fromy); ctx.lineTo(tox, toy);
-        ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
-        ctx.moveTo(tox, toy); ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
-        ctx.stroke();
-    }
-
-    function getHoverPoint(mx, my) { return rObjects.points.find(p => Math.hypot(p.x - mx, p.y - my) < 15); }
-    function getHoverVector(mx, my) {
-        return rObjects.vectors.find(v => {
-            const p1 = rObjects.points.find(p => p.id === v.from);
-            const p2 = rObjects.points.find(p => p.id === v.to);
-            if(!p1 || !p2) return false;
-            return Math.hypot((p1.x+p2.x)/2 - mx, (p1.y+p2.y)/2 - my) < 10;
-        });
-    }
-
-    if(repCanvas) {
-        repCanvas.addEventListener('mousedown', (e) => {
-            const pos = getSnappedPos(e);
-            const targetPoint = getHoverPoint(pos.rawX, pos.rawY);
-            const targetVector = getHoverVector(pos.rawX, pos.rawY);
-
-            if(rConfig.mode === 'delete') {
-                if(targetPoint) {
-                    rObjects.points = rObjects.points.filter(p => p !== targetPoint);
-                    rObjects.vectors = rObjects.vectors.filter(v => v.from !== targetPoint.id && v.to !== targetPoint.id);
-                    if(rState.vectorStart === targetPoint) rState.vectorStart = null;
-                } else if(targetVector) {
-                    rObjects.vectors = rObjects.vectors.filter(v => v !== targetVector);
-                }
-                drawRepere(); return;
-            }
-            if(rConfig.mode === 'point') {
-                if(!targetPoint) {
-                    let name = String.fromCharCode(65 + rObjects.points.length);
-                    rObjects.points.push({ id: Date.now(), x: pos.pixelX, y: pos.pixelY, name: name });
-                    drawRepere();
-                }
-                return;
-            }
-            if(rConfig.mode === 'vector') {
-                if(targetPoint) {
-                    if(!rState.vectorStart) { rState.vectorStart = targetPoint; } 
-                    else if(targetPoint !== rState.vectorStart) {
-                        const exists = rObjects.vectors.find(v => v.from === rState.vectorStart.id && v.to === targetPoint.id);
-                        if(!exists) rObjects.vectors.push({ from: rState.vectorStart.id, to: targetPoint.id });
-                        rState.vectorStart = null;
-                    }
-                    updateInstructions(); drawRepere();
-                } else if(rState.vectorStart) { rState.vectorStart = null; updateInstructions(); drawRepere(); }
-                return;
-            }
-            if(rConfig.mode === 'move' && targetPoint) { rState.dragging = targetPoint; }
-        });
-
-        repCanvas.addEventListener('mousemove', (e) => {
-            const pos = getSnappedPos(e);
-            rState.currentMouse = {x: pos.rawX, y: pos.rawY};
-            
-            // --- MODIFICATION ICI : Mise à jour sécurisée des deux affichages ---
-            const coordsText = `x: ${pos.mathX.toFixed(2)}, y: ${pos.mathY.toFixed(2)}`;
-            
-            // 1. Mise à jour dans le panneau de contrôle
-            const panelCoords = document.getElementById('mouse-coords');
-            if(panelCoords) panelCoords.innerText = coordsText;
-
-            // 2. Mise à jour de la bulle flottante (si le HTML a été corrigé)
-            const tooltip = document.getElementById('mouse-tooltip');
-            if(tooltip) tooltip.innerText = coordsText;
-            // ------------------------------------------------------------------
-
-            rState.hover = getHoverPoint(pos.rawX, pos.rawY);
-            repCanvas.style.cursor = rState.hover ? 'pointer' : 'default';
-            if(rState.dragging && rConfig.mode === 'move') { rState.dragging.x = pos.pixelX; rState.dragging.y = pos.pixelY; }
-            drawRepere();
-        });
-
-        repCanvas.addEventListener('mouseup', () => { if(rConfig.mode === 'move') rState.dragging = null; });
-        repCanvas.addEventListener('mouseleave', () => { if(rConfig.mode === 'move') rState.dragging = null; });
-    }
-
-    function clearRepere() {
-        rObjects = { points: [], vectors: [] }; rState.vectorStart = null; updateInstructions(); drawRepere();
-    }
-
-/* --- LOGIQUE DES OUTILS (À coller dans le SCRIPT) --- */
-
-        /* 1. CERCLE TRIGONOMÉTRIQUE (Version Valeurs Remarquables) */
-        let trigoCanvas = document.getElementById('trigoCanvas');
-        let tCtx = trigoCanvas ? trigoCanvas.getContext('2d') : null;
-        let isDraggingTrigo = false;
-        let lastRenderedIndex = -1; // Pour éviter de rafraichir MathJax inutilement
-
-        // Base de données des valeurs remarquables
-        /* --- DONNÉES CERCLE TRIGO (Format : "Positif ; Négatif") --- */
-        const remarkableValues = [
-            // 0 et 2pi
-            { val: 0, label: "0 \\text{ ; } 2\\pi", cos: "1", sin: "0", tan: "0" },
-            
-            // --- CADRAN 1 (Haut Droite) ---
-            { val: Math.PI/6, label: "\\frac{\\pi}{6}", cos: "\\frac{\\sqrt{3}}{2}", sin: "\\frac{1}{2}", tan: "\\frac{\\sqrt{3}}{3}" },
-            { val: Math.PI/4, label: "\\frac{\\pi}{4}", cos: "\\frac{\\sqrt{2}}{2}", sin: "\\frac{\\sqrt{2}}{2}", tan: "1" },
-            { val: Math.PI/3, label: "\\frac{\\pi}{3}", cos: "\\frac{1}{2}", sin: "\\frac{\\sqrt{3}}{2}", tan: "\\sqrt{3}" },
-            
-            // PI/2 (Haut)
-            { val: Math.PI/2, label: "\\frac{\\pi}{2}", cos: "0", sin: "1", tan: "\\infty" },
-            
-            // --- CADRAN 2 (Haut Gauche) ---
-            { val: 2*Math.PI/3, label: "\\frac{2\\pi}{3}", cos: "-\\frac{1}{2}", sin: "\\frac{\\sqrt{3}}{2}", tan: "-\\sqrt{3}" },
-            { val: 3*Math.PI/4, label: "\\frac{3\\pi}{4}", cos: "-\\frac{\\sqrt{2}}{2}", sin: "\\frac{\\sqrt{2}}{2}", tan: "-1" },
-            { val: 5*Math.PI/6, label: "\\frac{5\\pi}{6}", cos: "-\\frac{\\sqrt{3}}{2}", sin: "\\frac{1}{2}", tan: "-\\frac{\\sqrt{3}}{3}" },
-            
-            // PI (Gauche)
-            { val: Math.PI, label: "\\pi \\text{ ; } -\\pi", cos: "-1", sin: "0", tan: "0" },
-            
-            // --- CADRAN 3 (Bas Gauche) -> Double affichage ---
-            { val: 7*Math.PI/6, label: "\\frac{7\\pi}{6} \\text{ ; } -\\frac{5\\pi}{6}", cos: "-\\frac{\\sqrt{3}}{2}", sin: "-\\frac{1}{2}", tan: "\\frac{\\sqrt{3}}{3}" },
-            { val: 5*Math.PI/4, label: "\\frac{5\\pi}{4} \\text{ ; } -\\frac{3\\pi}{4}", cos: "-\\frac{\\sqrt{2}}{2}", sin: "-\\frac{\\sqrt{2}}{2}", tan: "1" },
-            { val: 4*Math.PI/3, label: "\\frac{4\\pi}{3} \\text{ ; } -\\frac{2\\pi}{3}", cos: "-\\frac{1}{2}", sin: "-\\frac{\\sqrt{3}}{2}", tan: "\\sqrt{3}" },
-            
-            // 3PI/2 (Bas)
-            { val: 3*Math.PI/2, label: "\\frac{3\\pi}{2} \\text{ ; } -\\frac{\\pi}{2}", cos: "0", sin: "-1", tan: "\\infty" },
-
-            // --- CADRAN 4 (Bas Droite) -> Double affichage ---
-            { val: 5*Math.PI/3, label: "\\frac{5\\pi}{3} \\text{ ; } -\\frac{\\pi}{3}", cos: "\\frac{1}{2}", sin: "-\\frac{\\sqrt{3}}{2}", tan: "-\\sqrt{3}" },
-            { val: 7*Math.PI/4, label: "\\frac{7\\pi}{4} \\text{ ; } -\\frac{\\pi}{4}", cos: "\\frac{\\sqrt{2}}{2}", sin: "-\\frac{\\sqrt{2}}{2}", tan: "-1" },
-            { val: 11*Math.PI/6, label: "\\frac{11\\pi}{6} \\text{ ; } -\\frac{\\pi}{6}", cos: "\\frac{\\sqrt{3}}{2}", sin: "-\\frac{1}{2}", tan: "-\\frac{\\sqrt{3}}{3}" },
-            
-            // Bouclage (360°)
-            { val: 2*Math.PI, label: "0 \\text{ ; } 2\\pi", cos: "1", sin: "0", tan: "0" }
-        ];
-
-        function initTrigo() { if(tCtx) drawTrigo(0); }
-
-        function drawTrigo(rawAngle) {
-            if(!tCtx) return;
-
-            // 1. Normaliser l'angle (de -PI/PI à 0/2PI)
-            let normalizedAngle = rawAngle;
-            if (normalizedAngle < 0) normalizedAngle += 2 * Math.PI;
-
-            // 2. Trouver la valeur remarquable la plus proche
-            let closest = remarkableValues.reduce((prev, curr) => {
-                return (Math.abs(curr.val - normalizedAngle) < Math.abs(prev.val - normalizedAngle) ? curr : prev);
-            });
-
-            // Gérer le cas cyclique (proche de 0 ou 2PI)
-            if (Math.abs(normalizedAngle - 0) < 0.2) closest = remarkableValues[0];
-            if (Math.abs(normalizedAngle - 2*Math.PI) < 0.2) closest = remarkableValues[0]; // Retour à 0 visuellement
-
-            // 3. Dessiner le Canvas
-            const w = trigoCanvas.width; const h = trigoCanvas.height;
-            const cx = w / 2; const cy = h / 2; const r = 150;
-            const angle = closest.val; // On utilise l'angle "aimanté"
-
-            tCtx.clearRect(0, 0, w, h);
-
-            // Axes
-            tCtx.beginPath(); tCtx.strokeStyle = '#ddd';
-            tCtx.moveTo(0, cy); tCtx.lineTo(w, cy); tCtx.moveTo(cx, 0); tCtx.lineTo(cx, h); tCtx.stroke();
-            // Cercle
-            tCtx.beginPath(); tCtx.strokeStyle = '#333'; tCtx.lineWidth = 2;
-            tCtx.arc(cx, cy, r, 0, Math.PI * 2); tCtx.stroke();
-            
-            // Calculs coords
-            let px = cx + r * Math.cos(angle); 
-            let py = cy - r * Math.sin(angle); // Y inversé en canvas
-
-            // Lignes projection
-            tCtx.setLineDash([5, 3]);
-            // Cos (rouge)
-            tCtx.beginPath(); tCtx.strokeStyle = 'red'; tCtx.lineWidth = 2;
-            tCtx.moveTo(px, py); tCtx.lineTo(px, cy); tCtx.moveTo(cx, cy); tCtx.lineTo(px, cy); tCtx.stroke();
-            // Sin (bleu)
-            tCtx.beginPath(); tCtx.strokeStyle = 'blue';
-            tCtx.moveTo(px, py); tCtx.lineTo(cx, py); tCtx.moveTo(cx, cy); tCtx.lineTo(cx, py); tCtx.stroke();
-            tCtx.setLineDash([]);
-
-            // Rayon et Point
-            tCtx.beginPath(); tCtx.strokeStyle = '#666'; tCtx.lineWidth = 1; 
-            tCtx.moveTo(cx, cy); tCtx.lineTo(px, py); tCtx.stroke();
-            
-            tCtx.beginPath(); tCtx.fillStyle = '#8459cf'; 
-            tCtx.arc(px, py, 6, 0, Math.PI * 2); tCtx.fill();
-
-            // Tangente (Vert) - Sauf si pi/2 ou 3pi/2
-            if(closest.label !== "\\frac{\\pi}{2}" && closest.label !== "\\frac{3\\pi}{2}") {
-                let tanVal = Math.tan(angle);
-                let tanLen = tanVal * r;
-                // Dessin simple de la tangente à droite (x = r)
-                tCtx.beginPath(); tCtx.strokeStyle = 'green';
-                tCtx.moveTo(cx + r, cy); 
-                tCtx.lineTo(cx + r, cy - tanLen); 
-                tCtx.stroke();
-            }
-
-            // 4. Mettre à jour le texte (Seulement si l'angle a changé)
-            // On utilise l'index dans le tableau comme identifiant unique
-            let currentIndex = remarkableValues.indexOf(closest);
-            if(currentIndex !== lastRenderedIndex) {
-                lastRenderedIndex = currentIndex;
-                
-                document.getElementById('val-angle-deg').innerText = (angle * 180 / Math.PI).toFixed(0);
-                
-                // Injection MathJax
-                document.getElementById('val-angle-rad').innerHTML = `$${closest.label}$`;
-                document.getElementById('val-cos').innerHTML = `$${closest.cos}$`;
-                document.getElementById('val-sin').innerHTML = `$${closest.sin}$`;
-                document.getElementById('val-tan').innerHTML = `$${closest.tan}$`;
-
-                if(window.MathJax) {
-                    MathJax.typesetPromise([
-                        document.getElementById('val-angle-rad'),
-                        document.getElementById('val-cos'),
-                        document.getElementById('val-sin'),
-                        document.getElementById('val-tan')
-                    ]).catch(err => console.log(err));
-                }
-            }
-        }
-
-        function getTrigoAngle(evt) {
-            const rect = trigoCanvas.getBoundingClientRect();
-            const scaleX = trigoCanvas.width / rect.width;
-            const scaleY = trigoCanvas.height / rect.height;
-            const x = (evt.clientX - rect.left) * scaleX;
-            const y = (evt.clientY - rect.top) * scaleY;
-            return Math.atan2(-(y - trigoCanvas.height/2), x - trigoCanvas.width/2);
-        }
-
-        if(trigoCanvas) {
-            trigoCanvas.addEventListener('mousedown', (e) => { isDraggingTrigo = true; drawTrigo(getTrigoAngle(e)); });
-            trigoCanvas.addEventListener('mousemove', (e) => { if(isDraggingTrigo) drawTrigo(getTrigoAngle(e)); });
-            window.addEventListener('mouseup', () => isDraggingTrigo = false);
-            // Support tactile basique
-            trigoCanvas.addEventListener('touchstart', (e) => { isDraggingTrigo = true; e.preventDefault(); }, {passive: false});
-            trigoCanvas.addEventListener('touchmove', (e) => { 
-                if(isDraggingTrigo) {
-                    let touch = e.touches[0];
-                    let mouseEvent = new MouseEvent("mousemove", { clientX: touch.clientX, clientY: touch.clientY });
-                    drawTrigo(getTrigoAngle(mouseEvent));
-                    e.preventDefault();
-                }
-            }, {passive: false});
-        }
-
-/* =============================================================================
-   SECTION RÉCITATION & DÉFI 1 MINUTE
-   ============================================================================= */
-
-// 1. Lancer le mode récitation (Normal ou via Bouton Défi)
-async function openRecitation(chapterNum) {
-    // Reset de l'UI pour éviter les restes d'une session précédente
-    document.getElementById('recite-game-zone').style.display = 'block';
     document.getElementById('recite-results').style.display = 'none';
-    document.getElementById('btn-start-speedrun').style.display = 'inline-flex';
+    document.getElementById('recite-game-zone').style.display = 'block';
     document.getElementById('recite-timer-bar').style.display = 'none';
-    document.getElementById('btn-check-recite').style.display = 'flex';
-    document.getElementById('speedrun-text').innerText = "Lancer le Défi 1 minute";
-    
-    const { data, error } = await sb
-        .from('flashcards')
-        .select('*')
-        .eq('class_id', state.currentClassCode)
-        .eq('subject_id', state.currentSubject.toLowerCase())
-        .eq('chapter_number', chapterNum);
 
-    if (error || !data || data.length === 0) {
-        return alert("Pas de questions de récitation pour ce chapitre.");
-    }
-
-    reciteChapterData = data.sort(() => 0.5 - Math.random());
-    reciteIndex = 0;
-    isSpeedRun = false; // Par défaut, on est en mode normal
-    
-    loadReciteQuestion();
-    navigateTo('view-recite');
+    showReciteQuestion();
 }
 
-// 2. Charger une question et focus le champ
-function loadReciteQuestion() {
-    const q = reciteChapterData[reciteIndex];
-    currentReciteQuestion = q;
-    document.getElementById('recite-question').innerText = q.front;
-    
-    const mf = document.getElementById('math-input');
-    mf.value = ""; 
-    // Petit délai pour assurer le focus après le rendu
-    setTimeout(() => mf.focus(), 50);
-}
+function showReciteQuestion() {
+    const q = reciteState.questions[reciteState.index];
+    if (!q) { showReciteResults(); return; }
 
-// 4. Lancement du Chrono et reset score
-function initActualSpeedRun() {
-    isSpeedRun = true;
-    timeLeft = 60;
-    currentScore = 0;
-    
-    document.getElementById('recite-timer-bar').style.display = 'flex';
-    document.getElementById('recite-score').innerText = "0";
-    document.getElementById('recite-time-left').innerText = "60";
-    document.getElementById('recite-time-left').style.color = "";
-    
-    // On remélange les questions pour le défi
-    reciteChapterData = [...reciteChapterData].sort(() => 0.5 - Math.random());
-    reciteIndex = 0;
-    loadReciteQuestion();
-
-    if(reciteTimer) clearInterval(reciteTimer);
-    reciteTimer = setInterval(() => {
-        timeLeft--;
-        document.getElementById('recite-time-left').innerText = timeLeft;
-        
-        if (timeLeft <= 10) document.getElementById('recite-time-left').style.color = "#e74c3c";
-
-        if (timeLeft <= 0) {
-            showReciteResults();
-        }
-    }, 1000);
-}
-
-// 5. Vérification de la réponse
-function checkReciteAnswer() {
-    const mf = document.getElementById('math-input');
-    const feedback = document.getElementById('recite-feedback');
-    const feedbackText = document.getElementById('feedback-text');
-    const correctionArea = document.getElementById('correction-area');
-    const btnCheck = document.getElementById('btn-check-recite');
-
-    // Nettoyage LaTeX
-    const userAns = mf.value.toLowerCase().replace(/\\\,/g, '').replace(/\s+/g, '').replace(/\\/g, '').trim();
-    const possibleAnswers = currentReciteQuestion.back.split('|');
-
-    const isCorrect = possibleAnswers.some(answer => {
-        const cleanPossible = answer.toLowerCase().replace(/\\\,/g, '').replace(/\s+/g, '').replace(/\\/g, '').trim();
-        return userAns === cleanPossible;
-    });
-
-    if (isCorrect) {
-        if (isSpeedRun) {
-            // Mode Défi : On incrémente et on enchaîne direct
-            currentScore++;
-            document.getElementById('recite-score').innerText = currentScore;
-            loadNextOrFinish();
-        } else {
-            // Mode Normal : On montre le feedback vert
-            btnCheck.style.display = 'none';
-            feedback.style.display = 'block';
-            feedback.style.backgroundColor = "#e8f8f0";
-            feedback.style.border = "2px solid var(--accent-green)";
-            feedbackText.innerHTML = "Bravo ! C'est juste 🎉";
-            feedbackText.style.color = "#155724";
-            correctionArea.style.display = 'none';
-            document.getElementById('btn-force-correct').style.display = 'none';
-        }
-    } else {
-        if (isSpeedRun) {
-            // Mode Défi : Flash rouge pour signaler l'erreur sans bloquer
-            mf.style.borderColor = "#e74c3c";
-            setTimeout(() => mf.style.borderColor = "var(--brand-school)", 300);
-        } else {
-            // Mode Normal : Feedback rouge avec correction
-            btnCheck.style.display = 'none';
-            feedback.style.display = 'block';
-            feedback.style.backgroundColor = "#fce8e6";
-            feedback.style.border = "2px solid var(--accent-red)";
-            feedbackText.innerHTML = "Pas tout à fait... 🤔";
-            feedbackText.style.color = "#721c24";
-            correctionArea.style.display = 'block';
-            correctionArea.innerHTML = `Réponse attendue : <br><strong>${possibleAnswers[0].trim()}</strong>`;
-            document.getElementById('btn-force-correct').style.display = 'flex';
-            if(window.MathJax) MathJax.typesetPromise([correctionArea]);
-        }
-    }
-}
-
-// 6. Navigation entre questions
-function goToNextQuestion() {
+    document.getElementById('recite-question').innerHTML = q.q;
     document.getElementById('recite-feedback').style.display = 'none';
-    document.getElementById('btn-check-recite').style.display = 'flex';
-    loadNextOrFinish();
+
+    const mf = document.getElementById('math-input');
+    if (mf) mf.value = '';
+
+    typesetMath();
 }
 
-function loadNextOrFinish() {
-    reciteIndex++;
-    if (reciteIndex < reciteChapterData.length) {
-        loadReciteQuestion();
-    } else {
-        if (isSpeedRun) {
-            showReciteResults();
-        } else {
-            alert("Félicitations, récitation terminée !");
-            navigateTo('view-chapters');
-        }
+function checkReciteAnswer() {
+    const q = reciteState.questions[reciteState.index];
+    if (!q) return;
+
+    const mf = document.getElementById('math-input');
+    const userRaw = (mf?.value || '').trim();
+    const userAnswer = normalizeMath(userRaw);
+    const expected = normalizeMath(q.answer);
+
+    const correct = userAnswer.length > 0 && userAnswer === expected;
+    showReciteFeedback(correct, q.answer);
+
+    if (correct) reciteState.score++;
+    updateReciteScore();
+}
+
+// Normalise une expression mathématique pour comparaison souple
+function normalizeMath(str) {
+    return String(str)
+        .toLowerCase()
+        .replace(/\\left|\\right|\\,|\\;|\s+/g, '')
+        .replace(/\\cdot|\\times|×/g, '*')
+        .replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, '($1)/($2)')
+        .replace(/[{}]/g, '')
+        .replace(/\\/g, '')
+        .replace(/\^/g, '');
+}
+
+function showReciteFeedback(correct, expectedRaw) {
+    const fb = document.getElementById('recite-feedback');
+    const text = document.getElementById('feedback-text');
+    const corr = document.getElementById('correction-area');
+
+    fb.style.display = 'block';
+    fb.style.background = correct ? '#e8f8f0' : '#fce8e6';
+    text.textContent = correct ? "✓ Correct !" : "✗ Pas tout à fait...";
+    text.style.color = correct ? 'var(--accent-green)' : 'var(--accent-red)';
+    corr.innerHTML = `Réponse attendue : <strong>${expectedRaw}</strong>`;
+
+    // En speedrun, on enchaîne automatiquement
+    if (reciteState.isSpeedRun) {
+        setTimeout(() => goToNextQuestion(), 600);
     }
+    typesetMath();
 }
 
-// 7. Écran de résultats final
-function showReciteResults() {
-    clearInterval(reciteTimer);
-    isSpeedRun = false;
-    document.getElementById('recite-game-zone').style.display = 'none';
-    const resDiv = document.getElementById('recite-results');
-    resDiv.style.display = 'block';
-    document.getElementById('final-score-big').innerText = currentScore;
-}
-
+// Valide manuellement une réponse jugée correcte par l'élève
 function forceValidAnswer() {
-    if (isSpeedRun) {
-        currentScore++;
-        document.getElementById('recite-score').innerText = currentScore;
-    }
+    reciteState.score++;
+    updateReciteScore();
     goToNextQuestion();
 }
 
-/* ==========================================
-   OUTILS : ANNALES & PDF STORAGE
-   ========================================== */
-
-async function initBiblio() {
-    // On récupère les données de la table 'annales'
-    const { data, error } = await sb
-        .from('annales')
-        .select('*')
-        .order('year', { ascending: false });
-
-    if (error) {
-        console.error("Erreur annales:", error.message);
-        return;
+function goToNextQuestion() {
+    reciteState.index++;
+    if (reciteState.index >= reciteState.questions.length) {
+        if (reciteState.isSpeedRun) {
+            // Recommence le pool pour continuer à scorer jusqu'à la fin du temps
+            reciteState.index = 0;
+            reciteState.questions.sort(() => Math.random() - 0.5);
+        } else {
+            showReciteResults();
+            return;
+        }
     }
-
-    // On garde une copie pour le filtrage
-    window.allAnnales = data; 
-    renderAnnales(data);
+    showReciteQuestion();
 }
 
-function renderAnnales(data) {
-    const grid = document.getElementById('biblio-grid');
-    const noResult = document.getElementById('no-result');
-    if(!grid) return;
-    
-    grid.innerHTML = '';
+function updateReciteScore() {
+    const el = document.getElementById('recite-score');
+    if (el) el.textContent = reciteState.score;
+}
 
-    if (!data || data.length === 0) {
-        if(noResult) noResult.style.display = 'block';
+// Défi 1 minute
+function startSpeedRun() {
+    if (reciteState.questions.length === 0) {
+        showToast("Aucune question disponible.", "error");
         return;
+    }
+    reciteState.isSpeedRun = true;
+    reciteState.score = 0;
+    reciteState.index = 0;
+    reciteState.timeLeft = 60;
+    reciteState.questions.sort(() => Math.random() - 0.5);
+
+    document.getElementById('recite-timer-bar').style.display = 'flex';
+    document.getElementById('recite-time-left').textContent = '60';
+    updateReciteScore();
+    showReciteQuestion();
+
+    if (reciteState.timer) clearInterval(reciteState.timer);
+    reciteState.timer = setInterval(() => {
+        reciteState.timeLeft--;
+        const t = document.getElementById('recite-time-left');
+        if (t) t.textContent = reciteState.timeLeft;
+        if (reciteState.timeLeft <= 0) {
+            clearInterval(reciteState.timer);
+            reciteState.timer = null;
+            showReciteResults();
+        }
+    }, 1000);
+}
+
+function showReciteResults() {
+    if (reciteState.timer) { clearInterval(reciteState.timer); reciteState.timer = null; }
+    const wasSpeedRun = reciteState.isSpeedRun;
+    reciteState.isSpeedRun = false;
+
+    document.getElementById('recite-game-zone').style.display = 'none';
+    document.getElementById('recite-results').style.display = 'block';
+
+    const scoreEl = document.getElementById('final-score-big');
+
+    if (wasSpeedRun) {
+        // Record persistant par classe + matière
+        const key = `record_${state.currentClassCode}_${state.currentSubject}`;
+        const oldRecord = parseInt(localStorage.getItem(key) || '0', 10);
+        if (reciteState.score > oldRecord) {
+            localStorage.setItem(key, reciteState.score);
+            scoreEl.innerHTML = `${reciteState.score}
+                <small style="font-size:1rem; display:block; color:var(--brand-izy);">🏆 Nouveau record !</small>`;
+        } else {
+            scoreEl.innerHTML = `${reciteState.score}
+                <small style="font-size:1rem; display:block; color:var(--text-muted);">Record : ${oldRecord}</small>`;
+        }
     } else {
-        if(noResult) noResult.style.display = 'none';
+        scoreEl.textContent = reciteState.score;
+    }
+}
+
+/* =============================================================================
+   10. OUTILS
+   ============================================================================= */
+
+/* ---- 10.1 Cercle trigonométrique (version unique, avec valeurs remarquables) ---- */
+let trigoAngle = 0; // en degrés
+
+function initTrigo() {
+    const canvas = document.getElementById('trigoCanvas');
+    if (!canvas) return;
+
+    const setFromEvent = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const cx = rect.width / 2;
+        const cy = rect.height / 2;
+        const clientX = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+        const clientY = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+        let ang = Math.atan2(-(clientY - cy), clientX - cx) * 180 / Math.PI;
+        if (ang < 0) ang += 360;
+
+        // Aimante vers les angles remarquables si on est proche (±7°)
+        const snaps = Object.keys(remarkableValues).map(Number);
+        for (const s of snaps) {
+            if (Math.abs(ang - s) < 7) { ang = s; break; }
+        }
+        trigoAngle = Math.round(ang);
+        drawTrigo();
+    };
+
+    let dragging = false;
+    canvas.onmousedown = (e) => { dragging = true; setFromEvent(e); };
+    canvas.onmousemove = (e) => { if (dragging) setFromEvent(e); };
+    window.addEventListener('mouseup', () => { dragging = false; });
+    canvas.ontouchstart = (e) => { dragging = true; setFromEvent(e); e.preventDefault(); };
+    canvas.ontouchmove = (e) => { if (dragging) { setFromEvent(e); e.preventDefault(); } };
+    canvas.ontouchend = () => { dragging = false; };
+
+    drawTrigo();
+}
+
+function drawTrigo() {
+    const canvas = document.getElementById('trigoCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const cx = W / 2, cy = H / 2, R = W * 0.38;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Axes
+    ctx.strokeStyle = '#ddd';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
+
+    // Cercle
+    ctx.strokeStyle = '#8459cf';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI); ctx.stroke();
+
+    const rad = trigoAngle * Math.PI / 180;
+    const px = cx + R * Math.cos(rad);
+    const py = cy - R * Math.sin(rad);
+
+    // Projection cos (rouge) et sin (bleu)
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#FF6B6B';
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, cy); ctx.stroke();
+    ctx.strokeStyle = '#4D96FF';
+    ctx.beginPath(); ctx.moveTo(px, cy); ctx.lineTo(px, py); ctx.stroke();
+
+    // Rayon
+    ctx.strokeStyle = '#8459cf';
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke();
+
+    // Point
+    ctx.fillStyle = '#f5bf78';
+    ctx.beginPath(); ctx.arc(px, py, 6, 0, 2 * Math.PI); ctx.fill();
+
+    updateTrigoPanel();
+}
+
+function updateTrigoPanel() {
+    const rad = trigoAngle * Math.PI / 180;
+    const rv = remarkableValues[trigoAngle];
+
+    document.getElementById('val-angle-deg').textContent = `${trigoAngle}°`;
+    document.getElementById('val-angle-rad').textContent = rv ? rv.rad : (rad).toFixed(2);
+    document.getElementById('val-cos').textContent = rv ? rv.cos : Math.cos(rad).toFixed(3);
+    document.getElementById('val-sin').textContent = rv ? rv.sin : Math.sin(rad).toFixed(3);
+
+    if (rv) {
+        document.getElementById('val-tan').textContent = rv.tan;
+    } else {
+        const c = Math.cos(rad);
+        document.getElementById('val-tan').textContent =
+            Math.abs(c) < 1e-6 ? "∞" : (Math.sin(rad) / c).toFixed(3);
+    }
+}
+
+/* ---- 10.2 Repère interactif (points & vecteurs) ---- */
+let rObjects = { points: [], vectors: [] };
+let rState = { mode: 'point', vectorStart: null };
+
+function initRepere() {
+    const canvas = document.getElementById('repereCanvas');
+    if (!canvas) return;
+
+    canvas.onclick = (e) => onRepereClick(e, canvas);
+    canvas.onmousemove = (e) => {
+        const { x, y } = pixelToCoord(e, canvas);
+        const disp = document.getElementById('mouse-coords');
+        const tip = document.getElementById('mouse-tooltip');
+        if (disp) disp.textContent = `x: ${x}, y: ${y}`;
+        if (tip) tip.textContent = `x:${x}, y:${y}`;
+    };
+
+    setRepereMode('point');
+    drawRepere();
+}
+
+function setRepereMode(mode) {
+    rState.mode = mode;
+    rState.vectorStart = null;
+    ['point', 'vector', 'move', 'delete'].forEach(m => {
+        const btn = document.getElementById('btn-mode-' + m);
+        if (btn) btn.classList.toggle('active', m === mode);
+    });
+    updateInstructions();
+}
+
+function updateInstructions() {
+    const el = document.getElementById('repere-instruction');
+    if (!el) return;
+    const texts = {
+        point:  "<strong>Mode Point :</strong> clique sur la grille pour ajouter un point (précision 0,25).",
+        vector: "<strong>Mode Vecteur :</strong> clique l'origine, puis l'extrémité.",
+        move:   "<strong>Mode Déplacer :</strong> (à venir) repositionne les objets.",
+        delete: "<strong>Mode Gomme :</strong> clique près d'un point pour le supprimer."
+    };
+    el.innerHTML = texts[rState.mode] || '';
+}
+
+function pixelToCoord(e, canvas) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const px = (e.clientX - rect.left) * scaleX;
+    const py = (e.clientY - rect.top) * scaleY;
+    const unit = 40;
+    const cx = canvas.width / 2, cy = canvas.height / 2;
+    let x = (px - cx) / unit;
+    let y = (cy - py) / unit;
+    // Précision 0,25
+    x = Math.round(x * 4) / 4;
+    y = Math.round(y * 4) / 4;
+    return { x, y };
+}
+
+function onRepereClick(e, canvas) {
+    const { x, y } = pixelToCoord(e, canvas);
+
+    if (rState.mode === 'point') {
+        rObjects.points.push({ x, y });
+    } else if (rState.mode === 'vector') {
+        if (!rState.vectorStart) {
+            rState.vectorStart = { x, y };
+        } else {
+            rObjects.vectors.push({ from: rState.vectorStart, to: { x, y } });
+            rState.vectorStart = null;
+        }
+    } else if (rState.mode === 'delete') {
+        // Supprime le point le plus proche (< 0.4 unité)
+        let best = -1, bestD = 0.4;
+        rObjects.points.forEach((p, i) => {
+            const d = Math.hypot(p.x - x, p.y - y);
+            if (d < bestD) { bestD = d; best = i; }
+        });
+        if (best >= 0) rObjects.points.splice(best, 1);
     }
 
-    const baseUrl = `https://kuuxhzyfnqrdoewfoiyf.supabase.co/storage/v1/object/public/annales/`;
+    drawRepere();
+}
 
-    data.forEach(item => {
+function drawRepere() {
+    const canvas = document.getElementById('repereCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const cx = W / 2, cy = H / 2, unit = 40;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Grille
+    ctx.strokeStyle = '#eee';
+    ctx.lineWidth = 1;
+    for (let gx = cx % unit; gx < W; gx += unit) {
+        ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke();
+    }
+    for (let gy = cy % unit; gy < H; gy += unit) {
+        ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+    }
+
+    // Axes
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
+
+    // Vecteurs
+    rObjects.vectors.forEach(v => {
+        const x1 = cx + v.from.x * unit, y1 = cy - v.from.y * unit;
+        const x2 = cx + v.to.x * unit, y2 = cy - v.to.y * unit;
+        ctx.strokeStyle = '#f5bf78';
+        ctx.fillStyle = '#f5bf78';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        // Flèche
+        const ang = Math.atan2(y2 - y1, x2 - x1);
+        ctx.beginPath();
+        ctx.moveTo(x2, y2);
+        ctx.lineTo(x2 - 10 * Math.cos(ang - 0.4), y2 - 10 * Math.sin(ang - 0.4));
+        ctx.lineTo(x2 - 10 * Math.cos(ang + 0.4), y2 - 10 * Math.sin(ang + 0.4));
+        ctx.closePath(); ctx.fill();
+    });
+
+    // Points
+    rObjects.points.forEach(p => {
+        const x = cx + p.x * unit, y = cy - p.y * unit;
+        ctx.fillStyle = '#8459cf';
+        ctx.beginPath(); ctx.arc(x, y, 5, 0, 2 * Math.PI); ctx.fill();
+        ctx.fillStyle = '#333';
+        ctx.font = '12px Segoe UI';
+        ctx.fillText(`(${p.x} ; ${p.y})`, x + 8, y - 8);
+    });
+}
+
+function clearRepere() {
+    if (rObjects.points.length > 0 || rObjects.vectors.length > 0) {
+        if (!confirm("Effacer tous les points et vecteurs ?")) return;
+    }
+    rObjects = { points: [], vectors: [] };
+    rState.vectorStart = null;
+    updateInstructions();
+    drawRepere();
+}
+
+/* ---- 10.3 Tableau périodique ---- */
+const famClass = {
+    "alkali": "fam-alkali", "alkaline": "fam-alkaline", "transition": "fam-transition",
+    "post-trans": "fam-post-trans", "metalloid": "fam-metalloid", "nonmetal": "fam-nonmetal",
+    "halogen": "fam-halogen", "noble": "fam-noble", "lanthanide": "fam-lanthanide", "actinide": "fam-actinide"
+};
+const famLabel = {
+    "alkali": "Métal alcalin", "alkaline": "Métal alcalino-terreux", "transition": "Métal de transition",
+    "post-trans": "Métal pauvre", "metalloid": "Métalloïde", "nonmetal": "Non-métal",
+    "halogen": "Halogène", "noble": "Gaz noble", "lanthanide": "Lanthanide", "actinide": "Actinide"
+};
+
+function initTableau() {
+    const grid = document.getElementById('periodic-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    // Grille 9 rangées × 18 colonnes ; on place chaque élément à sa position
+    const map = {};
+    fullElements.forEach(el => { map[`${el.row}-${el.col}`] = el; });
+
+    for (let row = 1; row <= 9; row++) {
+        for (let col = 1; col <= 18; col++) {
+            const el = map[`${row}-${col}`];
+            const cell = document.createElement('div');
+            if (el) {
+                cell.className = `element-card ${famClass[el.fam] || ''}`;
+                cell.innerHTML = `
+                    <div class="elem-header"><span class="element-number">${el.n}</span></div>
+                    <div class="elem-body"><span class="element-symbol">${el.s}</span></div>
+                    <div class="elem-footer"><span class="element-molar">${el.m}</span></div>`;
+                cell.onmouseenter = () => showElementDetails(el);
+                cell.onclick = () => showElementDetails(el);
+            } else {
+                cell.className = 'empty-cell';
+            }
+            grid.appendChild(cell);
+        }
+    }
+}
+
+function showElementDetails(el) {
+    const box = document.getElementById('periodic-details');
+    if (!box) return;
+    box.innerHTML = `<strong style="font-size:1.3rem; color:var(--brand-school);">${el.n} — ${el.s} · ${el.name}</strong>
+        <div style="margin-top:5px;">Masse molaire : <strong>${el.m} g/mol</strong> · ${famLabel[el.fam] || ''}</div>`;
+}
+
+/* ---- 10.4 Convertisseur d'unités ---- */
+let convCategory = 'length';
+
+function initConverter() {
+    setConvCategory('length');
+}
+
+function setConvCategory(cat) {
+    convCategory = cat;
+    document.querySelectorAll('.conv-tab').forEach(t => {
+        t.classList.toggle('active', t.getAttribute('onclick')?.includes(`'${cat}'`));
+    });
+
+    const cfg = convData[cat];
+    const sel1 = document.getElementById('conv-unit-1');
+    const sel2 = document.getElementById('conv-unit-2');
+    sel1.innerHTML = ''; sel2.innerHTML = '';
+
+    const units = Object.keys(cfg.units);
+    units.forEach(u => {
+        sel1.appendChild(new Option(u, u));
+        sel2.appendChild(new Option(u, u));
+    });
+    // Deux unités différentes par défaut
+    sel1.selectedIndex = 0;
+    sel2.selectedIndex = Math.min(1, units.length - 1);
+
+    document.getElementById('conv-input-1').value = 1;
+    calculateConv(1);
+}
+
+function calculateConv(source) {
+    const cfg = convData[convCategory];
+    const u1 = document.getElementById('conv-unit-1').value;
+    const u2 = document.getElementById('conv-unit-2').value;
+    const in1 = document.getElementById('conv-input-1');
+    const in2 = document.getElementById('conv-input-2');
+
+    if (source === 1) {
+        const base = (parseFloat(in1.value) || 0) * cfg.units[u1];
+        in2.value = +(base / cfg.units[u2]).toPrecision(6);
+    } else {
+        const base = (parseFloat(in2.value) || 0) * cfg.units[u2];
+        in1.value = +(base / cfg.units[u1]).toPrecision(6);
+    }
+
+    const formula = document.getElementById('conv-formula');
+    if (formula) {
+        const ratio = +(cfg.units[u1] / cfg.units[u2]).toPrecision(6);
+        formula.textContent = `1 ${u1} = ${ratio} ${u2}`;
+    }
+}
+
+/* ---- 10.5 Traceur de fonctions ---- */
+let graphZoom = 40;
+
+function initGraph() {
+    graphZoom = 40;
+    const slider = document.getElementById('zoom-slider');
+    if (slider) slider.value = 40;
+    drawGraph();
+}
+
+function updateZoom(val) {
+    graphZoom = parseInt(val, 10);
+    document.getElementById('zoom-val').textContent = val;
+    drawGraph();
+}
+
+// Évalue f(x) de façon sécurisée (sans eval brut)
+function makeFunction(expr) {
+    let js = expr
+        .replace(/\^/g, '**')
+        .replace(/(\d)(x)/g, '$1*$2')
+        .replace(/\)\(/g, ')*(');
+    const allowed = ['sin', 'cos', 'tan', 'sqrt', 'abs', 'log', 'exp', 'PI', 'E', 'pow', 'min', 'max'];
+    allowed.forEach(fn => {
+        js = js.replace(new RegExp('\\b' + fn + '\\b', 'g'), 'Math.' + fn);
+    });
+    js = js.replace(/Math\.Math\./g, 'Math.');
+    try {
+        // eslint-disable-next-line no-new-func
+        return new Function('x', `return ${js};`);
+    } catch (e) {
+        return null;
+    }
+}
+
+function drawGraph() {
+    const canvas = document.getElementById('graphCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const cx = W / 2, cy = H / 2;
+    const unit = graphZoom;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Grille
+    ctx.strokeStyle = '#eee';
+    for (let gx = cx % unit; gx < W; gx += unit) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke(); }
+    for (let gy = cy % unit; gy < H; gy += unit) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
+
+    // Axes
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
+
+    const expr = document.getElementById('func-input').value.trim();
+    const f = makeFunction(expr);
+    if (!f) { showToast("Expression invalide.", "error"); return; }
+
+    ctx.strokeStyle = '#8459cf';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    let started = false;
+    for (let px = 0; px <= W; px++) {
+        const x = (px - cx) / unit;
+        let y;
+        try { y = f(x); } catch (e) { y = NaN; }
+        if (!isFinite(y)) { started = false; continue; }
+        const py = cy - y * unit;
+        if (py < -H || py > 2 * H) { started = false; continue; }
+        if (!started) { ctx.moveTo(px, py); started = true; }
+        else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+}
+
+/* ---- 10.6 Calculateur de masse molaire ---- */
+let currentMolString = "";
+
+function addMolChar(ch) {
+    currentMolString += ch;
+    refreshMolDisplay();
+}
+
+// Vraie suppression du dernier élément (gère les atomes à 2 lettres)
+function deleteMolChar() {
+    if (currentMolString.length === 0) return;
+    const twoCharAtoms = ['Cl', 'Na', 'Ca', 'Cu', 'Fe', 'Mg', 'Al'];
+    const lastTwo = currentMolString.slice(-2);
+    if (twoCharAtoms.includes(lastTwo)) {
+        currentMolString = currentMolString.slice(0, -2);
+    } else {
+        currentMolString = currentMolString.slice(0, -1);
+    }
+    refreshMolDisplay();
+}
+
+// Tout effacer (bouton séparé)
+function clearMolAll() {
+    currentMolString = "";
+    refreshMolDisplay();
+    const box = document.getElementById('mol-result-box');
+    if (box) box.style.display = 'none';
+}
+
+function refreshMolDisplay() {
+    const display = document.getElementById('mol-display');
+    const placeholder = document.getElementById('mol-placeholder');
+    if (!display) return;
+    display.innerHTML = '';
+
+    // Les chiffres qui suivent une lettre ou une parenthèse s'affichent en indice
+    let i = 0;
+    while (i < currentMolString.length) {
+        const c = currentMolString[i];
+        if (!isNaN(c) && c !== ' ' && i > 0 && /[A-Za-z\)]/.test(currentMolString[i - 1])) {
+            display.innerHTML += `<sub>${c}</sub>`;
+        } else {
+            display.innerHTML += c;
+        }
+        i++;
+    }
+    if (placeholder) placeholder.style.display = currentMolString.length === 0 ? 'block' : 'none';
+}
+
+// Parse une formule chimique (avec parenthèses) et calcule la masse molaire
+function calculateComplexMass() {
+    const box = document.getElementById('mol-result-box');
+    if (!box) return;
+
+    if (currentMolString.trim() === "") {
+        showToast("Saisis d'abord une molécule.", "error");
+        return;
+    }
+
+    let counts;
+    try {
+        counts = parseFormula(currentMolString);
+    } catch (e) {
+        box.style.display = 'block';
+        box.innerHTML = `<p style="color:var(--accent-red);">Formule invalide. Vérifie les parenthèses.</p>`;
+        return;
+    }
+
+    let total = 0;
+    let stepsHtml = '';
+    let unknown = [];
+
+    for (const atom in counts) {
+        const mass = atomMasses[atom];
+        if (mass == null) { unknown.push(atom); continue; }
+        const sub = mass * counts[atom];
+        total += sub;
+        stepsHtml += `<div class="step-line">${atom} : ${mass} × ${counts[atom]} = ${sub.toFixed(3)} g/mol</div>`;
+    }
+
+    box.style.display = 'block';
+    if (unknown.length > 0) {
+        box.innerHTML = `<p style="color:var(--accent-red);">Atome(s) inconnu(s) : ${unknown.join(', ')}.</p>
+            <p style="font-size:0.85rem; color:#888;">Atomes gérés : ${Object.keys(atomMasses).join(', ')}.</p>`;
+        return;
+    }
+
+    box.innerHTML = stepsHtml + `<div class="step-total">M = ${total.toFixed(2)} g/mol</div>`;
+}
+
+// Compte les atomes d'une formule, gère les parenthèses imbriquées
+function parseFormula(formula) {
+    let i = 0;
+
+    function parseGroup() {
+        const counts = {};
+        while (i < formula.length) {
+            const c = formula[i];
+            if (c === '(') {
+                i++; // saute '('
+                const inner = parseGroup();
+                if (formula[i] !== ')') throw new Error("Parenthèse non fermée");
+                i++; // saute ')'
+                const mult = readNumber();
+                for (const a in inner) counts[a] = (counts[a] || 0) + inner[a] * mult;
+            } else if (c === ')') {
+                break;
+            } else if (/[A-Z]/.test(c)) {
+                let atom = c; i++;
+                if (i < formula.length && /[a-z]/.test(formula[i])) { atom += formula[i]; i++; }
+                const n = readNumber();
+                counts[atom] = (counts[atom] || 0) + n;
+            } else {
+                i++; // ignore tout caractère inattendu
+            }
+        }
+        return counts;
+    }
+
+    function readNumber() {
+        let num = '';
+        while (i < formula.length && /[0-9]/.test(formula[i])) { num += formula[i]; i++; }
+        return num === '' ? 1 : parseInt(num, 10);
+    }
+
+    const result = parseGroup();
+    if (Object.keys(result).length === 0) throw new Error("Formule vide");
+    return result;
+}
+
+/* =============================================================================
+   11. ANNALES (PDF)
+   ============================================================================= */
+let allAnnales = [];
+
+async function initBiblio() {
+    showLoading('biblio-grid', 'Chargement des annales...');
+    const { data, error } = await sb
+        .from('annales')
+        .select('subject, year, title, chapters, file_sujet, file_corrige')
+        .order('year', { ascending: false });
+
+    const grid = document.getElementById('biblio-grid');
+    if (error || !data || data.length === 0) {
+        grid.innerHTML = '';
+        document.getElementById('no-result').style.display = 'block';
+        return;
+    }
+    allAnnales = data;
+    renderAnnales(allAnnales);
+}
+
+function renderAnnales(list) {
+    const grid = document.getElementById('biblio-grid');
+    const noResult = document.getElementById('no-result');
+    grid.innerHTML = '';
+
+    if (list.length === 0) {
+        noResult.style.display = 'block';
+        return;
+    }
+    noResult.style.display = 'none';
+
+    list.forEach(a => {
+        const subjClass = (a.subject || '').toLowerCase().includes('phys') ? 'physique'
+            : (a.subject || '').toLowerCase().includes('svt') ? 'svt' : 'maths';
+        const chapters = Array.isArray(a.chapters) ? a.chapters : [];
+        const tagsHtml = chapters.map(c => `<span class="tag">${c}</span>`).join('');
+
         const card = document.createElement('div');
-        card.className = `annale-card ${item.subject.toLowerCase()}`;
-        
-        let chapters = [];
-        try {
-            chapters = typeof item.chapters === 'string' ? JSON.parse(item.chapters) : item.chapters;
-        } catch(e) { chapters = []; }
-
-        let tagsHtml = (chapters || []).map(chap => `<span class="tag">${chap}</span>`).join('');
-
-        // URLs des fichiers
-        const linkSujet = item.file_sujet ? baseUrl + item.file_sujet : "#";
-        const linkCorrige = item.file_corrige ? baseUrl + item.file_corrige : "#";
-
+        card.className = `annale-card ${subjClass}`;
         card.innerHTML = `
             <div class="annale-header">
-                <span class="annale-subject">${item.subject}</span>
-                <span class="annale-year">${item.year}</span>
+                <span class="annale-subject">${a.subject || ''}</span>
+                <span class="annale-year">${a.year || ''}</span>
             </div>
-            <div class="annale-title">${item.title}</div>
+            <div class="annale-title">${a.title || 'Sujet'}</div>
             <div class="annale-tags">${tagsHtml}</div>
-            
             <div class="annale-actions">
-                <button 
-                    onclick="openPdfModal('${linkSujet}', 'Sujet : ${item.title.replace(/'/g, "\\'")}')" 
-                    class="btn-pdf btn-sujet" 
-                    ${linkSujet === "#" ? 'disabled style="opacity:0.5;pointer-events:none"' : ''}>
-                    📄 Sujet
-                </button>
-                
-                <button 
-                    onclick="openPdfModal('${linkCorrige}', 'Corrigé : ${item.title.replace(/'/g, "\\'")}')" 
-                    class="btn-pdf btn-corrige" 
-                    ${linkCorrige === "#" ? 'disabled style="opacity:0.5;pointer-events:none"' : ''}>
-                    📝 Corrigé
-                </button>
-            </div>
-        `;
+                ${a.file_sujet ? `<button class="btn-pdf btn-sujet" onclick="openPdf('${a.file_sujet}','${(a.title || '').replace(/'/g, "")} — Sujet')">📄 Sujet</button>` : ''}
+                ${a.file_corrige ? `<button class="btn-pdf btn-corrige" onclick="openPdf('${a.file_corrige}','${(a.title || '').replace(/'/g, "")} — Corrigé')">✅ Corrigé</button>` : ''}
+            </div>`;
         grid.appendChild(card);
     });
 }
 
-/* --- NAVIGATION DE RETOUR CORRIGÉE --- */
+function filterAnnales() {
+    const q = (document.getElementById('biblio-search').value || '').toLowerCase().trim();
+    const year = document.getElementById('filter-year').value;
+    const subject = document.getElementById('filter-subject').value;
 
-// Cette fonction remplace "goBackToSubjects" pour être plus intelligente
-function backFromChapters() {
-    // Si l'élève est en mode Quiz/Exo/Flashcard, on le renvoie au choix du mode
-    // Sinon (mode lesson), on le renvoie à la liste des matières
-    if (state.currentMode !== 'lesson') {
-        navigateTo('view-mode');
-    } else {
-        openSubjectsPage(state.currentClassCode);
-    }
+    const filtered = allAnnales.filter(a => {
+        const matchYear = (year === 'all') || String(a.year) === year;
+        const matchSubject = (subject === 'all') || (a.subject || '').toLowerCase().includes(subject.toLowerCase());
+        const haystack = `${a.title || ''} ${(Array.isArray(a.chapters) ? a.chapters.join(' ') : '')} ${a.subject || ''}`.toLowerCase();
+        const matchSearch = q === '' || haystack.includes(q);
+        return matchYear && matchSubject && matchSearch;
+    });
+
+    renderAnnales(filtered);
 }
 
-function goBackToClasses() { 
-    openLevelPage(state.currentLevelGroup); 
-}
-
-// Optionnel : si tu veux garder ce nom pour tes boutons existants
-function goBackToSubjects() { 
-    openSubjectsPage(state.currentClassCode); 
-}
-
-function openPdfModal(pdfUrl, title) {
+function openPdf(fileName, title) {
     const modal = document.getElementById('pdf-modal');
     const viewer = document.getElementById('pdf-viewer');
-    const titleSpan = document.getElementById('pdf-title');
-    
-    titleSpan.innerText = title;
-    viewer.src = pdfUrl; // On charge l'URL du PDF
+    const titleEl = document.getElementById('pdf-title');
+    // URL absolue ou nom de fichier dans le bucket Storage
+    const url = /^https?:\/\//.test(fileName) ? fileName : (STORAGE_ANNALES + fileName);
+    viewer.src = url;
+    if (titleEl) titleEl.textContent = title || "Document";
     modal.style.display = 'flex';
 }
 
 function closePdfModal() {
     const modal = document.getElementById('pdf-modal');
     const viewer = document.getElementById('pdf-viewer');
-    
     modal.style.display = 'none';
-    viewer.src = ''; // On vide l'iframe pour stopper le chargement
+    viewer.src = '';
 }
 
 /* =============================================================================
-   6. INITIALISATION
+   12. POMODORO & CALCULATRICE FLOTTANTE
+   ============================================================================= */
+const pomo = {
+    duration: 25 * 60,
+    remaining: 25 * 60,
+    timer: null,
+    running: false
+};
+
+function formatTime(sec) {
+    const m = String(Math.floor(sec / 60)).padStart(2, '0');
+    const s = String(sec % 60).padStart(2, '0');
+    return `${m}:${s}`;
+}
+
+function updatePomoDisplay() {
+    const el = document.getElementById('pomo-timer');
+    if (el) el.textContent = formatTime(pomo.remaining);
+}
+
+function togglePomodoro() {
+    const wrapper = document.getElementById('pomo-container');
+    const btnIcon = document.querySelector('#pomo-btn svg path, #pomo-btn svg');
+
+    if (pomo.running) {
+        // Pause
+        clearInterval(pomo.timer);
+        pomo.timer = null;
+        pomo.running = false;
+        wrapper?.classList.remove('running');
+    } else {
+        pomo.running = true;
+        wrapper?.classList.add('running');
+        pomo.timer = setInterval(() => {
+            pomo.remaining--;
+            updatePomoDisplay();
+            if (pomo.remaining <= 0) {
+                clearInterval(pomo.timer);
+                pomo.timer = null;
+                pomo.running = false;
+                wrapper?.classList.remove('running');
+                pomo.remaining = pomo.duration;
+                updatePomoDisplay();
+                notifyPomoEnd();
+            }
+        }, 1000);
+    }
+}
+
+function resetPomodoro() {
+    clearInterval(pomo.timer);
+    pomo.timer = null;
+    pomo.running = false;
+    pomo.remaining = pomo.duration;
+    document.getElementById('pomo-container')?.classList.remove('running');
+    updatePomoDisplay();
+}
+
+// Fin de Pomodoro : notification douce (pas d'alert bloquante)
+function notifyPomoEnd() {
+    try {
+        if ("Notification" in window && Notification.permission === "granted") {
+            new Notification("🍅 Schoolizy", { body: "Pause méritée !" });
+        }
+    } catch (e) { /* ignore */ }
+    showToast("🔔 C'est la pause ! Bravo 🍅", "success", 5000);
+}
+
+function toggleFloatingCalc() {
+    const popup = document.getElementById('calc-popup');
+    if (!popup) return;
+    popup.style.display = (popup.style.display === 'flex') ? 'none' : 'flex';
+}
+
+/* =============================================================================
+   13. INITIALISATION
    ============================================================================= */
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Gestion de la recherche
-    const searchInput = document.getElementById('site-search');
-    if (searchInput) {
-        searchInput.addEventListener('input', performSearch);
-    }
+    applySavedTheme();
+    updatePomoDisplay();
+    navigateTo('view-home');
 
-    // 2. Gestion des ESPACES pour MathLive
-    const mf = document.getElementById('math-input');
-    if (mf) {
-        mf.addEventListener('keydown', (ev) => {
-            if (ev.code === 'Space') {
-                ev.preventDefault(); 
-                // mf.insert('\\,') insère un petit espace LaTeX
-                mf.insert('\\,');   
-            }
-        });
-    }
+    // Navigation clavier du quiz (enregistrée une seule fois)
+    document.addEventListener('keydown', handleQuizKeyboard);
 
-    // 3. Update initial de la calculette
-    updateFloatingCalcVisibility();
+    // Échap ferme la modale PDF
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closePdfModal();
+    });
+
+    // Ferme les résultats de recherche au clic extérieur
+    document.addEventListener('click', (e) => {
+        const wrapper = document.querySelector('.search-wrapper');
+        const box = document.getElementById('search-results');
+        if (wrapper && box && !wrapper.contains(e.target)) box.style.display = 'none';
+    });
+
+    // Demande (en douceur) l'autorisation de notification pour le Pomodoro
+    try {
+        if ("Notification" in window && Notification.permission === "default") {
+            // ne pas spammer : on demandera au premier lancement de Pomodoro
+        }
+    } catch (e) { /* ignore */ }
+});
+
+/* Exposition globale (les attributs onclick du HTML appellent ces fonctions) */
+Object.assign(window, {
+    navigateTo, performSearch, toggleTheme,
+    openLevelPage, chooseMode, backFromChapters,
+    toggleMultiSelectionMode, prepareMultiQuiz,
+    selectOption, changeSlide, finishQuiz, openQuiz, launchSurvieLogic,
+    toggleCorrection,
+    checkReciteAnswer, goToNextQuestion, forceValidAnswer, startSpeedRun,
+    initTrigo, initRepere, setRepereMode, clearRepere,
+    initTableau, initConverter, setConvCategory, calculateConv,
+    initGraph, drawGraph, updateZoom,
+    addMolChar, deleteMolChar, clearMolAll, calculateComplexMass,
+    initBiblio, filterAnnales, openPdf, closePdfModal,
+    togglePomodoro, resetPomodoro, toggleFloatingCalc,
+    state
 });
