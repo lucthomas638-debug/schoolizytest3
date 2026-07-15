@@ -2452,6 +2452,177 @@ document.addEventListener('DOMContentLoaded', () => {
     updateFloatingCalcVisibility();
 });
 
+
+/* =============================================================================
+   SYSTÈME D'AUTHENTIFICATION & PROFILS
+   ============================================================================= */
+
+let authMode = 'signup'; 
+let currentUser = null;
+let userProfile = null;
+
+// 1. Basculer entre Inscription et Connexion
+function toggleAuthMode() {
+    authMode = (authMode === 'signup') ? 'login' : 'signup';
+    const btnAction = document.getElementById('btn-auth-action');
+    const btnSwitch = document.getElementById('auth-switch'); // C'est maintenant un bouton
+    const signupFields = document.getElementById('signup-fields');
+    
+    if (authMode === 'login') {
+        btnAction.innerText = "Se connecter";
+        btnSwitch.innerText = "Pas de compte ? S'inscrire";
+        signupFields.style.display = 'none';
+    } else {
+        btnAction.innerText = "Créer mon compte";
+        btnSwitch.innerText = "Déjà un compte ? Se connecter";
+        signupFields.style.display = 'block';
+    }
+}
+
+// 2. Logique principale (SignUp / Login)
+async function handleAuth() {
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-password').value;
+    const msg = document.getElementById('auth-msg');
+
+    if (!email || !password) return showError("Remplit tous les champs !");
+
+    if (authMode === 'signup') {
+        const prenom = document.getElementById('reg-prenom').value;
+        const nom = document.getElementById('reg-nom').value;
+        const phone = document.getElementById('auth-phone').value;
+
+        if (!prenom || !nom || !phone) return showError("Toutes les infos sont requises.");
+
+        // A. Inscription dans le système Auth de Supabase
+        const { data: authData, error: authError } = await sb.auth.signUp({ email, password });
+        if (authError) return showError(authError.message);
+
+        // B. Création de la fiche dans ta table 'profiles'
+        const { error: profError } = await sb.from('profiles').insert([
+            { 
+                id: authData.user.id, 
+                nom: nom, 
+                prenom: prenom, 
+                phone: phone, 
+                selected_chapters: [] 
+            }
+        ]);
+
+        if (profError) {
+            console.error(profError);
+            return showError("Erreur profil ou téléphone déjà utilisé.");
+        }
+
+        msg.style.display = 'block';
+        msg.style.color = 'green';
+        msg.innerText = "Inscription réussie ! Bienvenue.";
+        setTimeout(() => navigateTo('view-home'), 1500);
+
+    } else {
+        // Mode Connexion
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) return showError("Email ou mot de passe incorrect.");
+        navigateTo('view-home');
+    }
+}
+
+function showError(text) {
+    const msg = document.getElementById('auth-msg');
+    msg.style.display = 'block';
+    msg.style.color = 'red';
+    msg.innerText = text;
+}
+
+// 3. Déconnexion
+async function handleLogout() {
+    await sb.auth.signOut();
+    window.location.reload();
+}
+
+// 4. Écouteur automatique d'état (Version Sécurisée)
+sb.auth.onAuthStateChange(async (event, session) => {
+    // On attend un micro-délai pour être sûr que le HTML est prêt
+    setTimeout(async () => {
+        const navAuth = document.getElementById('nav-auth');
+        const navUser = document.getElementById('nav-user');
+        const navLogout = document.getElementById('nav-logout');
+        const userNameSpan = document.getElementById('user-name');
+
+        if (session && session.user) {
+            currentUser = session.user;
+            
+            try {
+                const { data: profile, error } = await sb
+                    .from('profiles')
+                    .select('prenom')
+                    .eq('id', currentUser.id)
+                    .maybeSingle();
+
+                if (profile && userNameSpan) {
+                    userProfile = profile;
+                    userNameSpan.innerText = profile.prenom;
+                }
+            } catch (e) {
+                console.warn("Erreur récupération profil:", e);
+            }
+
+            // Mise à jour de l'interface avec sécurité (if exist)
+            if (navAuth) navAuth.style.display = 'none';
+            if (navUser) navUser.style.display = 'flex'; 
+            if (navLogout) navLogout.style.display = 'block';
+            
+        } else {
+            // Mode déconnecté
+            currentUser = null;
+            userProfile = null;
+            if (navAuth) navAuth.style.display = 'block';
+            if (navUser) navUser.style.display = 'none';
+            if (navLogout) navLogout.style.display = 'none';
+        }
+    }, 10);
+});
+
+/* =============================================================================
+   FONCTIONS GLOBALES (CONFETTIS & MOYENNE)
+   ============================================================================= */
+
+// Fonction pour lancer les confettis
+function launchSuccessConfetti() {
+    // On appelle directement la bibliothèque. 
+    // Elle gère elle-même la création d'un calque transparent par-dessus ton site.
+    confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        zIndex: 9999, // S'assure de passer devant le texte et les boutons
+        colors: ['#8459cf', '#f5bf78'] // Tes couleurs Schoolizy
+    });
+}
+
+// Fonction pour le calculateur de moyenne cible
+function calculerMoyenneCible() {
+    const actuelle = parseFloat(document.getElementById('moy-actuelle').value);
+    const coeff = parseFloat(document.getElementById('moy-coeff').value);
+    const cible = parseFloat(document.getElementById('moy-cible').value);
+    const resBox = document.getElementById('moy-resultat');
+    const resText = document.getElementById('moy-result-text');
+
+    if (isNaN(actuelle) || isNaN(cible)) return alert("Remplis les moyennes !");
+
+    // Formule pour calculer la note nécessaire
+    const noteRequise = ((cible * (1 + coeff)) - actuelle) / coeff;
+
+    resBox.style.display = 'block';
+    if (noteRequise > 20) {
+        resText.innerHTML = `Ouch ! Il te faudrait un <strong>${noteRequise.toFixed(2)}/20</strong>. C'est mathématiquement impossible sur ce seul devoir, vise un peu plus bas ! 😅`;
+    } else if (noteRequise <= 0) {
+        resText.innerHTML = `Tranquille ! Même avec un 0/20, tu restes au-dessus de ton objectif. 😎`;
+    } else {
+        resText.innerHTML = `Pour atteindre ${cible}/20, tu dois obtenir au moins <strong>${noteRequise.toFixed(2)}/20</strong> au prochain DS. Tu peux le faire ! 💪`;
+    }
+}
+
 /* =============================================================================
    OUTIL 10.7 : RÉSOLVEUR D'ÉQUATIONS PAS À PAS
    ============================================================================= */
@@ -2670,174 +2841,4 @@ function renderEquationUI() {
     }
 
     typesetMath(); // Demande à MathJax de compiler le nouveau LaTeX
-}
-
-/* =============================================================================
-   SYSTÈME D'AUTHENTIFICATION & PROFILS
-   ============================================================================= */
-
-let authMode = 'signup'; 
-let currentUser = null;
-let userProfile = null;
-
-// 1. Basculer entre Inscription et Connexion
-function toggleAuthMode() {
-    authMode = (authMode === 'signup') ? 'login' : 'signup';
-    const btnAction = document.getElementById('btn-auth-action');
-    const btnSwitch = document.getElementById('auth-switch'); // C'est maintenant un bouton
-    const signupFields = document.getElementById('signup-fields');
-    
-    if (authMode === 'login') {
-        btnAction.innerText = "Se connecter";
-        btnSwitch.innerText = "Pas de compte ? S'inscrire";
-        signupFields.style.display = 'none';
-    } else {
-        btnAction.innerText = "Créer mon compte";
-        btnSwitch.innerText = "Déjà un compte ? Se connecter";
-        signupFields.style.display = 'block';
-    }
-}
-
-// 2. Logique principale (SignUp / Login)
-async function handleAuth() {
-    const email = document.getElementById('auth-email').value;
-    const password = document.getElementById('auth-password').value;
-    const msg = document.getElementById('auth-msg');
-
-    if (!email || !password) return showError("Remplit tous les champs !");
-
-    if (authMode === 'signup') {
-        const prenom = document.getElementById('reg-prenom').value;
-        const nom = document.getElementById('reg-nom').value;
-        const phone = document.getElementById('auth-phone').value;
-
-        if (!prenom || !nom || !phone) return showError("Toutes les infos sont requises.");
-
-        // A. Inscription dans le système Auth de Supabase
-        const { data: authData, error: authError } = await sb.auth.signUp({ email, password });
-        if (authError) return showError(authError.message);
-
-        // B. Création de la fiche dans ta table 'profiles'
-        const { error: profError } = await sb.from('profiles').insert([
-            { 
-                id: authData.user.id, 
-                nom: nom, 
-                prenom: prenom, 
-                phone: phone, 
-                selected_chapters: [] 
-            }
-        ]);
-
-        if (profError) {
-            console.error(profError);
-            return showError("Erreur profil ou téléphone déjà utilisé.");
-        }
-
-        msg.style.display = 'block';
-        msg.style.color = 'green';
-        msg.innerText = "Inscription réussie ! Bienvenue.";
-        setTimeout(() => navigateTo('view-home'), 1500);
-
-    } else {
-        // Mode Connexion
-        const { error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) return showError("Email ou mot de passe incorrect.");
-        navigateTo('view-home');
-    }
-}
-
-function showError(text) {
-    const msg = document.getElementById('auth-msg');
-    msg.style.display = 'block';
-    msg.style.color = 'red';
-    msg.innerText = text;
-}
-
-// 3. Déconnexion
-async function handleLogout() {
-    await sb.auth.signOut();
-    window.location.reload();
-}
-
-// 4. Écouteur automatique d'état (Version Sécurisée)
-sb.auth.onAuthStateChange(async (event, session) => {
-    // On attend un micro-délai pour être sûr que le HTML est prêt
-    setTimeout(async () => {
-        const navAuth = document.getElementById('nav-auth');
-        const navUser = document.getElementById('nav-user');
-        const navLogout = document.getElementById('nav-logout');
-        const userNameSpan = document.getElementById('user-name');
-
-        if (session && session.user) {
-            currentUser = session.user;
-            
-            try {
-                const { data: profile, error } = await sb
-                    .from('profiles')
-                    .select('prenom')
-                    .eq('id', currentUser.id)
-                    .maybeSingle();
-
-                if (profile && userNameSpan) {
-                    userProfile = profile;
-                    userNameSpan.innerText = profile.prenom;
-                }
-            } catch (e) {
-                console.warn("Erreur récupération profil:", e);
-            }
-
-            // Mise à jour de l'interface avec sécurité (if exist)
-            if (navAuth) navAuth.style.display = 'none';
-            if (navUser) navUser.style.display = 'flex'; 
-            if (navLogout) navLogout.style.display = 'block';
-            
-        } else {
-            // Mode déconnecté
-            currentUser = null;
-            userProfile = null;
-            if (navAuth) navAuth.style.display = 'block';
-            if (navUser) navUser.style.display = 'none';
-            if (navLogout) navLogout.style.display = 'none';
-        }
-    }, 10);
-});
-
-/* =============================================================================
-   FONCTIONS GLOBALES (CONFETTIS & MOYENNE)
-   ============================================================================= */
-
-// Fonction pour lancer les confettis
-function launchSuccessConfetti() {
-    // On appelle directement la bibliothèque. 
-    // Elle gère elle-même la création d'un calque transparent par-dessus ton site.
-    confetti({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-        zIndex: 9999, // S'assure de passer devant le texte et les boutons
-        colors: ['#8459cf', '#f5bf78'] // Tes couleurs Schoolizy
-    });
-}
-
-// Fonction pour le calculateur de moyenne cible
-function calculerMoyenneCible() {
-    const actuelle = parseFloat(document.getElementById('moy-actuelle').value);
-    const coeff = parseFloat(document.getElementById('moy-coeff').value);
-    const cible = parseFloat(document.getElementById('moy-cible').value);
-    const resBox = document.getElementById('moy-resultat');
-    const resText = document.getElementById('moy-result-text');
-
-    if (isNaN(actuelle) || isNaN(cible)) return alert("Remplis les moyennes !");
-
-    // Formule pour calculer la note nécessaire
-    const noteRequise = ((cible * (1 + coeff)) - actuelle) / coeff;
-
-    resBox.style.display = 'block';
-    if (noteRequise > 20) {
-        resText.innerHTML = `Ouch ! Il te faudrait un <strong>${noteRequise.toFixed(2)}/20</strong>. C'est mathématiquement impossible sur ce seul devoir, vise un peu plus bas ! 😅`;
-    } else if (noteRequise <= 0) {
-        resText.innerHTML = `Tranquille ! Même avec un 0/20, tu restes au-dessus de ton objectif. 😎`;
-    } else {
-        resText.innerHTML = `Pour atteindre ${cible}/20, tu dois obtenir au moins <strong>${noteRequise.toFixed(2)}/20</strong> au prochain DS. Tu peux le faire ! 💪`;
-    }
 }
