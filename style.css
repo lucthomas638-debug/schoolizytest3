@@ -685,38 +685,3 @@ body.dark-mode math-field { background: #2c2c44; color: white; }
     .numworks-container iframe { transform: scale(0.85); height: 580px; }
     .container { padding: 1rem; }
 }
-
-/* =============================================================================
-   OUTIL : ÉQUATIONS PAS À PAS
-   ============================================================================= */
-.eq-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 2px solid var(--border-soft); padding-bottom: 1rem; }
-.eq-header-flex .view-title { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
-.eq-progress-badge { background: var(--accent-orange); color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 1.1rem; }
-
-.eq-history { margin-bottom: 2rem; }
-.eq-history-step { border-bottom: 1px solid var(--border-soft); padding: 1.5rem 0; text-align: center; animation: fadeIn 0.4s ease-out; }
-.eq-step-text { color: var(--text-muted); font-size: 0.95rem; font-style: italic; margin-bottom: 1rem; }
-.eq-step-math { font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--text-dark); }
-
-.eq-action-box { background: var(--surface); border: 1px solid var(--border-soft); border-radius: 15px; padding: 2rem; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-.eq-instruction { color: var(--text-muted); font-size: 1rem; margin-bottom: 1.5rem; }
-.eq-current-math { font-size: 2rem; font-weight: bold; margin-bottom: 2rem; color: var(--text-dark); }
-
-.eq-controls { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
-.eq-input-group { display: flex; gap: 10px; max-width: 500px; width: 100%; justify-content: center; }
-.eq-input-group input { width: 150px; padding: 10px 15px; border: 2px solid var(--border-soft); border-radius: 10px; font-size: 1.2rem; text-align: center; outline: none; transition: 0.2s; background: var(--surface); color: var(--text-dark); }
-.eq-input-group input:focus { border-color: var(--accent-orange); }
-
-.btn-effectuer { background: var(--accent-orange); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 1rem; padding: 0 20px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(255, 140, 66, 0.2); }
-.btn-effectuer:hover { background: #e67e22; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(255, 140, 66, 0.3); }
-
-.btn-passer { background: transparent; color: var(--text-muted); border: 2px solid var(--border-soft); border-radius: 10px; font-weight: bold; padding: 0 15px; cursor: pointer; transition: all 0.2s; }
-.btn-passer:hover { border-color: var(--text-muted); color: var(--text-dark); }
-
-.eq-ops { display: flex; gap: 10px; }
-.eq-op-btn { width: 80px; height: 50px; border: 2px solid var(--accent-orange); background: var(--surface-cream); color: var(--accent-orange); font-size: 1.5rem; font-weight: bold; border-radius: 10px; cursor: pointer; transition: all 0.2s; }
-.eq-op-btn:hover, .eq-op-btn.active { background: var(--accent-orange); color: white; }
-
-.eq-error { color: var(--accent-red); margin-top: 15px; font-size: 0.95rem; font-weight: bold; min-height: 20px; }
-.eq-success-box { text-align: center; padding: 3rem; background: #f0fdf4; border: 2px solid var(--accent-green); border-radius: 15px; margin-top: 2rem; animation: fadeIn 0.5s; }
-#eq-solution-text { color: var(--accent-green); font-size: 1.5rem; margin-bottom: 1.5rem; font-weight: 800; }
