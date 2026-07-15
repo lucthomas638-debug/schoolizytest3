@@ -135,6 +135,9 @@
                 <div class="card" onclick="navigateTo('view-tool-mol')">
                     <span>⚗️</span><h3>Masse Molaire</h3><p>Calculateur Chimie</p>
                 </div>
+                <div class="card orange" onclick="initEquation(); navigateTo('view-tool-equation')">
+                    <span>⚖️</span><h3>Équations</h3><p>Résolution pas à pas</p>
+                </div>
             </div>
         </div>
 
@@ -237,6 +240,47 @@
                     </div>
                 </div>
                 <div id="conv-formula" style="text-align:center; color:#666; margin-top:1rem; font-style:italic;"></div>
+            </div>
+        </div>
+
+        <!-- Outil : Résolution d'Équations -->
+        <div id="view-tool-equation" class="view container">
+            <div class="btn-back" onclick="navigateTo('view-outils')">← Retour Outils</div>
+            
+            <div class="eq-header-flex">
+                <h2 class="view-title" style="margin-bottom: 0;">Équations pas à pas</h2>
+                <div id="eq-progress" class="eq-progress-badge">1 / 5</div>
+            </div>
+        
+            <!-- Historique des étapes validées -->
+            <div id="eq-history-container" class="eq-history"></div>
+        
+            <!-- Zone d'action courante -->
+            <div id="eq-action-container" class="eq-action-box">
+                <p class="eq-instruction">Choisir l'opération à appliquer sur chaque membre de l'équation pour isoler x.</p>
+                
+                <div id="eq-current-display" class="eq-current-math"></div>
+        
+                <div class="eq-controls">
+                    <div class="eq-input-group">
+                        <input type="text" id="eq-input-val" placeholder="ex: 7 ou 2x">
+                        <button class="btn-effectuer" onclick="applyEqOp()">EFFECTUER</button>
+                        <button class="btn-passer" onclick="nextEquation()">PASSER ➔</button>
+                    </div>
+                    <div class="eq-ops">
+                        <button class="eq-op-btn" onclick="setEqOp('+')">+</button>
+                        <button class="eq-op-btn" onclick="setEqOp('-')">−</button>
+                        <button class="eq-op-btn" onclick="setEqOp('*')">×</button>
+                        <button class="eq-op-btn" onclick="setEqOp('/')">÷</button>
+                    </div>
+                </div>
+                <div class="eq-error" id="eq-error-msg"></div>
+            </div>
+        
+            <!-- Message de réussite final -->
+            <div id="eq-success-container" class="eq-success-box" style="display:none;">
+                <h3 id="eq-solution-text"></h3>
+                <button class="btn-effectuer" style="width:auto; padding: 15px 30px;" onclick="nextEquation()">ÉQUATION SUIVANTE ➔</button>
             </div>
         </div>
 
