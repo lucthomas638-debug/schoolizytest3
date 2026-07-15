@@ -2453,6 +2453,226 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* =============================================================================
+   OUTIL 10.7 : RÉSOLVEUR D'ÉQUATIONS PAS À PAS
+   ============================================================================= */
+// Base de données locale pour l'outil (niveau progressif)
+const eqDataList = [
+    { lhs: { x: 1, c: 7 }, rhs: { x: 0, c: 7 } },        // x + 7 = 7
+    { lhs: { x: 1, c: -2 }, rhs: { x: 0, c: 5 } },       // x - 2 = 5
+    { lhs: { x: 3, c: -6 }, rhs: { x: 0, c: -18 } },     // 3x - 6 = -18
+    { lhs: { x: 2, c: 4 }, rhs: { x: 1, c: -2 } },       // 2x + 4 = x - 2
+    { lhs: { x: 5, c: -3 }, rhs: { x: 2, c: 9 } }        // 5x - 3 = 2x + 9
+];
+
+let currentEqIndex = 0;
+let eqCurrentState = null;
+let eqHistory = [];
+let eqSelectedOp = null;
+
+function initEquation() {
+    currentEqIndex = 0;
+    loadEquation(currentEqIndex);
+}
+
+function loadEquation(index) {
+    if (index >= eqDataList.length) {
+        showToast("Bravo, tu as terminé toutes les équations de la série !", "success");
+        navigateTo('view-outils');
+        return;
+    }
+    
+    // Clonage profond pour ne pas altérer la base de données
+    eqCurrentState = JSON.parse(JSON.stringify(eqDataList[index]));
+    eqHistory = [];
+    eqSelectedOp = null;
+    
+    document.getElementById('eq-progress').textContent = `${index + 1} / ${eqDataList.length}`;
+    document.getElementById('eq-input-val').value = '';
+    document.getElementById('eq-error-msg').textContent = '';
+    document.querySelectorAll('.eq-op-btn').forEach(btn => btn.classList.remove('active'));
+
+    document.getElementById('eq-success-container').style.display = 'none';
+    document.getElementById('eq-action-container').style.display = 'block';
+
+    renderEquationUI();
+}
+
+function nextEquation() {
+    currentEqIndex++;
+    loadEquation(currentEqIndex);
+}
+
+function setEqOp(op) {
+    eqSelectedOp = op;
+    document.querySelectorAll('.eq-op-btn').forEach(btn => {
+        const text = btn.textContent.trim();
+        const isActive = (text === op) || (text === '×' && op === '*') || (text === '÷' && op === '/') || (text === '−' && op === '-');
+        btn.classList.toggle('active', isActive);
+    });
+    document.getElementById('eq-error-msg').textContent = '';
+}
+
+// Parseur intelligent pour autoriser les saisies du type "7", "x", "-2x"
+function parseEqInput(str) {
+    str = str.replace(/\s+/g, '').toLowerCase();
+    if (str === '') return null;
+    let val = { x: 0, c: 0 };
+    
+    if (str.includes('x')) {
+        let coeff = str.replace('x', '');
+        if (coeff === '' || coeff === '+') val.x = 1;
+        else if (coeff === '-') val.x = -1;
+        else val.x = parseFloat(coeff);
+    } else {
+        val.c = parseFloat(str);
+    }
+    
+    if (isNaN(val.x) || isNaN(val.c)) return null;
+    return val;
+}
+
+function applyEqOp() {
+    if (!eqSelectedOp) {
+        document.getElementById('eq-error-msg').textContent = "Sélectionne d'abord une opération (+, -, ×, ÷).";
+        return;
+    }
+    const rawVal = document.getElementById('eq-input-val').value;
+    const val = parseEqInput(rawVal);
+
+    if (!val) {
+        document.getElementById('eq-error-msg').textContent = "Saisie invalide. Essaie par exemple '7' ou '2x'.";
+        return;
+    }
+
+    // Sécurités mathématiques simples
+    if ((eqSelectedOp === '*' || eqSelectedOp === '/') && val.x !== 0) {
+        document.getElementById('eq-error-msg').textContent = "Pour l'instant, limite-toi à multiplier/diviser par des nombres.";
+        return;
+    }
+    if (eqSelectedOp === '/' && val.c === 0) {
+        document.getElementById('eq-error-msg').textContent = "La division par zéro est impossible !";
+        return;
+    }
+
+    // Sauvegarde de l'état avant transformation
+    const beforeState = JSON.parse(JSON.stringify(eqCurrentState));
+
+    // Application de la transformation algébrique
+    if (eqSelectedOp === '+') {
+        eqCurrentState.lhs.x += val.x; eqCurrentState.lhs.c += val.c;
+        eqCurrentState.rhs.x += val.x; eqCurrentState.rhs.c += val.c;
+    } else if (eqSelectedOp === '-') {
+        eqCurrentState.lhs.x -= val.x; eqCurrentState.lhs.c -= val.c;
+        eqCurrentState.rhs.x -= val.x; eqCurrentState.rhs.c -= val.c;
+    } else if (eqSelectedOp === '*') {
+        eqCurrentState.lhs.x *= val.c; eqCurrentState.lhs.c *= val.c;
+        eqCurrentState.rhs.x *= val.c; eqCurrentState.rhs.c *= val.c;
+    } else if (eqSelectedOp === '/') {
+        eqCurrentState.lhs.x /= val.c; eqCurrentState.lhs.c /= val.c;
+        eqCurrentState.rhs.x /= val.c; eqCurrentState.rhs.c /= val.c;
+    }
+
+    eqHistory.push({
+        before: beforeState,
+        op: eqSelectedOp,
+        val: val,
+        rawVal: rawVal,
+        after: JSON.parse(JSON.stringify(eqCurrentState))
+    });
+
+    // Reset du panel d'action
+    document.getElementById('eq-input-val').value = '';
+    eqSelectedOp = null;
+    document.querySelectorAll('.eq-op-btn').forEach(b => b.classList.remove('active'));
+
+    renderEquationUI();
+}
+
+// Transforme un objet {x, c} en string mathématique lisible
+function formatEqSide(term) {
+    let s = '';
+    if (term.x !== 0) {
+        if (term.x === 1) s += 'x';
+        else if (term.x === -1) s += '-x';
+        else s += term.x + 'x';
+    }
+    if (term.c !== 0) {
+        if (s !== '') {
+            s += (term.c > 0) ? ' + ' + term.c : ' - ' + Math.abs(term.c);
+        } else {
+            s += term.c;
+        }
+    }
+    if (s === '') s = '0';
+    return s;
+}
+
+// Applique intelligemment des parenthèses comme sur ta maquette (Image 2)
+function wrapParen(termStr) {
+    if (/^[0-9]+x?$/.test(termStr) || termStr === 'x') {
+        return termStr; // Pas de parenthèses pour "3x" ou "5"
+    }
+    return `\\left(${termStr}\\right)`;
+}
+
+// Formate l'opération intermédiaire en LaTeX avec la couleur Schoolizy (rouge/orange)
+function formatEqOp(op, rawVal) {
+    const color = '#e74c3c';
+    let texOp = op;
+    if (op === '*') texOp = '\\times';
+    if (op === '/') texOp = '\\div';
+    return `\\color{${color}}{${texOp} ${rawVal}}`;
+}
+
+// Génère la phrase explicative dynamique
+function getOpText(op, rawVal) {
+    if (op === '+') return `On ajoute ${rawVal} à chaque membre de l'équation et on obtient une équation équivalente.`;
+    if (op === '-') return `On soustrait ${rawVal} à chaque membre de l'équation et on obtient une équation équivalente.`;
+    if (op === '*') return `On multiplie chaque membre de l'équation par ${rawVal} et on obtient une équation équivalente.`;
+    if (op === '/') return `On divise chaque membre de l'équation par ${rawVal} et on obtient une équation équivalente.`;
+}
+
+function renderEquationUI() {
+    const histContainer = document.getElementById('eq-history-container');
+    histContainer.innerHTML = '';
+
+    // 1. Rendu de l'historique (Les étapes successives de l'image 2)
+    eqHistory.forEach(step => {
+        const div = document.createElement('div');
+        div.className = 'eq-history-step';
+
+        const lhsStr = formatEqSide(step.before.lhs);
+        const rhsStr = formatEqSide(step.before.rhs);
+        const opStr = formatEqOp(step.op, step.rawVal);
+
+        const lhsFmt = wrapParen(lhsStr);
+        const rhsFmt = wrapParen(rhsStr);
+
+        const mathStr = `$$ ${lhsFmt} ${opStr} = ${rhsFmt} ${opStr} $$`;
+
+        div.innerHTML = `
+            <div class="eq-step-text">${getOpText(step.op, step.rawVal)}</div>
+            <div class="eq-step-math">${mathStr}</div>
+        `;
+        histContainer.appendChild(div);
+    });
+
+    // 2. Rendu de l'état courant de l'équation
+    const currentMath = `$$ ${formatEqSide(eqCurrentState.lhs)} = ${formatEqSide(eqCurrentState.rhs)} $$`;
+    document.getElementById('eq-current-display').innerHTML = currentMath;
+
+    // 3. Vérification de la condition de victoire ( x = Constante )
+    if (eqCurrentState.lhs.x === 1 && eqCurrentState.lhs.c === 0 && eqCurrentState.rhs.x === 0) {
+        document.getElementById('eq-action-container').style.display = 'none';
+        const successBox = document.getElementById('eq-success-container');
+        successBox.style.display = 'block';
+        document.getElementById('eq-solution-text').innerHTML = `La solution de l'équation est <strong>${eqCurrentState.rhs.c}</strong>.`;
+    }
+
+    typesetMath(); // Demande à MathJax de compiler le nouveau LaTeX
+}
+
+/* =============================================================================
    SYSTÈME D'AUTHENTIFICATION & PROFILS
    ============================================================================= */
 
