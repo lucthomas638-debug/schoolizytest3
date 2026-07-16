@@ -2619,9 +2619,45 @@ math-field::part(virtual-keyboard-toggle) {
 .eq-current-math { font-size: 2rem; font-weight: bold; margin-bottom: 2rem; color: var(--text-dark); }
 
 .eq-controls { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
-.eq-input-group { display: flex; gap: 10px; max-width: 500px; width: 100%; justify-content: center; }
-.eq-input-group input { width: 150px; padding: 10px 15px; border: 2px solid var(--border-soft); border-radius: 10px; font-size: 1.2rem; text-align: center; outline: none; transition: 0.2s; background: var(--surface); color: var(--text-dark); }
-.eq-input-group input:focus { border-color: var(--accent-orange); }
+.eq-input-group { display: flex; gap: 10px; max-width: 600px; width: 100%; justify-content: center; align-items: stretch; }
+
+/* --- NOUVELLE BOÎTE FUSIONNÉE [OPÉRATION] [SAISIE] --- */
+.eq-input-wrapper {
+    display: flex;
+    align-items: stretch;
+    border: 2px solid var(--border-soft);
+    border-radius: 10px;
+    background: var(--surface);
+    overflow: hidden;
+    transition: border 0.2s;
+}
+.eq-input-wrapper:focus-within {
+    border-color: var(--accent-orange);
+}
+
+.eq-op-display {
+    background: var(--surface-cream);
+    color: var(--accent-orange);
+    font-weight: 900;
+    font-size: 1.5rem;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 2px solid var(--border-soft);
+    min-width: 55px;
+}
+
+.eq-input-wrapper input {
+    width: 120px;
+    padding: 10px 15px;
+    border: none !important;
+    font-size: 1.2rem;
+    text-align: center;
+    outline: none;
+    background: transparent;
+    color: var(--text-dark);
+}
 
 .btn-effectuer { background: var(--accent-orange); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 1rem; padding: 0 20px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(255, 140, 66, 0.2); }
 .btn-effectuer:hover { background: #e67e22; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(255, 140, 66, 0.3); }
@@ -2637,9 +2673,10 @@ math-field::part(virtual-keyboard-toggle) {
 .eq-success-box { text-align: center; padding: 3rem; background: #f0fdf4; border: 2px solid var(--accent-green); border-radius: 15px; margin-top: 2rem; animation: fadeIn 0.5s; }
 #eq-solution-text { color: var(--accent-green); font-size: 1.5rem; margin-bottom: 1.5rem; font-weight: 800; }
 
-/* Thème sombre pour l'outil */
+/* --- THÈME SOMBRE --- */
 body.dark-mode .eq-op-btn { background: #2c2c44; }
 body.dark-mode .eq-success-box { background: #1a2e20; }
+body.dark-mode .eq-op-display { background: #2c2c44; border-right-color: var(--border-soft); }
     
 </style>
 
