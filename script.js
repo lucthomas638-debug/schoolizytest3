@@ -2652,7 +2652,6 @@ function loadEquation(index) {
         return;
     }
     
-    // Clonage profond pour ne pas altérer la base de données
     eqCurrentState = JSON.parse(JSON.stringify(eqDataList[index]));
     eqHistory = [];
     eqSelectedOp = null;
@@ -2660,6 +2659,7 @@ function loadEquation(index) {
     document.getElementById('eq-progress').textContent = `${index + 1} / ${eqDataList.length}`;
     document.getElementById('eq-input-val').value = '';
     document.getElementById('eq-error-msg').textContent = '';
+    document.getElementById('eq-selected-op-display').textContent = '...'; // Reset de la case d'opération
     document.querySelectorAll('.eq-op-btn').forEach(btn => btn.classList.remove('active'));
 
     document.getElementById('eq-success-container').style.display = 'none';
@@ -2679,8 +2679,14 @@ function setEqOp(op) {
         const text = btn.textContent.trim();
         const isActive = (text === op) || (text === '×' && op === '*') || (text === '÷' && op === '/') || (text === '−' && op === '-');
         btn.classList.toggle('active', isActive);
+        
+        // Afficher l'opération visuelle dans la case de gauche
+        if (isActive) {
+            document.getElementById('eq-selected-op-display').textContent = text;
+        }
     });
     document.getElementById('eq-error-msg').textContent = '';
+    document.getElementById('eq-input-val').focus(); // Auto-focus pratique !
 }
 
 // Parseur intelligent pour autoriser les saisies du type "7", "x", "-2x"
@@ -2715,7 +2721,6 @@ function applyEqOp() {
         return;
     }
 
-    // Sécurités mathématiques simples
     if ((eqSelectedOp === '*' || eqSelectedOp === '/') && val.x !== 0) {
         document.getElementById('eq-error-msg').textContent = "Pour l'instant, limite-toi à multiplier/diviser par des nombres.";
         return;
@@ -2725,10 +2730,8 @@ function applyEqOp() {
         return;
     }
 
-    // Sauvegarde de l'état avant transformation
     const beforeState = JSON.parse(JSON.stringify(eqCurrentState));
 
-    // Application de la transformation algébrique
     if (eqSelectedOp === '+') {
         eqCurrentState.lhs.x += val.x; eqCurrentState.lhs.c += val.c;
         eqCurrentState.rhs.x += val.x; eqCurrentState.rhs.c += val.c;
@@ -2753,6 +2756,7 @@ function applyEqOp() {
 
     // Reset du panel d'action
     document.getElementById('eq-input-val').value = '';
+    document.getElementById('eq-selected-op-display').textContent = '...'; // Reset
     eqSelectedOp = null;
     document.querySelectorAll('.eq-op-btn').forEach(b => b.classList.remove('active'));
 
@@ -2807,7 +2811,6 @@ function renderEquationUI() {
     const histContainer = document.getElementById('eq-history-container');
     histContainer.innerHTML = '';
 
-    // 1. Rendu de l'historique (Les étapes successives de l'image 2)
     eqHistory.forEach(step => {
         const div = document.createElement('div');
         div.className = 'eq-history-step';
@@ -2828,15 +2831,16 @@ function renderEquationUI() {
         histContainer.appendChild(div);
     });
 
-    // 2. Rendu de l'état courant de l'équation
     const currentMath = `$$ ${formatEqSide(eqCurrentState.lhs)} = ${formatEqSide(eqCurrentState.rhs)} $$`;
     document.getElementById('eq-current-display').innerHTML = currentMath;
 
-    // 3. Vérification de la condition de victoire ( x = Constante )
     if (eqCurrentState.lhs.x === 1 && eqCurrentState.lhs.c === 0 && eqCurrentState.rhs.x === 0) {
         document.getElementById('eq-action-container').style.display = 'none';
         const successBox = document.getElementById('eq-success-container');
         successBox.style.display = 'block';
+        
+        // AJOUT : Rendu de l'équation finale x = résultat
+        document.getElementById('eq-success-math-display').innerHTML = `$$ x = ${eqCurrentState.rhs.c} $$`;
         document.getElementById('eq-solution-text').innerHTML = `La solution de l'équation est <strong>${eqCurrentState.rhs.c}</strong>.`;
     }
 
