@@ -2840,5 +2840,5 @@ function renderEquationUI() {
         document.getElementById('eq-solution-text').innerHTML = `La solution de l'équation est <strong>${eqCurrentState.rhs.c}</strong>.`;
     }
 
-    typesetMath(); // Demande à MathJax de compiler le nouveau LaTeX
+      if (window.MathJax) MathJax.typesetPromise(); // Demande à MathJax de compiler le nouveau LaTeX
 }
