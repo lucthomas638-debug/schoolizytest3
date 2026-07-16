@@ -3080,16 +3080,22 @@ body.dark-mode .eq-success-box { background: #1a2e20; }
                 <div id="eq-current-display" class="eq-current-math"></div>
         
                 <div class="eq-controls">
-                    <div class="eq-input-group">
-                        <input type="text" id="eq-input-val" placeholder="ex: 7 ou 2x">
-                        <button class="btn-effectuer" onclick="applyEqOp()">EFFECTUER</button>
-                        <button class="btn-passer" onclick="nextEquation()">PASSER ➔</button>
-                    </div>
+                    <!-- 1. Les boutons d'opération au-dessus -->
                     <div class="eq-ops">
                         <button class="eq-op-btn" onclick="setEqOp('+')">+</button>
                         <button class="eq-op-btn" onclick="setEqOp('-')">−</button>
                         <button class="eq-op-btn" onclick="setEqOp('*')">×</button>
                         <button class="eq-op-btn" onclick="setEqOp('/')">÷</button>
+                    </div>
+                    
+                    <!-- 2. La case de saisie unifiée -->
+                    <div class="eq-input-group">
+                        <div class="eq-input-wrapper">
+                            <div id="eq-selected-op-display" class="eq-op-display">...</div>
+                            <input type="text" id="eq-input-val" placeholder="ex: 7 ou 2x">
+                        </div>
+                        <button class="btn-effectuer" onclick="applyEqOp()">EFFECTUER</button>
+                        <button class="btn-passer" onclick="nextEquation()">PASSER ➔</button>
                     </div>
                 </div>
                 <div class="eq-error" id="eq-error-msg"></div>
@@ -3097,6 +3103,7 @@ body.dark-mode .eq-success-box { background: #1a2e20; }
 
             <!-- Message de réussite final -->
             <div id="eq-success-container" class="eq-success-box" style="display:none;">
+                <div id="eq-success-math-display" class="eq-current-math" style="font-size: 2.5rem; margin-bottom: 1rem;"></div>
                 <h3 id="eq-solution-text"></h3>
                 <button class="btn-effectuer" style="width:auto; padding: 15px 30px;" onclick="nextEquation()">ÉQUATION SUIVANTE ➔</button>
             </div>
