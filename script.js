@@ -2659,7 +2659,7 @@ function loadEquation(index) {
     document.getElementById('eq-progress').textContent = `${index + 1} / ${eqDataList.length}`;
     document.getElementById('eq-input-val').value = '';
     document.getElementById('eq-error-msg').textContent = '';
-    document.getElementById('eq-selected-op-display').textContent = '...'; // Reset de la case d'opération
+    document.getElementById('eq-selected-op-display').textContent = '...'; 
     document.querySelectorAll('.eq-op-btn').forEach(btn => btn.classList.remove('active'));
 
     document.getElementById('eq-success-container').style.display = 'none';
@@ -2680,16 +2680,12 @@ function setEqOp(op) {
         const isActive = (text === op) || (text === '×' && op === '*') || (text === '÷' && op === '/') || (text === '−' && op === '-');
         btn.classList.toggle('active', isActive);
         
-        // Afficher l'opération visuelle dans la case de gauche
-        if (isActive) {
-            document.getElementById('eq-selected-op-display').textContent = text;
-        }
+        if (isActive) document.getElementById('eq-selected-op-display').textContent = text;
     });
     document.getElementById('eq-error-msg').textContent = '';
-    document.getElementById('eq-input-val').focus(); // Auto-focus pratique !
+    document.getElementById('eq-input-val').focus();
 }
 
-// Parseur intelligent pour autoriser les saisies du type "7", "x", "-2x"
 function parseEqInput(str) {
     str = str.replace(/\s+/g, '').toLowerCase();
     if (str === '') return null;
@@ -2706,6 +2702,30 @@ function parseEqInput(str) {
     
     if (isNaN(val.x) || isNaN(val.c)) return null;
     return val;
+}
+
+// Transforme un décimal (ex: 2.333) en fraction LaTeX (ex: \frac{7}{3})
+function formatNumberAsFraction(x) {
+    if (Math.abs(x) < 0.00001) return '0';
+    if (Math.abs(x - Math.round(x)) < 0.00001) return Math.round(x).toString();
+    
+    let sign = x < 0 ? '-' : '';
+    let absX = Math.abs(x);
+    
+    // Recherche du meilleur dénominateur (jusqu'à 100)
+    for (let d = 2; d <= 100; d++) {
+        let n = absX * d;
+        if (Math.abs(n - Math.round(n)) < 0.00001) {
+            return `${sign}\\frac{${Math.round(n)}}{${d}}`;
+        }
+    }
+    return parseFloat(x.toFixed(3)).toString();
+}
+
+// Corrige les petites erreurs des ordinateurs (ex: 0.999999 devient 1)
+function cleanFloat(f) {
+    if (Math.abs(f - Math.round(f)) < 0.00001) return Math.round(f);
+    return f;
 }
 
 function applyEqOp() {
@@ -2746,6 +2766,12 @@ function applyEqOp() {
         eqCurrentState.rhs.x /= val.c; eqCurrentState.rhs.c /= val.c;
     }
 
+    // Nettoyage des valeurs pour éviter les bugs de virgule
+    eqCurrentState.lhs.x = cleanFloat(eqCurrentState.lhs.x);
+    eqCurrentState.lhs.c = cleanFloat(eqCurrentState.lhs.c);
+    eqCurrentState.rhs.x = cleanFloat(eqCurrentState.rhs.x);
+    eqCurrentState.rhs.c = cleanFloat(eqCurrentState.rhs.c);
+
     eqHistory.push({
         before: beforeState,
         op: eqSelectedOp,
@@ -2754,43 +2780,62 @@ function applyEqOp() {
         after: JSON.parse(JSON.stringify(eqCurrentState))
     });
 
-    // Reset du panel d'action
     document.getElementById('eq-input-val').value = '';
-    document.getElementById('eq-selected-op-display').textContent = '...'; // Reset
+    document.getElementById('eq-selected-op-display').textContent = '...'; 
     eqSelectedOp = null;
     document.querySelectorAll('.eq-op-btn').forEach(b => b.classList.remove('active'));
 
     renderEquationUI();
 }
 
-// Transforme un objet {x, c} en string mathématique lisible
 function formatEqSide(term) {
     let s = '';
-    if (term.x !== 0) {
-        if (term.x === 1) s += 'x';
-        else if (term.x === -1) s += '-x';
-        else s += term.x + 'x';
-    }
-    if (term.c !== 0) {
-        if (s !== '') {
-            s += (term.c > 0) ? ' + ' + term.c : ' - ' + Math.abs(term.c);
+    
+    // Traitement des x (Gère l'affichage propre de fractions type x/3 au lieu de 1/3x)
+    if (Math.abs(term.x) > 0.00001) {
+        let isNeg = term.x < 0;
+        let numStr = formatNumberAsFraction(Math.abs(term.x));
+        
+        let termXStr = '';
+        if (numStr === '1') {
+            termXStr = 'x';
+        } else if (numStr.startsWith('\\frac{')) {
+            let match = numStr.match(/\\frac\{(\d+)\}\{(\d+)\}/);
+            if (match) {
+                termXStr = match[1] === '1' ? `\\frac{x}{${match[2]}}` : `\\frac{${match[1]}x}{${match[2]}}`;
+            } else {
+                termXStr = numStr + 'x';
+            }
         } else {
-            s += term.c;
+            termXStr = numStr + 'x';
+        }
+        
+        s += (isNeg ? '-' : '') + termXStr;
+    }
+    
+    // Traitement des constantes
+    if (Math.abs(term.c) > 0.00001) {
+        let isNeg = term.c < 0;
+        let numStr = formatNumberAsFraction(Math.abs(term.c));
+        
+        if (s !== '') {
+            s += isNeg ? ' - ' + numStr : ' + ' + numStr;
+        } else {
+            s += (isNeg ? '-' : '') + numStr;
         }
     }
+    
     if (s === '') s = '0';
     return s;
 }
 
-// Applique intelligemment des parenthèses comme sur ta maquette (Image 2)
 function wrapParen(termStr) {
-    if (/^[0-9]+x?$/.test(termStr) || termStr === 'x') {
-        return termStr; // Pas de parenthèses pour "3x" ou "5"
+    if (/^[0-9]+x?$/.test(termStr) || termStr === 'x' || termStr.startsWith('\\frac')) {
+        return termStr; 
     }
     return `\\left(${termStr}\\right)`;
 }
 
-// Formate l'opération intermédiaire en LaTeX avec la couleur Schoolizy (rouge/orange)
 function formatEqOp(op, rawVal) {
     const color = '#e74c3c';
     let texOp = op;
@@ -2799,7 +2844,6 @@ function formatEqOp(op, rawVal) {
     return `\\color{${color}}{${texOp} ${rawVal}}`;
 }
 
-// Génère la phrase explicative dynamique
 function getOpText(op, rawVal) {
     if (op === '+') return `On ajoute ${rawVal} à chaque membre de l'équation et on obtient une équation équivalente.`;
     if (op === '-') return `On soustrait ${rawVal} à chaque membre de l'équation et on obtient une équation équivalente.`;
@@ -2834,14 +2878,15 @@ function renderEquationUI() {
     const currentMath = `$$ ${formatEqSide(eqCurrentState.lhs)} = ${formatEqSide(eqCurrentState.rhs)} $$`;
     document.getElementById('eq-current-display').innerHTML = currentMath;
 
-    if (eqCurrentState.lhs.x === 1 && eqCurrentState.lhs.c === 0 && eqCurrentState.rhs.x === 0) {
+    // Condition de victoire : L'équation est du type 1x + 0 = 0x + C
+    if (Math.abs(eqCurrentState.lhs.x - 1) < 0.00001 && Math.abs(eqCurrentState.lhs.c) < 0.00001 && Math.abs(eqCurrentState.rhs.x) < 0.00001) {
         document.getElementById('eq-action-container').style.display = 'none';
         const successBox = document.getElementById('eq-success-container');
         successBox.style.display = 'block';
         
-        // AJOUT : Rendu de l'équation finale x = résultat
-        document.getElementById('eq-success-math-display').innerHTML = `$$ x = ${eqCurrentState.rhs.c} $$`;
-        document.getElementById('eq-solution-text').innerHTML = `La solution de l'équation est <strong>${eqCurrentState.rhs.c}</strong>.`;
+        let solFmt = formatNumberAsFraction(eqCurrentState.rhs.c);
+        document.getElementById('eq-success-math-display').innerHTML = `$$ x = ${solFmt} $$`;
+        document.getElementById('eq-solution-text').innerHTML = `La solution de l'équation est <strong>$${solFmt}$</strong>.`;
     }
 
       if (window.MathJax) MathJax.typesetPromise(); // Demande à MathJax de compiler le nouveau LaTeX
