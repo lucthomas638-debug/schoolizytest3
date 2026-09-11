@@ -7,15 +7,50 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const sb = supabase.createClient(supabaseUrl, supabaseKey);
 
 const levelsData = {
-    lycee: [{ name: "Seconde", code: "seconde" }, { name: "Première", code: "premiere" }, { name: "Terminale", code: "terminale" }],
-    college: [{ name: "3ème", code: "3eme" }],
-    primaire: [{ name: "CP", code: "cp" }, { name: "CE1", code: "ce1" }, { name: "CE2", code: "ce2" }, { name: "CM1", code: "cm1" }, { name: "CM2", code: "cm2" }]
+    lycee: [
+        { name: "Seconde", code: "seconde" }, 
+        { name: "Première", code: "premiere" }, 
+        { name: "Terminale", code: "terminale" }
+    ],
+    college: [
+        { name: "6ème", code: "6eme" }, 
+        { name: "5ème", code: "5eme" }, 
+        { name: "4ème", code: "4eme" }, 
+        { name: "3ème", code: "3eme" }
+    ],
+    primaire: [
+        { name: "CP", code: "cp" }, 
+        { name: "CE1", code: "ce1" }, 
+        { name: "CE2", code: "ce2" }, 
+        { name: "CM1", code: "cm1" }, 
+        { name: "CM2", code: "cm2" }
+    ],
+    superieur: [
+        { name: "Licence 1", code: "l1" }, 
+        { name: "Licence 2", code: "l2" }, 
+        { name: "Licence 3", code: "l3" }, 
+        { name: "Master 1", code: "m1" }, 
+        { name: "Master 2", code: "m2" }
+    ]
 };
 
 const subjectsData = {
     seconde: ["Maths", "Physique-Chimie"],
     premiere: ["Maths", "Physique-Chimie"],
-    terminale: ["Maths", "Physique-Chimie"]
+    terminale: ["Maths", "Physique-Chimie"],
+    // Ajouts pour le supérieur (tu pourras adapter L1 à M1 plus tard si besoin)
+    l1: ["Maths", "Physique-Chimie"],
+    l2: ["Maths", "Physique-Chimie"],
+    l3: ["Maths", "Physique-Chimie"],
+    m1: ["Maths", "Physique-Chimie"],
+    // Tes UE de Master 2
+    m2: [
+        "Chimie des Polymères",
+        "Dynamique Moléculaire",
+        "Nanomatériaux pour l'environnement",
+        "Microscopie pour Biomatériaux",
+        "Matériaux pour la Santé"
+    ]
 };
 
 let state = { currentLevelGroup: '', currentClassCode: '', currentSubject: '', currentMode: 'lesson' };
