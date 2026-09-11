@@ -8,7 +8,7 @@ const sb = supabase.createClient(supabaseUrl, supabaseKey);
 
 const levelsData = {
     lycee: [{ name: "Seconde", code: "seconde" }, { name: "Première", code: "premiere" }, { name: "Terminale", code: "terminale" }],
-    college: [{ name: "6ème", code: "6eme" }], { name: "5ème", code: "5eme" }], { name: "4ème", code: "4eme" }], { name: "3ème", code: "3eme" }],
+    college: [{ name: "6ème", code: "6eme" }, { name: "5ème", code: "5eme" }, { name: "4ème", code: "4eme" }, { name: "3ème", code: "3eme" }],
     primaire: [{ name: "CP", code: "cp" }, { name: "CE1", code: "ce1" }, { name: "CE2", code: "ce2" }, { name: "CM1", code: "cm1" }, { name: "CM2", code: "cm2" }],
     superieur: [{ name: "Licence 1", code: "l1" }, { name: "Licence 2", code: "l2" }, { name: "Licence 3", code: "l3" }, { name: "Master 1", code: "m1" }, { name: "Master 2", code: "m2" }]
 };
