@@ -102,7 +102,7 @@ function updateFloatingCalcVisibility() {
     const popup = document.getElementById('calc-popup');
     if (!btn) return;
     
-    const subjectsWithCalc = ['maths', 'physique-chimie', 'physique'];
+    const subjectsWithCalc = ['maths', 'physique-chimie', 'physique', 'chimie-polymeres',];
     const currentSub = state.currentSubject ? state.currentSubject.toLowerCase().trim() : '';
     
     // Si on est dans une matière scientifique ET qu'on n'est pas sur l'accueil
