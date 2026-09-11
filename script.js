@@ -45,7 +45,7 @@ const subjectsData = {
     m1: ["Maths", "Physique-Chimie"],
     // Tes UE de Master 2
     m2: [
-        "Chimie des Polymères",
+        "Chimie",
         "Dynamique Moléculaire",
         "Nanomatériaux pour l'environnement",
         "Microscopie pour Biomatériaux",
