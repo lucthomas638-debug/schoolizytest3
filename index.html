@@ -319,6 +319,30 @@
             transform: translateY(-5px); 
             box-shadow: 0 15px 30px rgba(132, 89, 207, 0.15); /* Ombre légèrement violette */
         }
+    
+        .btn-master:hover {
+            background: #f9f7ff; /* Fond très légèrement violet */
+            border-color: var(--brand-school);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(132, 89, 207, 0.15);
+        }
+        
+        /* --- AFFICHAGE LECTEUR PDF DANS LA LEÇON --- */
+        .pdf-lesson-viewer {
+            width: 100%;
+            height: 80vh; /* Prend 80% de la hauteur de l'écran */
+            min-height: 600px;
+            border: none;
+            border-radius: 15px;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.1);
+            background-color: #e9ecef;
+        }
+        
+        .lesson-container.pdf-mode {
+            padding: 1rem; /* On réduit le padding pour laisser la place au PDF */
+            background: transparent;
+            box-shadow: none;
+        }
 
 
 
@@ -2803,6 +2827,13 @@ body.dark-mode .eq-op-display { background: #2c2c44; border-right-color: var(--b
                         <div>
                             <h3>Lycée</h3>
                             <p>2nde à Terminale</p>
+                        </div>
+                    </div>
+                    <div class="big-level-btn btn-master" onclick="openLevelPage('superieur')">
+                        <span>🔬</span>
+                        <div>
+                            <h3>Supérieur</h3>
+                            <p>Licence & Master</p>
                         </div>
                     </div>
                 </div>
