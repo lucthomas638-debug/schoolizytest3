@@ -488,7 +488,7 @@ async function displayLesson(num) {
     if (content.toLowerCase().endsWith('.pdf')) {
         // ⚠️ N'oublie pas de créer le dossier 'cours_pdf' (en public) dans le Storage de ton Supabase !
         const bucketName = 'cours_pdf'; 
-        const pdfUrl = `https://kuuxhzyfnqrdoewfoiyf.supabase.co/storage/v1/object/public/cours_pdf/`;
+        const pdfUrl = `https://kuuxhzyfnqrdoewfoiyf.supabase.co/storage/v1/object/public/${bucketName}/${content}`;
         
         // On ouvre la modale des annales, mais avec l'URL du cours !
         openPdfModal(pdfUrl, lessonTitle);
