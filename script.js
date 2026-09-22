@@ -467,10 +467,10 @@ function openChaptersPage(list) {
 }
 
 async function displayLesson(num) {
-    // 1. On va chercher le contenu ET le titre dans la base de données
+    // 1. On demande UNIQUEMENT 'content' (car 'title' n'existe pas dans ta table)
     const { data, error } = await sb
         .from('lessons')
-        .select('content, title') 
+        .select('content') 
         .eq('chapter_number', num)
         .eq('class_id', state.currentClassCode.trim())
         .eq('subject_id', state.currentSubject.toLowerCase().trim())
@@ -482,11 +482,11 @@ async function displayLesson(num) {
     }
 
     const content = data.content.trim();
-    const lessonTitle = data.title ? data.title : `Cours - Chapitre ${num}`;
+    // On génère un titre automatiquement pour la modale
+    const lessonTitle = `Cours - Chapitre ${num}`;
 
     // 2. On vérifie si c'est un PDF
     if (content.toLowerCase().endsWith('.pdf')) {
-        // ⚠️ N'oublie pas de créer le dossier 'cours_pdf' (en public) dans le Storage de ton Supabase !
         const bucketName = 'cours_pdf'; 
         const pdfUrl = `https://kuuxhzyfnqrdoewfoiyf.supabase.co/storage/v1/object/public/${bucketName}/${content}`;
         
@@ -494,7 +494,7 @@ async function displayLesson(num) {
         openPdfModal(pdfUrl, lessonTitle);
         
     } else {
-        // 3. Si ce n'est pas un PDF, on l'affiche comme du texte normal (pour tes cours de Lycée/Collège)
+        // 3. Si ce n'est pas un PDF, on l'affiche comme du texte normal
         document.getElementById('lesson-container').innerHTML = content;
         if (window.MathJax) MathJax.typesetPromise();
         navigateTo('view-lesson');
