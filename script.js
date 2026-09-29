@@ -50,6 +50,7 @@ const subjectsData = {
         "Nanomatériaux pour l'environnement",
         "Microscopie pour Biomatériaux",
         "Matériaux pour la Santé"
+        "nanomatériaux fonctionnels"
     ]
 };
 
