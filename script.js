@@ -49,7 +49,7 @@ const subjectsData = {
         "Dynamique Moléculaire",
         "Nanomatériaux pour l'environnement",
         "Microscopie pour Biomatériaux",
-        "Matériaux pour la Santé"
+        "Matériaux pour la Santé",
         "nanomatériaux fonctionnels"
     ]
 };
