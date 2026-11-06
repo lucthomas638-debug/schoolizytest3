@@ -3,10 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Schoolizy - Réussir ensemble</title>
+    <title>Schoolizy – Réviser du CP au Master : cours, quiz et outils</title>
+    <meta name="description" content="Schoolizy, la plateforme de révision du CP au Master : cours, fiches récap, quiz, flashcards, exercices corrigés et outils (cercle trigo, tableau périodique, convertisseur…).">
+    <meta name="theme-color" content="#8459cf">
+
+    <!-- Aperçu quand le lien est partagé (WhatsApp, Discord, réseaux…) -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Schoolizy">
+    <meta property="og:title" content="Schoolizy – l'école c'est cool ici !">
+    <meta property="og:description" content="Cours, fiches, quiz, flashcards et outils pour réviser du CP au Master.">
+    <meta property="og:locale" content="fr_FR">
+
+    <!-- Icône de l'onglet (un « S » aux couleurs Schoolizy, sans fichier à ajouter) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%238459cf'/%3E%3Ctext x='32' y='45' font-family='Segoe UI,Arial,sans-serif' font-size='40' font-weight='900' text-anchor='middle' fill='%23f5bf78'%3ES%3C/text%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%238459cf'/%3E%3Ctext x='32' y='45' font-family='Segoe UI,Arial,sans-serif' font-size='40' font-weight='900' text-anchor='middle' fill='%23f5bf78'%3ES%3C/text%3E%3C/svg%3E">
     
-    <!-- defer : ne bloque plus l'affichage ; l'ordre d'exécution (supabase puis script.js) est conservé -->
-    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- defer : ne bloque plus l'affichage ; l'ordre d'exécution (supabase puis script.js) est conservé.
+         Versions fixées : une mise à jour d'une librairie ne peut plus casser le site sans prévenir. -->
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 
     <script>
       window.MathJax = {
@@ -15,7 +29,7 @@
         }
       };
     </script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
 
     <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
@@ -390,8 +404,10 @@
         }
 
         /* --- LESSON & QUIZ --- */
-        /* --- STYLE DES TITRES DE SECTION (I, II, III...) --- */
-        h2 { 
+        /* --- STYLE DES TITRES DE SECTION (I, II, III...) ---
+           :not(.view-title) : avant, cette règle en !important s'appliquait AUSSI aux grands
+           titres de page et écrasait leur style « intérieur jaune + contour violet ». */
+        h2:not(.view-title) { 
             color: var(--brand-school) !important; /* Titre en VIOLET */
             text-align: center !important;         /* CENTRÉ */
             margin-top: 40px !important; 
@@ -613,7 +629,7 @@
 
         /* Responsive */
         @media (max-width: 768px) {
-            .nav-links { display: none; }
+            .nav-links { display: none; }  /* remplacé par le menu déroulant (voir MENU MOBILE) */
             .hero-title { font-size: 2rem; }
             .slogan-part { font-size: 1.5rem; }
             .big-level-btn { width: 100%; max-width: 300px; padding: 1rem; margin: 0 auto; display:flex; align-items:center; text-align: left; gap: 1rem;}
@@ -916,11 +932,11 @@
 
 /* 2. STYLE POMODORO (Centré + Couleurs demandées + Boutons finaux) */
         .pomodoro-wrapper {
-            /* CENTRAGE ABSOLU PARFAIT */
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
+            /* Placé dans la barre, juste avant les liens (avant : centré en position absolue,
+               il chevauchait « Accueil » sur les écrans moyens) */
+            position: relative;
+            margin-right: 1.5rem;
+            flex-shrink: 0;
             z-index: 100;
 
             /* DESIGN BASE */
@@ -956,6 +972,7 @@
         /* --- INTERACTIONS & COULEURS --- */
         
         .pomodoro-wrapper:hover,
+        .pomodoro-wrapper.open,
         .pomodoro-wrapper.running {
             background: #fffcf5; /* Fond Orange Clair */
             border-color: var(--brand-school); /* Bord Violet */
@@ -964,6 +981,7 @@
         }
 
         .pomodoro-wrapper:hover .pomo-details,
+        .pomodoro-wrapper.open .pomo-details,
         .pomodoro-wrapper.running .pomo-details {
             max-width: 200px;
             opacity: 1;
@@ -2308,8 +2326,8 @@ math-field::part(virtual-keyboard-toggle) {
 
 /* --- VUE AUTH (Connexion / Inscription) --- */
 
-/* La boîte blanche centrale */
-#view-auth .info-page-content {
+/* La boîte blanche centrale (aussi pour « nouveau mot de passe » et « espace parent ») */
+#view-auth .info-page-content, #view-reset-password .info-page-content, #view-parent .info-page-content {
     max-width: 450px;
     margin: 0 auto;
     padding: 30px;
@@ -2332,7 +2350,7 @@ math-field::part(virtual-keyboard-toggle) {
 }
 
 /* Style général des inputs dans Auth */
-#view-auth .search-input {
+.auth-form .search-input {
     width: 100%;
     margin-bottom: 12px;
     border: 1px solid #eee;
@@ -2348,7 +2366,7 @@ math-field::part(virtual-keyboard-toggle) {
 }
 
 /* Le bouton principal */
-#btn-auth-action {
+#btn-auth-action, #btn-new-password {
     width: 100%;
     height: 50px;
     border-radius: 50px;
@@ -2362,7 +2380,7 @@ math-field::part(virtual-keyboard-toggle) {
     margin-bottom: 15px;
 }
 
-#btn-auth-action:hover {
+#btn-auth-action:hover, #btn-new-password:hover {
     filter: brightness(1.1);
     transform: translateY(-2px);
 }
@@ -2469,7 +2487,7 @@ math-field::part(virtual-keyboard-toggle) {
 }
 
 /* Style du message d'erreur */
-#auth-msg {
+#auth-msg, #reset-msg {
     margin-top: 15px;
     font-size: 0.9rem;
     font-weight: bold;
@@ -2581,6 +2599,356 @@ body.dark-mode .eq-op-btn { background: #2c2c44; }
 body.dark-mode .eq-success-box { background: #1a2e20; }
 body.dark-mode .eq-op-display { background: #2c2c44; border-right-color: var(--border-soft); }
     
+
+/* =============================================================================
+   EN-TÊTE : BOUTONS ICÔNES, MENU MOBILE
+   ============================================================================= */
+.nav-icon-btn {
+    background: none; border: 2px solid transparent; border-radius: 50%;
+    width: 40px; height: 40px; margin-left: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; cursor: pointer; transition: all 0.2s ease;
+}
+.nav-icon-btn:hover { border-color: var(--brand-school); background: #fffcf5; }
+.nav-icon-btn:focus-visible, .nav-links li:focus-visible, .logo:focus-visible {
+    outline: 3px solid var(--brand-izy); outline-offset: 2px;
+}
+
+/* Bouton « hamburger » : 3 barres qui se transforment en croix */
+#nav-burger { display: none; flex-direction: column; gap: 4px; }
+#nav-burger span {
+    display: block; width: 20px; height: 2.5px; border-radius: 2px;
+    background: var(--brand-school); transition: transform 0.25s, opacity 0.2s;
+}
+header.menu-open #nav-burger span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+header.menu-open #nav-burger span:nth-child(2) { opacity: 0; }
+header.menu-open #nav-burger span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+@media (max-width: 768px) {
+    nav { padding: 0.75rem 1rem; }
+    .nav-offres-badge { margin-left: 12px; padding: 4px 10px; }
+    .pomodoro-wrapper { margin-right: 0; }
+    #nav-burger { display: flex; }
+
+    /* Le menu s'ouvre en panneau sous la barre */
+    header.menu-open .nav-links {
+        display: flex; flex-direction: column; align-items: stretch; gap: 0;
+        position: absolute; top: 100%; left: 0; right: 0;
+        background: white; padding: 0.5rem 1rem 1rem;
+        box-shadow: 0 12px 25px rgba(0,0,0,0.1);
+        border-top: 1px solid #eee;
+        animation: fadeIn 0.2s ease-out;
+    }
+    header.menu-open .nav-links li {
+        padding: 0.9rem 0.5rem; border-bottom: 1px solid #f2f2f5; font-size: 1.05rem;
+    }
+    header.menu-open .nav-links li:last-child { border-bottom: none; }
+    header.menu-open #nav-user { margin-left: 0 !important; }
+    header.menu-open .btn-logout-izy { margin-top: 0.5rem; text-align: center; justify-content: center; }
+}
+@media (max-width: 768px) {
+    /* Accueil : le contenu centré verticalement était coupé en haut sur téléphone */
+    #view-home.active { justify-content: flex-start; }
+    h2.view-title { font-size: 2rem; -webkit-text-stroke-width: 2px; }
+
+    /* Pomodoro : sur téléphone, les commandes s'ouvrent dans une bulle sous l'icône
+       au lieu d'élargir la barre (qui poussait le menu hors de l'écran) */
+    .pomodoro-wrapper, .pomodoro-wrapper:hover, .pomodoro-wrapper.open, .pomodoro-wrapper.running {
+        overflow: visible; padding: 5px; background: transparent; border-color: transparent; box-shadow: none;
+    }
+    .pomodoro-wrapper .pomo-details {
+        position: absolute; top: calc(100% + 10px); left: 50%; transform: translateX(-50%);
+        max-width: none; margin-left: 0; padding: 6px 14px; gap: 6px;
+        background: #fffcf5; border: 2px solid var(--brand-school); border-radius: 50px;
+        box-shadow: 0 6px 18px rgba(132, 89, 207, 0.2);
+        visibility: hidden; transition: opacity 0.2s, visibility 0.2s;
+    }
+    .pomodoro-wrapper:hover .pomo-details, .pomodoro-wrapper.open .pomo-details, .pomodoro-wrapper.running .pomo-details {
+        max-width: none; margin-left: 0; visibility: visible;
+    }
+    body.dark-mode .pomodoro-wrapper .pomo-details { background: #26263a; }
+}
+@media (max-width: 420px) {
+    .logo { font-size: 1.25rem; }
+    .nav-offres-badge { font-size: 0.8rem; margin-left: 8px; }
+    .nav-icon-btn { margin-left: 4px; width: 36px; height: 36px; }
+}
+
+/* =============================================================================
+   BARRE DE CHARGEMENT (appels Supabase)
+   ============================================================================= */
+#loading-bar {
+    position: fixed; top: 0; left: 0; height: 3px; width: 0; z-index: 10001;
+    background: linear-gradient(90deg, var(--brand-school), var(--brand-izy));
+    box-shadow: 0 0 8px rgba(132, 89, 207, 0.5);
+    opacity: 0; transition: opacity 0.3s ease, width 0.3s ease;
+    pointer-events: none;
+}
+body.is-loading #loading-bar { opacity: 1; animation: loading-progress 8s cubic-bezier(0.1, 0.7, 0.3, 1) forwards; }
+body.is-loading main { cursor: progress; }
+@keyframes loading-progress { from { width: 0; } to { width: 92%; } }
+@media (prefers-reduced-motion: reduce) {
+    body.is-loading #loading-bar { animation: none; width: 100%; }
+}
+
+/* Messages : variante erreur */
+.izy-toast { cursor: pointer; width: max-content; max-width: calc(100vw - 32px); text-align: center; }
+.izy-toast.error { border-color: var(--accent-red); color: #c0392b; }
+
+/* =============================================================================
+   MODE SOMBRE (bouton 🌙 dans la barre). Les règles body.dark-mode déjà présentes
+   plus haut (annales, trigo, équations...) sont conservées ; celles-ci couvrent le reste.
+   ============================================================================= */
+body.dark-mode {
+    --bg-light: #13131f;
+    --text-dark: #e9e8f2;
+    --border-soft: #34344c;
+    --text-muted: #a3a3b8;
+    --surface: #1e1e2f;
+    --surface-cream: #26263a;
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+}
+body.dark-mode header, body.dark-mode header.menu-open .nav-links { background: #1a1a2b; border-color: #2c2c44; }
+body.dark-mode .nav-links li { color: var(--text-dark); }
+body.dark-mode header.menu-open .nav-links li { border-color: #2c2c44; }
+body.dark-mode .nav-icon-btn:hover, body.dark-mode .nav-offres-badge { background: #26263a; }
+body.dark-mode .pomodoro-wrapper:hover, body.dark-mode .pomodoro-wrapper.open,
+body.dark-mode .pomodoro-wrapper.running { background: #26263a; }
+body.dark-mode #pomo-timer { color: var(--text-dark); }
+
+body.dark-mode #view-home.active { background: linear-gradient(180deg, #1a1a2b 0%, var(--bg-light) 100%); }
+body.dark-mode .hero-subtitle, body.dark-mode .card p, body.dark-mode .class-btn p,
+body.dark-mode .subject-card p, body.dark-mode .big-level-btn p { color: #a3a3b8; }
+body.dark-mode .slogan-part span::after { opacity: 0.35; }
+
+/* Surfaces (cartes, panneaux, boîtes) */
+body.dark-mode .card, body.dark-mode .class-btn, body.dark-mode .subject-card,
+body.dark-mode .big-level-btn, body.dark-mode .chapter-card-interactive,
+body.dark-mode .info-page-content, body.dark-mode #view-auth .info-page-content, body.dark-mode #view-reset-password .info-page-content, body.dark-mode #view-parent .info-page-content,
+body.dark-mode .lesson-container, body.dark-mode .quiz-question-card, body.dark-mode #quiz-container,
+body.dark-mode .quiz-result-box, body.dark-mode .exercise-card, body.dark-mode .fiche-section,
+body.dark-mode .flashcard-front, body.dark-mode .flashcard-back, body.dark-mode .actions-toolbar,
+body.dark-mode .tool-controls, body.dark-mode .canvas-container, body.dark-mode .converter-card,
+body.dark-mode .element-details, body.dark-mode .result-box, body.dark-mode .mol-screen,
+body.dark-mode .mol-keyboard, body.dark-mode .modal-card, body.dark-mode .btn-back,
+body.dark-mode .search-container, body.dark-mode #search-results, body.dark-mode #recite-game-zone,
+body.dark-mode #recite-results, body.dark-mode .calc-popup, body.dark-mode .calc-popup-header,
+body.dark-mode .pdf-modal-content, body.dark-mode .izy-toast, body.dark-mode .eq-action-box,
+body.dark-mode .about-block {
+    background: #1e1e2f !important;
+    color: var(--text-dark);
+    border-color: #34344c;
+}
+body.dark-mode .card:hover, body.dark-mode .class-btn:hover, body.dark-mode .subject-card:hover,
+body.dark-mode .big-level-btn:hover, body.dark-mode .chapter-card-interactive.selected {
+    background: #26263a !important; border-color: var(--brand-school) !important;
+}
+body.dark-mode .btn-back { color: var(--text-dark); }
+body.dark-mode .chapter-card-interactive h3 { color: var(--text-dark) !important; }
+
+/* Le contenu des cours était forcé en noir : on le passe en clair */
+body.dark-mode .lesson-container p, body.dark-mode .lesson-container li,
+body.dark-mode .lesson-container div, body.dark-mode .exercise-body,
+body.dark-mode .correction-box div { color: #e9e8f2 !important; }
+body.dark-mode .lesson-container strong { color: #c3a8f5; }
+body.dark-mode .definition { background-color: #2a2442; }
+body.dark-mode .propriete { background-color: #332d1c; }
+body.dark-mode .formule-box { background-color: #26263a; border-color: #34344c; color: var(--text-dark); }
+body.dark-mode .correction-box { background-color: #241f36; }
+body.dark-mode h2:not(.view-title) { color: #c3a8f5 !important; }
+
+/* Quiz */
+body.dark-mode .quiz-header { background: #26263a !important; }
+body.dark-mode .quiz-option { background: #26263a; border-color: #34344c; color: var(--text-dark); }
+body.dark-mode .quiz-option:hover { background: #2e2e46; border-color: #4a4a66; }
+body.dark-mode .quiz-option.selected { background-color: #2f2650 !important; }
+body.dark-mode .quiz-option.correct { background-color: #173825 !important; color: #8ee6ad !important; }
+body.dark-mode .quiz-option.wrong { background-color: #3d1c20 !important; color: #f5a3a3 !important; }
+body.dark-mode .btn-nav, body.dark-mode .btn-nav-quick { background: #1e1e2f !important; }
+body.dark-mode .btn-nav:hover, body.dark-mode .btn-nav-quick:hover { background: var(--brand-school) !important; color: white !important; }
+body.dark-mode #countdown-overlay, body.dark-mode #recite-countdown-overlay { background: #1e1e2f !important; }
+body.dark-mode .flash-txt { color: var(--text-dark); }
+body.dark-mode .flashcard-hint { background: #2f2650; }
+
+/* Formulaires */
+body.dark-mode input, body.dark-mode select, body.dark-mode .search-input, body.dark-mode math-field {
+    background: #26263a; color: var(--text-dark); border-color: #34344c;
+}
+body.dark-mode input::placeholder { color: #8a8aa0; }
+body.dark-mode .conv-tab { background: #26263a; color: #c9c8d8; }
+body.dark-mode .conv-tab.active { background: #2f2650 !important; color: #d9c8ff !important; }
+body.dark-mode .mode-btn { background: #26263a; color: #c9c8d8; border-color: #34344c; }
+body.dark-mode .btn-calc.num, body.dark-mode .btn-calc.atom { background: #2c2c44; color: var(--text-dark); border-color: #44445e; box-shadow: 0 3px 0 #11111b; }
+body.dark-mode .btn-calc.atom.main { background: #2f2650; color: #d9c8ff; }
+body.dark-mode .step-line { color: #c9c8d8; border-color: #34344c; }
+body.dark-mode #quiz-options-bar, body.dark-mode .instruction-box { background: #1e1e2f !important; color: var(--text-dark) !important; }
+
+body.dark-mode .pomodoro-wrapper { background: transparent; }
+body.dark-mode .search-btn, body.dark-mode .btn-sablier { background-color: #26263a !important; }
+body.dark-mode .btn-sablier { border-color: #34344c; }
+body.dark-mode h2.view-title { border-bottom-color: #34344c; }
+body.dark-mode .btn-secondary { background-color: #1e1e2f !important; }
+
+/* Les dessins (repère, traceur, cercle trigo) restent sur fond clair pour rester lisibles */
+body.dark-mode canvas { background: #fdfdfd; border-radius: 8px; }
+
+/* =============================================================================
+   PAGE À PROPOS
+   ============================================================================= */
+.about-page { max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
+.about-block {
+    background: white; border-radius: 20px; padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 2px solid transparent;
+}
+.about-block h3 { color: var(--brand-school); font-size: 1.3rem; margin-bottom: 0.75rem; }
+.about-block p { color: #555; font-size: 1.05rem; line-height: 1.7; }
+.about-block p + p { margin-top: 0.75rem; }
+body.dark-mode .about-block p { color: #c9c8d8; }
+.about-lead { font-size: 1.2rem !important; color: var(--text-dark) !important; }
+.about-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 0.5rem; }
+.about-item { display: flex; gap: 12px; align-items: flex-start; }
+.about-item .about-ico { font-size: 1.6rem; line-height: 1.2; }
+.about-item strong { display: block; color: var(--text-dark); margin-bottom: 2px; }
+.about-item span.txt { color: #666; font-size: 0.95rem; line-height: 1.5; }
+body.dark-mode .about-item span.txt { color: #a3a3b8; }
+.about-cta { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.about-cta .btn-nav { justify-content: center; }
+.todo-fill { background: #fff3cd; border-radius: 4px; padding: 0 4px; }
+
+
+
+/* =============================================================================
+   FORMULAIRE DE COMPTE (inscription, connexion, mot de passe)
+   ============================================================================= */
+#view-reset-password .info-page-content, #view-parent .info-page-content { max-width: 480px; }
+.auth-form { display: flex; flex-direction: column; text-align: left; }
+.auth-form [hidden], .link-btn[hidden] { display: none !important; }
+.auth-form .auth-intro { text-align: center; }
+.auth-switch-container { text-align: center; }
+.auth-intro { color: #666; font-size: 0.95rem; text-align: center; margin-bottom: 18px; line-height: 1.5; }
+.auth-intro.small { font-size: 0.85rem; }
+.auth-intro a, .auth-check a { color: var(--brand-school); font-weight: 600; }
+.auth-field { display: block; width: 100%; }
+.auth-field > span:first-child {
+    display: block; font-size: 0.82rem; font-weight: 700; color: #555; margin: 0 0 5px 4px;
+}
+.auth-field em { font-weight: 400; color: #999; font-style: normal; }
+.form-row { display: flex; gap: 10px; }
+.form-row .auth-field { flex: 1; min-width: 0; }
+.auth-form .search-input:focus { outline: none; border-color: var(--brand-school); box-shadow: 0 0 0 3px rgba(132, 89, 207, 0.15); }
+.auth-form .search-input.invalid { border-color: var(--accent-red); }
+.auth-box-info {
+    background: #f6f2ff; border: 1px solid #e4dafa; border-radius: 14px; padding: 12px 14px 2px; margin-bottom: 12px;
+}
+.auth-box-info p { font-size: 0.88rem; color: #555; margin-bottom: 10px; line-height: 1.45; }
+.auth-check { display: flex; gap: 10px; align-items: flex-start; font-size: 0.88rem; color: #555; margin: 4px 0 14px; cursor: pointer; line-height: 1.45; }
+.auth-check input { width: 18px; height: 18px; margin-top: 1px; flex-shrink: 0; accent-color: var(--brand-school); }
+.password-wrap { position: relative; display: block; }
+.password-wrap .search-input { padding-right: 48px; }
+.pw-toggle {
+    position: absolute; right: 8px; top: 6px; width: 36px; height: 36px; border: none; background: none;
+    cursor: pointer; font-size: 1.05rem; border-radius: 50%; opacity: 0.6;
+}
+.pw-toggle:hover, .pw-toggle.on { opacity: 1; }
+.pw-rules { list-style: none; padding: 0; margin: -4px 0 10px 4px; display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px; font-size: 0.8rem; }
+.pw-rules:empty { display: none; }
+.pw-rules li { color: #999; }
+.pw-rules li::before { content: '○ '; }
+.pw-rules li.ok { color: #1e8449; }
+.pw-rules li.ok::before { content: '✔ '; }
+.link-btn {
+    background: none; border: none; color: var(--brand-school); font-weight: 600; font-size: 0.88rem;
+    cursor: pointer; padding: 2px 4px; margin: -4px 0 12px auto; display: block; text-decoration: underline;
+}
+#btn-auth-action:disabled, #btn-new-password:disabled { opacity: 0.6; cursor: progress; }
+@media (max-width: 420px) {
+    .form-row { flex-direction: column; gap: 0; }
+    .pw-rules { grid-template-columns: 1fr; }
+    #view-auth .info-page-content, #view-reset-password .info-page-content, #view-parent .info-page-content { padding: 22px 18px; }
+}
+
+/* Espace parent */
+.parent-children { display: flex; flex-direction: column; gap: 12px; }
+.child-card { border: 2px solid #eee; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.child-card h4 { font-size: 1.1rem; color: var(--text-dark); }
+.child-card .child-meta { font-size: 0.85rem; color: #777; }
+.child-card .child-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.child-card .child-actions button { flex: 1; min-width: 120px; justify-content: center; }
+.child-status { font-weight: 700; font-size: 0.9rem; }
+.child-status.granted { color: #1e8449; }
+.child-status.refused { color: #c0392b; }
+.child-status.pending { color: #b9770e; }
+
+body.dark-mode .auth-intro, body.dark-mode .auth-check, body.dark-mode .auth-field > span:first-child, body.dark-mode .auth-box-info p { color: #c9c8d8; }
+body.dark-mode .auth-box-info { background: #241f36; border-color: #3a3256; }
+body.dark-mode .child-card { border-color: #34344c; }
+body.dark-mode .child-card h4 { color: var(--text-dark); }
+
+/* =============================================================================
+   PAGE OFFRES
+   ============================================================================= */
+.offers-banner {
+    background: #fffcf5; color: var(--brand-school); padding: 15px 20px; border-radius: 15px;
+    text-align: center; margin: 0 auto 30px; max-width: 900px; font-weight: 600;
+    border: 2px dashed var(--brand-izy);
+}
+.offers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; align-items: stretch; }
+.offer-card {
+    position: relative; background: white; border-radius: 20px; padding: 2rem 1.5rem 1.5rem;
+    border: 2px solid #eee; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.offer-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(132, 89, 207, 0.15); }
+.offer-card.featured { border-color: var(--brand-school); background: #fcfaff; }
+.offer-card.family { background: var(--brand-school); border-color: var(--brand-school); color: white; }
+.offer-tag {
+    position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
+    background: var(--brand-izy); color: var(--text-dark); font-size: 0.75rem; font-weight: 800;
+    padding: 4px 12px; border-radius: 20px; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.offer-ico { font-size: 2.2rem; }
+.offer-card h3 { margin: 8px 0 4px; font-size: 1.3rem; color: var(--text-dark); }
+.offer-card.family h3 { color: white; }
+.offer-price { font-size: 1.7rem; font-weight: 900; color: var(--brand-school); }
+.offer-card.family .offer-price { color: white; }
+.offer-price small { font-size: 0.9rem; font-weight: 600; opacity: 0.8; }
+.offer-sub { font-size: 0.85rem; opacity: 0.9; margin-top: 2px; }
+.offer-list { list-style: none; padding: 0; margin: 18px 0; text-align: left; font-size: 0.92rem; width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.offer-card:not(.family) .offer-list { color: #555; }
+.offer-list li.no { color: #999; }
+.offer-list li.soon { color: #888; }
+.offer-card.family .offer-list li.soon { color: rgba(255,255,255,0.75); }
+.soon-badge {
+    display: inline-block; font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+    background: #f3f0ff; color: var(--brand-school); padding: 2px 8px; border-radius: 10px; margin-left: 4px; vertical-align: 1px;
+}
+.offer-btn { width: 100%; justify-content: center; margin-top: auto; }
+.offer-card.family .offer-btn { border: none !important; }
+.offers-note { text-align: center; color: #888; font-size: 0.9rem; margin-top: 1.5rem; }
+
+/* Calculateur famille */
+.family-calc { width: 100%; background: rgba(255,255,255,0.12); border-radius: 15px; padding: 14px; margin-bottom: 14px; animation: fadeIn 0.3s ease-out; }
+.family-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-weight: 600; font-size: 0.95rem; }
+.stepper { display: flex; align-items: center; gap: 10px; }
+.stepper button {
+    width: 34px; height: 34px; border-radius: 50%; border: 2px solid white; background: transparent;
+    color: white; font-size: 1.2rem; font-weight: 800; cursor: pointer; line-height: 1;
+}
+.stepper button:hover:not(:disabled) { background: white; color: var(--brand-school); }
+.stepper button:disabled { opacity: 0.4; cursor: default; }
+.stepper output { min-width: 1.5em; text-align: center; font-size: 1.3rem; font-weight: 900; }
+.family-total { font-size: 1.6rem; font-weight: 900; margin-top: 10px; }
+.family-compare { font-size: 0.85rem; opacity: 0.9; margin-top: 4px; }
+
+body.dark-mode .offer-card { background: #1e1e2f; border-color: #34344c; }
+body.dark-mode .offer-card.featured { background: #231d38; border-color: var(--brand-school); }
+body.dark-mode .offer-card.family { background: #4b3290; border-color: #4b3290; }
+body.dark-mode .offer-card:not(.family) .offer-list { color: #c9c8d8; }
+body.dark-mode .offers-banner { background: #26263a; }
+body.dark-mode .soon-badge { background: #2f2650; color: #d9c8ff; }
+
 /* --- PETIT MESSAGE ÉPHÉMÈRE (showToast) --- */
 .izy-toast {
     position: fixed; left: 50%; bottom: 30px; transform: translate(-50%, 20px);
@@ -2593,40 +2961,44 @@ body.dark-mode .eq-op-display { background: #2c2c44; border-right-color: var(--b
 .izy-toast.success { border-color: var(--accent-green); color: #1e8449; }
 </style>
 
-<script defer src="https://unpkg.com/mathlive"></script>
+<script defer src="https://unpkg.com/mathlive@0.111.4"></script>
     
 </head>
 <body>
+    <!-- Applique le thème mémorisé avant l'affichage (évite un flash blanc en mode sombre) -->
+    <script>try { if (localStorage.getItem('schoolizy-theme') === 'dark') document.body.classList.add('dark-mode'); } catch (e) {}</script>
+    <div id="loading-bar" aria-hidden="true"></div>
 
     <!-- Header / Nav -->
 <header>
         <nav>
-            <div class="logo" onclick="navigateTo('view-home')">School<span>izy</span>.</div>
+            <div class="logo" onclick="navigateTo('view-home')" role="link" tabindex="0" aria-label="Schoolizy, retour à l'accueil">School<span>izy</span>.</div>
 
             <div class="nav-offres-badge" onclick="navigateTo('view-offres')">
                 <span>⚡</span> Offres
             </div>
             
             <div class="pomodoro-wrapper" id="pomo-container">
-                <span class="pomo-icon">⏱️</span>
+                <!-- Sur téléphone (pas de survol), un appui sur l'icône ouvre le minuteur -->
+                <span class="pomo-icon" onclick="this.parentElement.classList.toggle('open')" title="Minuteur Pomodoro (25 min)">⏱️</span>
                 
             <div class="pomo-details">
                 <span id="pomo-timer">25:00</span>
                 
-                <button id="pomo-btn" onclick="togglePomodoro()">
+                <button id="pomo-btn" onclick="togglePomodoro()" title="Démarrer / Pause" aria-label="Démarrer ou mettre en pause le minuteur">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M8 5V19L19 12L8 5Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
                     </svg>
                 </button>
                 
-                <button id="pomo-reset" onclick="resetPomodoro()" title="Arrêter / Reset">
+                <button id="pomo-reset" onclick="resetPomodoro()" title="Arrêter / Reset" aria-label="Remettre le minuteur à zéro">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect x="4" y="4" width="16" height="16" rx="4" fill="currentColor"/>
                     </svg>
                 </button>
             </div>
             </div>
-                <ul class="nav-links">
+                <ul class="nav-links" id="main-menu">
                     <li onclick="navigateTo('view-home')">Accueil</li>
                     <li onclick="navigateTo('view-apropos')">À propos</li>
                     <li onclick="navigateTo('view-outils')">Outils</li>
@@ -2634,6 +3006,14 @@ body.dark-mode .eq-op-display { background: #2c2c44; border-right-color: var(--b
                     <li id="nav-user" class="user-badge" style="display:none;">💼 <span id="user-name"></span></li>
                     <li id="nav-logout" class="btn-logout-izy" onclick="handleLogout()" style="display:none;">Déconnexion</li>
                 </ul>
+
+                <!-- Mode sombre -->
+                <button id="theme-toggle" class="nav-icon-btn" onclick="toggleTheme()" aria-label="Passer en mode sombre" title="Passer en mode sombre">🌙</button>
+
+                <!-- Bouton menu, visible seulement sur téléphone -->
+                <button id="nav-burger" class="nav-icon-btn" onclick="toggleMobileMenu()" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="main-menu">
+                    <span></span><span></span><span></span>
+                </button>
         </nav>
     
     </header>
@@ -2646,28 +3026,101 @@ body.dark-mode .eq-op-display { background: #2c2c44; border-right-color: var(--b
             <h2 class="view-title">Mon Compte</h2>
             
             <div class="info-page-content">
-                <div id="auth-form-box">
+                <form id="auth-form-box" class="auth-form" novalidate onsubmit="event.preventDefault(); handleAuth();">
+                    <p class="auth-intro" id="auth-intro">Crée ton compte gratuit pour accéder aux quiz, flashcards et exercices.</p>
+
+                    <!-- ===== Champs de l'inscription ===== -->
                     <div id="signup-fields">
                         <div class="form-row">
-                            <input type="text" id="reg-prenom" placeholder="Prénom" class="search-input">
-                            <input type="text" id="reg-nom" placeholder="Nom" class="search-input">
+                            <label class="auth-field"><span>Prénom</span>
+                                <input type="text" id="reg-prenom" class="search-input" autocomplete="given-name" maxlength="50" required></label>
+                            <label class="auth-field"><span>Nom</span>
+                                <input type="text" id="reg-nom" class="search-input" autocomplete="family-name" maxlength="50" required></label>
                         </div>
-                        <input type="tel" id="auth-phone" placeholder="Numéro de téléphone" class="search-input">
+
+                        <label class="auth-field"><span>Date de naissance</span>
+                            <input type="date" id="reg-birth" class="search-input" autocomplete="bday" required onchange="updateAgeFields()" oninput="updateAgeFields()"></label>
+
+                        <!-- Moins de 15 ans : accord d'un parent (règle CNIL) -->
+                        <div id="minor-fields" class="auth-box-info" hidden>
+                            <p><strong>👨‍👩‍👧 Tu as moins de 15 ans</strong> : un parent doit valider ton compte. Il recevra un e-mail avec un lien de validation.</p>
+                            <label class="auth-field"><span>E-mail d'un parent</span>
+                                <input type="email" id="reg-parent-email" class="search-input" autocomplete="off" maxlength="120"></label>
+                        </div>
+
+                        <!-- 15 ans et plus : téléphone facultatif + accord séparé pour les rappels -->
+                        <div id="adult-fields" hidden>
+                            <label class="auth-field"><span>Téléphone <em>(facultatif)</em></span>
+                                <input type="tel" id="auth-phone" class="search-input" autocomplete="tel" maxlength="20" placeholder="06 12 34 56 78"></label>
+                            <label class="auth-check">
+                                <input type="checkbox" id="reg-sms-consent">
+                                <span>Je veux recevoir des <strong>rappels de révision par SMS</strong>. Je peux me désinscrire à tout moment.</span>
+                            </label>
+                        </div>
                     </div>
-        
-                    <input type="email" id="auth-email" placeholder="Email" class="search-input">
-                    <input type="password" id="auth-password" placeholder="Mot de passe" class="search-input">
-                    
-                    <button id="btn-auth-action" onclick="handleAuth()">Créer mon compte</button>
+
+                    <!-- ===== Champs communs ===== -->
+                    <label class="auth-field"><span>E-mail</span>
+                        <input type="email" id="auth-email" class="search-input" autocomplete="email" maxlength="120" required></label>
+
+                    <div id="password-block">
+                        <label class="auth-field"><span>Mot de passe</span>
+                            <span class="password-wrap">
+                                <input type="password" id="auth-password" class="search-input" autocomplete="new-password" maxlength="72" required oninput="renderPasswordRules('auth-password', 'pw-rules')">
+                                <button type="button" class="pw-toggle" onclick="togglePasswordVisibility('auth-password', this)" aria-label="Afficher le mot de passe">👁️</button>
+                            </span>
+                        </label>
+                        <ul class="pw-rules" id="pw-rules" aria-live="polite"></ul>
+                        <button type="button" id="forgot-link" class="link-btn" onclick="setAuthMode('forgot')" hidden>Mot de passe oublié ?</button>
+                    </div>
+
+                    <label class="auth-check" id="cgu-block">
+                        <input type="checkbox" id="reg-cgu">
+                        <span>J'accepte les <a href="cgu.html" target="_blank" rel="noopener">conditions d'utilisation</a> et la <a href="confidentialite.html" target="_blank" rel="noopener">politique de confidentialité</a>.</span>
+                    </label>
+
+                    <button id="btn-auth-action" type="submit">Créer mon compte</button>
                     
                     <div class="auth-switch-container">
-                        <button id="auth-switch" class="btn-secondary" onclick="toggleAuthMode()">
+                        <button id="auth-switch" type="button" class="btn-secondary" onclick="toggleAuthMode()">
                             Déjà un compte ? Se connecter
                         </button>
                     </div>
-                </div>
+                </form>
         
-                <p id="auth-msg"></p>
+                <p id="auth-msg" role="alert"></p>
+            </div>
+        </div>
+
+        <!-- Nouveau mot de passe (après le lien « mot de passe oublié ») -->
+        <div id="view-reset-password" class="view container">
+            <h2 class="view-title">Nouveau mot de passe</h2>
+            <div class="info-page-content">
+                <form class="auth-form" novalidate onsubmit="event.preventDefault(); submitNewPassword();">
+                    <p class="auth-intro">Choisis ton nouveau mot de passe.</p>
+                    <label class="auth-field"><span>Nouveau mot de passe</span>
+                        <span class="password-wrap">
+                            <input type="password" id="new-password" class="search-input" autocomplete="new-password" maxlength="72" oninput="renderPasswordRules('new-password', 'pw-rules-reset')">
+                            <button type="button" class="pw-toggle" onclick="togglePasswordVisibility('new-password', this)" aria-label="Afficher le mot de passe">👁️</button>
+                        </span>
+                    </label>
+                    <ul class="pw-rules" id="pw-rules-reset" aria-live="polite"></ul>
+                    <label class="auth-field"><span>Confirme le mot de passe</span>
+                        <input type="password" id="new-password-2" class="search-input" autocomplete="new-password" maxlength="72"></label>
+                    <button type="submit" id="btn-new-password">Enregistrer</button>
+                </form>
+                <p id="reset-msg" role="alert"></p>
+            </div>
+        </div>
+
+        <!-- Espace parent : validation du compte d'un enfant de moins de 15 ans -->
+        <div id="view-parent" class="view container">
+            <div class="btn-back" onclick="navigateTo('view-home')">← Accueil</div>
+            <h2 class="view-title">Espace Parent</h2>
+            <div class="info-page-content">
+                <p class="auth-intro">Votre enfant a créé un compte Schoolizy et a indiqué votre adresse e-mail. Comme il a moins de 15 ans, votre accord est nécessaire pour qu'il puisse utiliser les activités de révision.</p>
+                <p class="auth-intro small">Les données collectées et vos droits sont décrits dans notre <a href="confidentialite.html" target="_blank" rel="noopener">politique de confidentialité</a>.</p>
+                <div id="parent-children" class="parent-children"></div>
             </div>
         </div>
         
@@ -2678,7 +3131,7 @@ body.dark-mode .eq-op-display { background: #2c2c44; border-right-color: var(--b
                     <span class="title-school">School</span><span class="title-izy">izy</span><br>
                     <span class="slogan-part"><span>l'école c'est cool ici !</span></span>
                 </h1>
-                <p class="hero-subtitle">Ta plateforme de révision gratuite, du CP à la Terminale.</p>
+                <p class="hero-subtitle">Ta plateforme de révision, du CP au Master. Cours et outils gratuits.</p>
                 
                 <!-- Recherche -->
                 <div class="search-wrapper">
@@ -2732,14 +3185,57 @@ body.dark-mode .eq-op-display { background: #2c2c44; border-right-color: var(--b
         <div id="view-apropos" class="view container">
             <div class="btn-back" onclick="navigateTo('view-home')">← Retour Accueil</div>
             <h2 class="view-title">À Propos</h2>
-            <div class="info-page-content">
-                <h3>Notre Mission</h3>
-                <p style="color: #666; font-size: 1.1rem; margin-top: 1rem;">
-                    Schoolizy est né d'une volonté simple : rendre l'éducation accessible à tous, gratuitement et sans stress. 
-                    <br><br>
-                    Nous croyons que chaque élève peut réussir s'il dispose des bons outils et d'un environnement bienveillant.
-                    Ici, pas de notes, pas de jugement, juste du contenu clair pour avancer à son rythme.
-                </p>
+
+            <div class="about-page">
+
+                <section class="about-block">
+                    <h3>🎯 Notre mission</h3>
+                    <p class="about-lead">Rendre les révisions plus simples, plus claires et moins stressantes, du CP jusqu'au Master.</p>
+                    <p>
+                        Schoolizy est né d'une volonté simple : rendre l'éducation accessible à tous.
+                        Nous croyons que chaque élève peut réussir s'il dispose des bons outils et d'un environnement bienveillant.
+                        Ici, pas de notes, pas de jugement : du contenu clair pour avancer à son rythme.
+                    </p>
+                </section>
+
+                <section class="about-block">
+                    <h3>📚 Ce que tu trouves sur Schoolizy</h3>
+                    <div class="about-grid">
+                        <div class="about-item"><span class="about-ico">📖</span><div><strong>Cours et fiches récap</strong><span class="txt">Le cours complet, puis l'essentiel à retenir.</span></div></div>
+                        <div class="about-item"><span class="about-ico">✍️</span><div><strong>Quiz et Défi 1 minute</strong><span class="txt">Pour vérifier ce qui est acquis, avec la correction détaillée.</span></div></div>
+                        <div class="about-item"><span class="about-ico">🧠</span><div><strong>Exercices corrigés</strong><span class="txt">Pour appliquer le cours, avec niveau de difficulté et durée.</span></div></div>
+                        <div class="about-item"><span class="about-ico">🃏</span><div><strong>Flashcards et récitation</strong><span class="txt">Pour mémoriser les définitions et les formules.</span></div></div>
+                        <div class="about-item"><span class="about-ico">🧰</span><div><strong>Outils gratuits</strong><span class="txt">Cercle trigo, repère, tableau périodique, convertisseur, masse molaire, équations…</span></div></div>
+                        <div class="about-item"><span class="about-ico">⏱️</span><div><strong>Minuteur Pomodoro</strong><span class="txt">25 minutes de concentration, puis une pause.</span></div></div>
+                    </div>
+                </section>
+
+                <section class="about-block">
+                    <h3>👋 Qui est derrière Schoolizy ?</h3>
+                    <!-- À COMPLÉTER : remplace le texte surligné par ta présentation, puis retire la classe "todo-fill" -->
+                    <p><span class="todo-fill">[À compléter : ton prénom, ton parcours (ex. étudiant en Master…), et pourquoi tu as créé Schoolizy, en 2 ou 3 phrases.]</span></p>
+                </section>
+
+                <section class="about-block">
+                    <h3>🤝 Nos engagements</h3>
+                    <div class="about-grid">
+                        <div class="about-item"><span class="about-ico">🆓</span><div><strong>Cours et outils gratuits</strong><span class="txt">Les cours et la boîte à outils restent accessibles gratuitement.</span></div></div>
+                        <div class="about-item"><span class="about-ico">🚫</span><div><strong>Pas de publicité</strong><span class="txt">Aucune pub pendant tes révisions.</span></div></div>
+                        <div class="about-item"><span class="about-ico">🔒</span><div><strong>Tes données protégées</strong><span class="txt">Nous ne collectons que le nécessaire et ne revendons rien.</span></div></div>
+                    </div>
+                </section>
+
+                <section class="about-block">
+                    <h3>✉️ Une question, une erreur dans un cours ?</h3>
+                    <p>Écris-nous, on lit tous les messages et on corrige les erreurs signalées.</p>
+                    <!-- À COMPLÉTER : remplace par ton adresse de contact -->
+                    <p><span class="todo-fill">[À compléter : adresse e-mail de contact]</span></p>
+                    <div class="about-cta" style="margin-top: 1.25rem;">
+                        <button class="btn-nav" onclick="navigateTo('view-outils')">🧰 Découvrir les outils</button>
+                        <button class="btn-nav" onclick="navigateTo('view-offres')">⚡ Voir les offres</button>
+                    </div>
+                </section>
+
             </div>
         </div>
 
@@ -2873,66 +3369,84 @@ body.dark-mode .eq-op-display { background: #2c2c44; border-right-color: var(--b
         <div id="view-offres" class="view container">
                 <div class="btn-back" onclick="navigateTo('view-home')">← Retour</div>
                 <h2 class="view-title">Choisis ton Pass</h2>
-            
-                <div id="trial-banner" style="background: #fffcf5; color: var(--brand-school); padding: 15px; border-radius: 15px; text-align: center; margin-bottom: 30px; font-weight: bold; border: 2px dashed var(--brand-izy);">
-                    🎁 1ère Connexion : <strong>Semaine Découverte active</strong> ! Accès complet à 1 matière pendant 7 jours.
+
+                <!-- Avant : annonçait une « Semaine Découverte active » qui n'existait pas encore -->
+                <div class="offers-banner">
+                    🚀 Les abonnements ouvrent bientôt. En attendant, <strong>tout le site est accessible gratuitement</strong> avec un compte.
                 </div>
-            
-                <div class="grid-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-                    
-                    <div class="card">
-                        <span style="font-size: 2rem;">📖</span>
+
+                <div class="offers-grid">
+
+                    <div class="offer-card">
+                        <span class="offer-ico">📖</span>
                         <h3>Izy Free</h3>
-                        <p style="font-size: 1.5rem; font-weight: 900;">Gratuit</p>
-                        <ul style="text-align: left; font-size: 0.9rem; margin: 15px 0; color: #666; list-style: none; padding: 0;">
-                            <li>✅ Accès aux <strong>Cours</strong></li>
-                            <li>✅ Accès aux <strong>Outils</strong></li>
-                            <li>❌ Pas de Quiz ni Récitation</li>
-                            <li>❌ Pas d'Audio-Révision</li>
+                        <p class="offer-price">Gratuit</p>
+                        <ul class="offer-list">
+                            <li>✅ Tous les <strong>cours</strong> et <strong>fiches récap</strong></li>
+                            <li>✅ Toute la <strong>boîte à outils</strong></li>
+                            <li class="no">✖ Pas de quiz ni de récitation</li>
                         </ul>
-                        <button class="btn-secondary" style="width:100%;">Actuel</button>
+                        <button class="btn-secondary offer-btn" onclick="startFreeOffer()">Commencer gratuitement</button>
                     </div>
-            
-                    <div class="card" style="border-color: var(--brand-izy);">
-                        <span style="font-size: 2rem;">⚡</span>
+
+                    <div class="offer-card">
+                        <span class="offer-ico">⚡</span>
                         <h3>Izy Pass</h3>
-                        <p style="font-size: 1.5rem; font-weight: 900;">9€<small>/mois</small></p>
-                        <ul style="text-align: left; font-size: 0.9rem; margin: 15px 0; list-style: none; padding: 0;">
+                        <p class="offer-price">9 €<small> / mois</small></p>
+                        <ul class="offer-list">
                             <li>✅ <strong>2 matières</strong> au choix</li>
-                            <li>✅ 1 seul niveau (ex: Lycée)</li>
-                            <li>✅ Quiz & Récitation illimités</li>
-                            <li>✅ Audio-Révision incluse</li>
+                            <li>✅ 1 niveau (ex : Lycée)</li>
+                            <li>✅ Quiz, flashcards, exercices et récitation illimités</li>
+                            <li class="soon">🔜 Audio-révision <span class="soon-badge">Bientôt</span></li>
                         </ul>
-                        <button class="btn-nav" style="width:100%; justify-content:center;">Prendre le Pass</button>
+                        <button class="btn-nav offer-btn" onclick="subscribeSoon('Izy Pass')">Bientôt disponible</button>
                     </div>
-            
-                    <div class="card" style="border: 2px solid var(--brand-school); background: #fcfaff;">
-                        <span style="font-size: 2rem;">💎</span>
+
+                    <div class="offer-card featured">
+                        <span class="offer-tag">Le plus complet</span>
+                        <span class="offer-ico">💎</span>
                         <h3>Izy Pass Premium</h3>
-                        <p style="font-size: 1.5rem; font-weight: 900; color: var(--brand-school);">14€<small>/mois</small></p>
-                        <ul style="text-align: left; font-size: 0.9rem; margin: 15px 0; list-style: none; padding: 0;">
-                            <li>✅ <strong>Toutes les matières</strong></li>
-                            <li>✅ 1 seul niveau complet</li>
-                            <li>✅ Accès aux Battle Royales</li>
-                            <li>✅ Inscription Concours</li>
+                        <p class="offer-price">14 €<small> / mois</small></p>
+                        <ul class="offer-list">
+                            <li>✅ <strong>Toutes les matières</strong> d'un niveau</li>
+                            <li>✅ Tout ce qu'inclut l'Izy Pass</li>
+                            <li class="soon">🔜 Battle Royales <span class="soon-badge">Bientôt</span></li>
+                            <li class="soon">🔜 Concours <span class="soon-badge">Bientôt</span></li>
                         </ul>
-                        <button class="btn-nav primary" style="width:100%; justify-content:center;">Devenir Premium</button>
+                        <button class="btn-nav offer-btn" onclick="subscribeSoon('Izy Pass Premium')">Bientôt disponible</button>
                     </div>
-            
-                    <div class="card" style="background: var(--brand-school); color: white;">
-                        <span style="font-size: 2rem;">👨‍👩‍👧‍👦</span>
-                        <h3 style="color: white;">Izy Pass Famille</h3>
-                        <p style="font-size: 1.5rem; font-weight: 900;">Dès 18€<small>/mois</small></p>
-                        <p style="font-size: 0.8rem; opacity: 0.9;">14€ + 4€ par enfant</p>
-                        <ul style="text-align: left; font-size: 0.9rem; margin: 15px 0; list-style: none; padding: 0;">
+
+                    <div class="offer-card family">
+                        <span class="offer-ico">👨‍👩‍👧‍👦</span>
+                        <h3>Izy Pass Famille</h3>
+                        <p class="offer-price">Dès 18 €<small> / mois</small></p>
+                        <p class="offer-sub">14 € + 4 € par enfant</p>
+                        <ul class="offer-list">
                             <li>✅ Jusqu'à 5 comptes enfants</li>
                             <li>✅ Tous les niveaux inclus</li>
-                            <li>✅ Économie massive</li>
+                            <li>✅ Dès 2 enfants, moins cher qu'un Premium par enfant</li>
                         </ul>
-                        <button class="btn-secondary" style="width:100%; border:none;">Calculer mon prix</button>
+
+                        <!-- Calculateur de prix (avant : le bouton ne faisait rien) -->
+                        <div class="family-calc" id="family-calc" hidden>
+                            <div class="family-row">
+                                <span>Nombre d'enfants</span>
+                                <div class="stepper">
+                                    <button type="button" onclick="changeKids(-1)" aria-label="Un enfant de moins">−</button>
+                                    <output id="kids-count" aria-live="polite">2</output>
+                                    <button type="button" onclick="changeKids(1)" aria-label="Un enfant de plus">+</button>
+                                </div>
+                            </div>
+                            <p class="family-total"><span id="family-price">22 €</span> / mois</p>
+                            <p class="family-compare" id="family-compare"></p>
+                        </div>
+
+                        <button class="btn-secondary offer-btn" id="btn-family-calc" onclick="toggleFamilyCalc()">Calculer mon prix</button>
                     </div>
-            
+
                 </div>
+
+                <p class="offers-note">Prix mensuels, sans engagement : tu pourras résilier à tout moment depuis ton compte.</p>
             </div>
 
         <!-- Repère vecteurs -->
@@ -3441,6 +3955,19 @@ body.dark-mode .eq-op-display { background: #2c2c44; border-right-color: var(--b
                 <div id="speedrun-recap-list" style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
                     </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Compte d'un moins de 15 ans en attente de l'accord parental -->
+<div id="consent-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+        <div class="modal-icon">👨‍👩‍👧</div>
+        <h3 id="consent-modal-title">En attente de ton parent</h3>
+        <p id="consent-modal-text"></p>
+        <div class="modal-buttons">
+            <button class="btn-modal-close" onclick="document.getElementById('consent-modal').style.display='none'">Fermer</button>
+            <button class="btn-modal-auth" id="btn-resend-parent" onclick="resendParentEmail()">Renvoyer l'e-mail</button>
         </div>
     </div>
 </div>

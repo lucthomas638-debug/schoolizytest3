@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page introuvable – Schoolizy</title>
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#8459cf">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%238459cf'/%3E%3Ctext x='32' y='45' font-family='Segoe UI,Arial,sans-serif' font-size='40' font-weight='900' text-anchor='middle' fill='%23f5bf78'%3ES%3C/text%3E%3C/svg%3E">
+    <style>
+        :root { --brand-school: #8459cf; --brand-izy: #f5bf78; --bg: #F9F9FB; --text: #2D2D3A; --card: #ffffff; --muted: #666; }
+        body.dark { --bg: #13131f; --text: #e9e8f2; --card: #1e1e2f; --muted: #a3a3b8; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            padding: 24px 16px; text-align: center;
+        }
+        .box {
+            background: var(--card); border-radius: 25px; padding: 3rem 2rem; max-width: 520px; width: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06); border: 2px solid var(--brand-school);
+        }
+        .logo { font-size: 1.5rem; font-weight: bold; color: var(--brand-school); margin-bottom: 1.5rem; }
+        .logo span { color: var(--brand-izy); }
+        .code {
+            font-size: 6rem; font-weight: 900; line-height: 1; color: var(--brand-izy);
+            -webkit-text-stroke: 3px var(--brand-school); margin-bottom: 1rem;
+        }
+        h1 { font-size: 1.6rem; color: var(--brand-school); margin-bottom: 0.75rem; }
+        p { color: var(--muted); font-size: 1.05rem; line-height: 1.6; margin-bottom: 2rem; }
+        a.btn {
+            display: inline-block; background: var(--brand-school); color: white; text-decoration: none;
+            padding: 12px 28px; border-radius: 50px; font-weight: bold; transition: transform 0.2s, filter 0.2s;
+        }
+        a.btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        a.btn:focus-visible { outline: 3px solid var(--brand-izy); outline-offset: 3px; }
+    </style>
+</head>
+<body>
+    <script>try { if (localStorage.getItem('schoolizy-theme') === 'dark') document.body.classList.add('dark'); } catch (e) {}</script>
+    <main class="box">
+        <div class="logo">School<span>izy</span>.</div>
+        <div class="code" aria-hidden="true">404</div>
+        <h1>Oups, cette page n'existe pas</h1>
+        <p>Le lien est peut-être incorrect, ou la page a été déplacée.<br>Pas de panique, tes révisions t'attendent à l'accueil !</p>
+        <!-- "./" ramène à la page d'accueil du site, quel que soit le nom du dépôt -->
+        <a class="btn" href="./">← Retour à l'accueil</a>
+    </main>
+    <script>
+        // Sur GitHub Pages, la 404 peut s'afficher depuis un sous-dossier : on vise la racine du site
+        (function () {
+            var parts = location.pathname.split('/').filter(Boolean);
+            var base = location.hostname.endsWith('github.io') && parts.length ? '/' + parts[0] + '/' : '/';
+            document.querySelector('a.btn').setAttribute('href', base);
+        })();
+    </script>
+</body>
+</html>
