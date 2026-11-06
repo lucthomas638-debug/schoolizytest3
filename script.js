@@ -4,7 +4,33 @@
 const supabaseUrl = 'https://kuuxhzyfnqrdoewfoiyf.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dXhoenlmbnFyZG9ld2ZvaXlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NjA2NzQsImV4cCI6MjA4ODEzNjY3NH0.ar-162v-HZ91M80xpDfE_mavK6xyE1Ciu7bZh-PNhHM';
 
-const sb = supabase.createClient(supabaseUrl, supabaseKey);
+/* --- BARRE DE CHARGEMENT ---
+   Chaque appel à Supabase (cours, quiz, connexion...) passe par ce fetch : une fine barre
+   violette apparaît en haut de l'écran pendant le chargement. Elle n'apparaît qu'après
+   150 ms, pour ne pas clignoter quand la réponse est quasi instantanée. */
+let pendingRequests = 0;
+let loadingDelay = null;
+function loadingStart() {
+    pendingRequests++;
+    if (pendingRequests === 1) {
+        loadingDelay = setTimeout(() => document.body.classList.add('is-loading'), 150);
+    }
+}
+function loadingEnd() {
+    pendingRequests = Math.max(0, pendingRequests - 1);
+    if (pendingRequests === 0) {
+        clearTimeout(loadingDelay);
+        document.body.classList.remove('is-loading');
+    }
+}
+function fetchWithLoading(...args) {
+    loadingStart();
+    return fetch(...args).finally(loadingEnd);
+}
+
+const sb = supabase.createClient(supabaseUrl, supabaseKey, {
+    global: { fetch: fetchWithLoading }
+});
 // URL publique du stockage (évite de répéter l'adresse du projet en dur partout)
 const STORAGE_URL = `${supabaseUrl}/storage/v1/object/public`;
 
@@ -38,19 +64,97 @@ function escapeHTML(str) {
     return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-// Petit message éphémère (remplace l'appel à showToast qui n'existait pas)
-function showToast(message, type = 'info') {
+// Message éphémère intégré au site (remplace les alert() du navigateur).
+// type : 'info' (violet), 'success' (vert), 'error' (rouge). duration en ms.
+function showToast(message, type = 'info', duration = 3500) {
     let toast = $('izy-toast');
     if (!toast) {
         toast = document.createElement('div');
         toast.id = 'izy-toast';
+        toast.setAttribute('role', 'status');
+        toast.setAttribute('aria-live', 'polite');
+        toast.onclick = () => toast.classList.remove('visible'); // un clic le ferme
         document.body.appendChild(toast);
     }
+    const icons = { info: 'ℹ️', success: '✅', error: '⚠️' };
     toast.className = `izy-toast ${type}`;
-    toast.textContent = message;
-    toast.classList.add('visible');
+    toast.textContent = `${icons[type] || ''} ${message}`.trim();
+    // petit délai pour relancer l'animation si un message est déjà affiché
+    requestAnimationFrame(() => toast.classList.add('visible'));
     clearTimeout(showToast._t);
-    showToast._t = setTimeout(() => toast.classList.remove('visible'), 3000);
+    showToast._t = setTimeout(() => toast.classList.remove('visible'), duration);
+}
+
+/* --- PAGE OFFRES --- */
+const FAMILY_BASE = 14, FAMILY_PER_CHILD = 4, PREMIUM_PRICE = 14;
+let familyKids = 2;
+
+// "Commencer gratuitement" : vers la création de compte, ou l'accueil si déjà connecté
+function startFreeOffer() {
+    navigateTo(currentUser ? 'view-home' : 'view-auth');
+}
+
+// Les boutons d'abonnement, en attendant le paiement en ligne
+function subscribeSoon(offerName) {
+    showToast(`L'${offerName} arrive bientôt ! En attendant, tout est accessible avec un compte gratuit.`, 'info', 5000);
+}
+
+function toggleFamilyCalc() {
+    const box = $('family-calc');
+    const btn = $('btn-family-calc');
+    if (!box) return;
+    box.hidden = !box.hidden;
+    if (btn) btn.textContent = box.hidden ? 'Calculer mon prix' : 'Masquer le calcul';
+    renderFamilyPrice();
+}
+
+function changeKids(delta) {
+    familyKids = Math.min(5, Math.max(1, familyKids + delta));
+    renderFamilyPrice();
+}
+
+function renderFamilyPrice() {
+    const total = FAMILY_BASE + FAMILY_PER_CHILD * familyKids;
+    const separate = PREMIUM_PRICE * familyKids;
+    $('kids-count').textContent = familyKids;
+    $('family-price').textContent = `${total} €`;
+    const minus = document.querySelector('.stepper button:first-child');
+    const plus = document.querySelector('.stepper button:last-child');
+    if (minus) minus.disabled = familyKids <= 1;
+    if (plus) plus.disabled = familyKids >= 5;
+    // Comparaison honnête : avec 1 seul enfant, le Premium individuel reste moins cher
+    $('family-compare').textContent = separate > total
+        ? `Soit ${separate - total} € d'économie par mois par rapport à ${familyKids} Pass Premium (${separate} €).`
+        : `Avec un seul enfant, l'Izy Pass Premium (${PREMIUM_PRICE} €) reste moins cher.`;
+}
+
+/* --- MENU MOBILE --- */
+function toggleMobileMenu(force) {
+    const header = document.querySelector('header');
+    const btn = $('nav-burger');
+    if (!header) return;
+    const open = typeof force === 'boolean' ? force : !header.classList.contains('menu-open');
+    header.classList.toggle('menu-open', open);
+    if (btn) btn.setAttribute('aria-expanded', String(open));
+}
+
+/* --- MODE SOMBRE (mémorisé sur l'appareil) --- */
+function applyTheme(dark) {
+    document.body.classList.toggle('dark-mode', dark);
+    const btn = $('theme-toggle');
+    if (btn) {
+        btn.textContent = dark ? '☀️' : '🌙';
+        btn.setAttribute('aria-label', dark ? 'Passer en mode clair' : 'Passer en mode sombre');
+        btn.title = btn.getAttribute('aria-label');
+    }
+    // Les canvas (repère, traceur, trigo) sont dessinés en clair : on les garde lisibles
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', dark ? '#1a1a2b' : '#8459cf');
+}
+function toggleTheme() {
+    const dark = !document.body.classList.contains('dark-mode');
+    try { localStorage.setItem('schoolizy-theme', dark ? 'dark' : 'light'); } catch (e) {}
+    applyTheme(dark);
 }
 
 const levelsData = {
@@ -170,6 +274,7 @@ function navigateTo(viewId) {
         if (currentView === 'view-recite') stopReciteTimers();
     }
 
+    toggleMobileMenu(false); // ferme le menu mobile après un choix
     document.querySelectorAll('.view.active').forEach(el => el.classList.remove('active'));
     const target = $(viewId);
 
@@ -326,6 +431,17 @@ async function chooseMode(mode) {
     }
     
     currentUser = user; 
+
+    // Moins de 15 ans : les activités attendent l'accord d'un parent
+    if (!userProfile) await loadUserProfile();
+    if (userProfile && (userProfile.parental_consent === 'pending' || userProfile.parental_consent === 'refused')) {
+        await loadUserProfile(); // le parent vient peut-être de valider
+        if (userProfile.parental_consent === 'pending' || userProfile.parental_consent === 'refused') {
+            showConsentModal();
+            return;
+        }
+    }
+
     state.currentMode = mode;
     loadChapters();
 }
@@ -367,7 +483,7 @@ async function loadChapters() {
             .order('chapter_number', { ascending: true });
 
         if (error || !data || data.length === 0) {
-            return alert("Contenu bientôt disponible pour cette matière !");
+            return showToast("Contenu bientôt disponible pour cette matière !", "info");
         }
         chapters = data.map(l => ({ ...l, title: extractTitle(l.content, "Chapitre " + l.chapter_number) }));
         chaptersCache.set(key, chapters);
@@ -438,7 +554,7 @@ async function prepareMultiQuiz() {
 
     // 2. Sécurité : Vérifier qu'il y a au moins DEUX chapitres
     if (selectedChapters.length < 2) {
-        return alert("Sélectionne au moins 2 chapitres pour ce mode.");
+        return showToast("Sélectionne au moins 2 chapitres pour ce mode.", "info");
     }
 
     // 3. Appel Supabase
@@ -450,7 +566,7 @@ async function prepareMultiQuiz() {
         .eq('subject_id', state.currentSubject.toLowerCase());
 
     if (error || !data || data.length === 0) {
-        return alert("Aucune question trouvée pour ces chapitres.");
+        return showToast("Aucune question trouvée pour ces chapitres.", "error");
     }
 
     // --- LOGIQUE DE MÉMOIRE POUR LE MODE SURVIE ---
@@ -603,7 +719,7 @@ async function displayLesson(num) {
 
         if (error || !data) {
             console.error("Erreur de chargement du cours:", error);
-            return alert("Leçon introuvable pour ce chapitre.");
+            return showToast("Leçon introuvable pour ce chapitre.", "error");
         }
         content = data.content;
     }
@@ -660,7 +776,7 @@ async function openQuiz(chapterNum) {
         .eq('chapter_number', chapterNum);
 
     if (error || !data || data.length === 0) {
-        return alert("Pas de quiz disponible pour ce chapitre.");
+        return showToast("Pas encore de quiz pour ce chapitre.", "info");
     }
 
     // 2. Stockage du réservoir complet pour le futur "Défi 1 minute"
@@ -951,7 +1067,7 @@ async function openFlashcards(chapterNum) {
         .eq('subject_id', state.currentSubject.toLowerCase().trim())
         .eq('chapter_number', chapterNum);
 
-    if (error || !data || data.length === 0) return alert("Pas de flashcards.");
+    if (error || !data || data.length === 0) return showToast("Pas encore de flashcards pour ce chapitre.", "info");
 
     const cardsToShow = shuffled(data).slice(0, 3);
 
@@ -1218,7 +1334,7 @@ async function openFicheRecap(chapterNum) {
                 
                 // Cas 2 : Parenthèse Fermante ")"
                 else if (match[4]) {
-                    if (stack.length < 2) { alert("Erreur : parenthèse fermante en trop."); return; }
+                    if (stack.length < 2) { showToast("Il y a une parenthèse fermante en trop.", "error"); return; }
                     let closingCount = match[5] === '' ? 1 : parseInt(match[5]); // Chiffre après la parenthèse
                     let currentGroup = stack.pop(); // On récupère la boîte du dessus (celle qui se ferme)
                     let parentGroup = stack[stack.length - 1]; // La boîte d'en dessous (qui reçoit le contenu)
@@ -1240,14 +1356,14 @@ async function openFicheRecap(chapterNum) {
                         if (!currentGroup[atom]) currentGroup[atom] = 0;
                         currentGroup[atom] += count;
                     } else {
-                        alert("Erreur : Atome inconnu (" + atom + ")");
+                        showToast(`Atome inconnu : ${atom}`, "error");
                         return;
                     }
                 }
             }
 
             // Avant : une parenthèse non fermée donnait un résultat faux sans prévenir
-            if (stack.length !== 1) { alert("Erreur : une parenthèse n'est pas fermée."); return; }
+            if (stack.length !== 1) { showToast("Une parenthèse n'est pas fermée.", "error"); return; }
 
             // À la fin, tous les atomes sont redescendus dans la première boîte (stack[0])
             let finalCounts = stack[0];
@@ -1851,7 +1967,7 @@ function togglePomodoro() {
                         isPomoRunning = false;
                         btn.innerHTML = POMO_iconPlay;
                         container.classList.remove('running');
-                        alert("🔔 Ding Dong ! C'est la pause !");
+                        showToast("🔔 Ding Dong ! C'est la pause !", "success", 8000);
                     }
                 }, 1000);
             }
@@ -2273,7 +2389,7 @@ async function openRecitation(chapterNum) {
         .eq('subject_id', state.currentSubject.toLowerCase())
         .eq('chapter_number', chapterNum);
 
-    if (error || !data || data.length === 0) return alert("Pas de questions.");
+    if (error || !data || data.length === 0) return showToast("Pas encore de questions à réciter pour ce chapitre.", "info");
 
     reciteChapterData = shuffled(data);
     reciteIndex = 0;
@@ -2659,6 +2775,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     updateFloatingCalcVisibility();
+
+    // Formulaire de compte : état initial (inscription) + date de naissance max = aujourd'hui
+    if ($('reg-birth')) $('reg-birth').max = new Date().toISOString().slice(0, 10);
+    if ($('auth-form-box')) setAuthMode('signup');
+
+    // Thème : le choix mémorisé (déjà appliqué dans le HTML pour éviter un flash), on met le bouton à jour
+    applyTheme(document.body.classList.contains('dark-mode'));
+
+    // Menu mobile : se ferme avec Échap ou en cliquant ailleurs
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { toggleMobileMenu(false); const m = $('consent-modal'); if (m) m.style.display = 'none'; } });
+    document.addEventListener('click', (e) => {
+        const header = document.querySelector('header');
+        if (header && header.classList.contains('menu-open') && !header.contains(e.target)) toggleMobileMenu(false);
+    });
 });
 
 
@@ -2668,77 +2798,350 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // (authMode, currentUser et userProfile sont déclarées en haut du fichier)
 
-// 1. Basculer entre Inscription et Connexion
-function toggleAuthMode() {
-    authMode = (authMode === 'signup') ? 'login' : 'signup';
-    const btnAction = document.getElementById('btn-auth-action');
-    const btnSwitch = document.getElementById('auth-switch'); // C'est maintenant un bouton
-    const signupFields = document.getElementById('signup-fields');
-    
-    if (authMode === 'login') {
-        btnAction.innerText = "Se connecter";
-        btnSwitch.innerText = "Pas de compte ? S'inscrire";
-        signupFields.style.display = 'none';
-    } else {
-        btnAction.innerText = "Créer mon compte";
-        btnSwitch.innerText = "Déjà un compte ? Se connecter";
-        signupFields.style.display = 'block';
+// Adresse du site (sert aux liens envoyés par e-mail : mot de passe oublié, validation parent).
+// Ex. https://lucthomas638-debug.github.io/schoolizytest3/
+const SITE_URL = location.origin + location.pathname.replace(/[^/]*$/, '');
+const CGU_VERSION = '2026-11';
+
+/* --- RÈGLES DU MOT DE PASSE ---
+   À garder identiques aux réglages Supabase (Authentication > Email > Password requirements) */
+const PASSWORD_RULES = [
+    { id: 'len',   label: '8 caractères minimum', test: p => p.length >= 8 },
+    { id: 'lower', label: 'Une minuscule',        test: p => /[a-z]/.test(p) },
+    { id: 'upper', label: 'Une majuscule',        test: p => /[A-Z]/.test(p) },
+    { id: 'digit', label: 'Un chiffre',           test: p => /\d/.test(p) },
+];
+
+function passwordProblems(pw) {
+    return PASSWORD_RULES.filter(r => !r.test(pw)).map(r => r.label.toLowerCase());
+}
+
+function renderPasswordRules(inputId, listId) {
+    const list = $(listId);
+    if (!list) return;
+    const pw = $(inputId).value;
+    list.innerHTML = PASSWORD_RULES.map(r => `<li class="${r.test(pw) ? 'ok' : ''}">${r.label}</li>`).join('');
+}
+
+function togglePasswordVisibility(inputId, btn) {
+    const input = $(inputId);
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    btn.classList.toggle('on', show);
+    btn.setAttribute('aria-label', show ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+}
+
+// Vérifie (sans jamais l'envoyer) si le mot de passe figure dans les fuites connues.
+// Seuls les 5 premiers caractères de son empreinte SHA-1 partent vers haveibeenpwned.com.
+async function isPasswordLeaked(password) {
+    try {
+        const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(password));
+        const hash = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 4000);
+        const res = await fetch(`https://api.pwnedpasswords.com/range/${hash.slice(0, 5)}`, { signal: ctrl.signal, headers: { 'Add-Padding': 'true' } });
+        clearTimeout(timer);
+        if (!res.ok) return false;
+        const text = await res.text();
+        return text.split('\n').some(line => {
+            const [suffix, count] = line.trim().split(':');
+            return suffix === hash.slice(5) && parseInt(count, 10) > 0;
+        });
+    } catch (e) {
+        return false; // service injoignable : on ne bloque pas l'inscription
     }
 }
 
-// 2. Logique principale (SignUp / Login)
+/* --- TRADUCTION DES ERREURS SUPABASE --- */
+function authErrorFr(error) {
+    if (!error) return '';
+    const code = error.code || '';
+    const msg = (error.message || '').toLowerCase();
+    const map = {
+        weak_password: 'Mot de passe trop faible. Il faut au moins 8 caractères, une minuscule, une majuscule et un chiffre.',
+        user_already_exists: 'Un compte existe déjà avec cet e-mail. Connecte-toi, ou utilise « Mot de passe oublié ».',
+        email_exists: 'Un compte existe déjà avec cet e-mail. Connecte-toi, ou utilise « Mot de passe oublié ».',
+        email_address_invalid: "Cette adresse e-mail n'est pas valide.",
+        validation_failed: 'Vérifie les informations saisies (e-mail notamment).',
+        invalid_credentials: 'E-mail ou mot de passe incorrect.',
+        email_not_confirmed: "Confirme d'abord ton adresse e-mail grâce au lien reçu par mail.",
+        over_email_send_rate_limit: "Trop d'e-mails envoyés. Réessaie dans quelques minutes.",
+        over_request_rate_limit: 'Trop de tentatives. Réessaie dans quelques minutes.',
+        email_address_not_authorized: "L'envoi d'e-mails n'est pas encore activé pour cette adresse. Réessaie plus tard ou contacte-nous.",
+        same_password: "Le nouveau mot de passe doit être différent de l'ancien.",
+        signup_disabled: 'Les inscriptions sont fermées pour le moment.',
+        user_banned: 'Ce compte est suspendu. Contacte-nous.',
+        otp_expired: 'Ce lien a expiré. Fais une nouvelle demande.',
+    };
+    if (map[code]) return map[code];
+    if (msg.includes('already registered')) return map.user_already_exists;
+    if (msg.includes('invalid login')) return map.invalid_credentials;
+    if (msg.includes('password')) return map.weak_password;
+    console.warn('Erreur auth non traduite :', error);
+    return 'Une erreur est survenue. Réessaie dans un instant.';
+}
+
+/* --- ÂGE --- */
+function ageFromBirthDate(value) {
+    if (!value) return null;
+    const birth = new Date(value + 'T00:00:00');
+    if (isNaN(birth)) return null;
+    const now = new Date();
+    let age = now.getFullYear() - birth.getFullYear();
+    const m = now.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+    return age;
+}
+
+function updateAgeFields() {
+    const age = ageFromBirthDate($('reg-birth').value);
+    const known = age !== null && age >= 3 && age <= 120;
+    $('minor-fields').hidden = !(known && age < 15);
+    $('adult-fields').hidden = !(known && age >= 15);
+}
+
+// 1. Basculer entre Inscription, Connexion et Mot de passe oublié
+function setAuthMode(mode) {
+    authMode = mode;
+    const isSignup = mode === 'signup', isLogin = mode === 'login', isForgot = mode === 'forgot';
+    $('signup-fields').style.display = isSignup ? 'block' : 'none';
+    $('cgu-block').style.display = isSignup ? 'flex' : 'none';
+    $('password-block').style.display = isForgot ? 'none' : 'block';
+    $('forgot-link').hidden = !isLogin;
+    $('pw-rules').style.display = isSignup ? '' : 'none';
+    $('auth-password').setAttribute('autocomplete', isSignup ? 'new-password' : 'current-password');
+    $('btn-auth-action').innerText = isSignup ? 'Créer mon compte' : isLogin ? 'Se connecter' : 'Recevoir le lien';
+    $('auth-switch').innerText = isSignup ? 'Déjà un compte ? Se connecter' : isLogin ? "Pas de compte ? S'inscrire" : '← Retour à la connexion';
+    $('auth-intro').innerText = isSignup ? 'Crée ton compte gratuit pour accéder aux quiz, flashcards et exercices.'
+        : isLogin ? 'Content de te revoir !'
+        : "Indique l'e-mail de ton compte : tu recevras un lien pour choisir un nouveau mot de passe.";
+    $('auth-msg').style.display = 'none';
+    if (isSignup) renderPasswordRules('auth-password', 'pw-rules');
+}
+
+function toggleAuthMode() {
+    // Inscription → Connexion ; Connexion → Inscription ; Mot de passe oublié → Connexion
+    setAuthMode(authMode === 'login' ? 'signup' : 'login');
+}
+
+function setAuthBusy(busy) {
+    const btn = $('btn-auth-action');
+    btn.disabled = busy;
+    if (busy) btn.dataset.label = btn.innerText, btn.innerText = 'Patiente…';
+    else if (btn.dataset.label) btn.innerText = btn.dataset.label;
+}
+
+// Envoie au parent un lien de connexion qui l'amène sur l'Espace Parent
+async function sendParentValidation(parentEmail) {
+    return sb.auth.signInWithOtp({
+        email: parentEmail,
+        options: {
+            shouldCreateUser: true,
+            emailRedirectTo: SITE_URL + '?espace=parent',
+            data: { account_type: 'parent' },
+        },
+    });
+}
+
+// 2. Logique principale (Inscription / Connexion / Mot de passe oublié)
 async function handleAuth() {
-    const email = document.getElementById('auth-email').value;
-    const password = document.getElementById('auth-password').value;
-    const msg = document.getElementById('auth-msg');
+    const email = $('auth-email').value.trim();
+    const password = $('auth-password').value;
+    const msg = $('auth-msg');
+    msg.style.display = 'none';
 
-    if (!email || !password) return showError("Remplis tous les champs !");
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError("Indique une adresse e-mail valide.");
 
-    if (authMode === 'signup') {
-        const prenom = document.getElementById('reg-prenom').value;
-        const nom = document.getElementById('reg-nom').value;
-        const phone = document.getElementById('auth-phone').value;
-
-        if (!prenom || !nom || !phone) return showError("Toutes les infos sont requises.");
-
-        // A. Inscription dans le système Auth de Supabase
-        const { data: authData, error: authError } = await sb.auth.signUp({ email, password });
-        if (authError) return showError(authError.message);
-
-        // B. Création de la fiche dans ta table 'profiles'
-        const { error: profError } = await sb.from('profiles').insert([
-            { 
-                id: authData.user.id, 
-                nom: nom, 
-                prenom: prenom, 
-                phone: phone, 
-                selected_chapters: [] 
-            }
-        ]);
-
-        if (profError) {
-            console.error(profError);
-            return showError("Erreur profil ou téléphone déjà utilisé.");
-        }
-
-        msg.style.display = 'block';
-        msg.style.color = 'green';
-        msg.innerText = "Inscription réussie ! Bienvenue.";
-        setTimeout(() => navigateTo('view-home'), 1500);
-
-    } else {
-        // Mode Connexion
-        const { error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) return showError("Email ou mot de passe incorrect.");
-        navigateTo('view-home');
+    // --- Mot de passe oublié ---
+    if (authMode === 'forgot') {
+        setAuthBusy(true);
+        const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: SITE_URL });
+        setAuthBusy(false);
+        if (error) return showError(authErrorFr(error));
+        // Même message que le compte existe ou non (on ne révèle pas qui est inscrit)
+        return showSuccess("Si un compte existe avec cet e-mail, tu vas recevoir un lien pour choisir un nouveau mot de passe. Pense à regarder tes spams.");
     }
+
+    if (!password) return showError("Indique ton mot de passe.");
+
+    // --- Connexion ---
+    if (authMode === 'login') {
+        setAuthBusy(true);
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        setAuthBusy(false);
+        if (error) return showError(authErrorFr(error));
+        return navigateTo('view-home');
+    }
+
+    // --- Inscription ---
+    const prenom = $('reg-prenom').value.trim();
+    const nom = $('reg-nom').value.trim();
+    const birth = $('reg-birth').value;
+    const age = ageFromBirthDate(birth);
+
+    if (!prenom || !nom) return showError("Indique ton prénom et ton nom.");
+    if (age === null || age < 3 || age > 120) return showError("Indique ta date de naissance.");
+
+    const minor = age < 15;
+    const parentEmail = minor ? $('reg-parent-email').value.trim().toLowerCase() : '';
+    if (minor) {
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentEmail)) return showError("Indique l'e-mail d'un parent : il devra valider ton compte.");
+        if (parentEmail === email.toLowerCase()) return showError("L'e-mail du parent doit être différent du tien.");
+    }
+    const phone = minor ? '' : $('auth-phone').value.replace(/[^\d+]/g, '');
+    const smsConsent = !minor && $('reg-sms-consent').checked;
+    if (smsConsent && phone.length < 10) return showError("Pour recevoir les rappels par SMS, indique ton numéro de téléphone.");
+    if (phone && phone.length < 10) return showError("Ce numéro de téléphone semble incomplet.");
+
+    const problems = passwordProblems(password);
+    if (problems.length) return showError(`Ton mot de passe doit contenir : ${problems.join(', ')}.`);
+    if (!$('reg-cgu').checked) return showError("Pour créer ton compte, accepte les conditions d'utilisation et la politique de confidentialité.");
+
+    setAuthBusy(true);
+    if (await isPasswordLeaked(password)) {
+        setAuthBusy(false);
+        return showError("Ce mot de passe est connu des pirates (il a déjà fuité sur internet). Choisis-en un autre.");
+    }
+
+    // Le profil est créé automatiquement par Supabase à partir de ces informations
+    const { data: authData, error: authError } = await sb.auth.signUp({
+        email,
+        password,
+        options: {
+            emailRedirectTo: SITE_URL,
+            data: {
+                prenom, nom, birth_date: birth,
+                parent_email: minor ? parentEmail : null,
+                phone: phone || null,
+                marketing_sms_consent: smsConsent,
+                cgu_accepted: true,
+                cgu_version: CGU_VERSION,
+            },
+        },
+    });
+
+    if (authError) { setAuthBusy(false); return showError(authErrorFr(authError)); }
+
+    // Supabase ne signale pas toujours un e-mail déjà utilisé : il renvoie un compte sans identité
+    if (authData.user && Array.isArray(authData.user.identities) && authData.user.identities.length === 0) {
+        setAuthBusy(false);
+        return showError(authErrorFr({ code: 'user_already_exists' }));
+    }
+
+    let parentMailOk = true;
+    if (minor) {
+        const { error } = await sendParentValidation(parentEmail);
+        parentMailOk = !error;
+        if (error) console.warn('E-mail parent :', error);
+    }
+    setAuthBusy(false);
+
+    if (!authData.session) {
+        // Confirmation par e-mail activée dans Supabase
+        return showSuccess("Compte créé ! Clique sur le lien reçu par e-mail pour l'activer." +
+            (minor ? " Ton parent a aussi reçu un e-mail pour valider ton compte." : ''));
+    }
+
+    if (minor) {
+        showSuccess(parentMailOk
+            ? `Compte créé ! Un e-mail vient d'être envoyé à ${parentEmail} : dès que ton parent aura validé, tu pourras faire les activités. Les cours et les outils sont déjà accessibles.`
+            : "Compte créé ! L'e-mail à ton parent n'a pas pu partir pour l'instant : tu pourras le renvoyer depuis une activité.");
+        return;
+    }
+    showSuccess("Inscription réussie ! Bienvenue sur Schoolizy 🎉");
+    setTimeout(() => navigateTo('view-home'), 1500);
 }
 
 function showError(text) {
-    const msg = document.getElementById('auth-msg');
+    const msg = $('auth-msg');
     msg.style.display = 'block';
-    msg.style.color = 'red';
+    msg.style.color = 'var(--accent-red)';
     msg.innerText = text;
+}
+
+function showSuccess(text) {
+    const msg = $('auth-msg');
+    msg.style.display = 'block';
+    msg.style.color = '#1e8449';
+    msg.innerText = text;
+}
+
+/* --- NOUVEAU MOT DE PASSE (arrivée depuis le lien reçu par e-mail) --- */
+async function submitNewPassword() {
+    const pw = $('new-password').value;
+    const pw2 = $('new-password-2').value;
+    const msg = $('reset-msg');
+    const say = (text, ok) => { msg.style.display = 'block'; msg.style.color = ok ? '#1e8449' : 'var(--accent-red)'; msg.innerText = text; };
+
+    const problems = passwordProblems(pw);
+    if (problems.length) return say(`Ton mot de passe doit contenir : ${problems.join(', ')}.`);
+    if (pw !== pw2) return say('Les deux mots de passe ne sont pas identiques.');
+
+    const btn = $('btn-new-password');
+    btn.disabled = true;
+    if (await isPasswordLeaked(pw)) { btn.disabled = false; return say('Ce mot de passe a déjà fuité sur internet. Choisis-en un autre.'); }
+    const { error } = await sb.auth.updateUser({ password: pw });
+    btn.disabled = false;
+    if (error) return say(authErrorFr(error));
+    say('Mot de passe modifié ! Tu es connecté.', true);
+    setTimeout(() => navigateTo('view-home'), 1500);
+}
+
+/* --- ACCORD PARENTAL --- */
+function showConsentModal() {
+    const status = userProfile && userProfile.parental_consent;
+    const refused = status === 'refused';
+    $('consent-modal-title').innerText = refused ? 'Compte non validé' : 'En attente de ton parent';
+    $('consent-modal-text').innerText = refused
+        ? "Ton parent n'a pas validé ton compte. Les cours et les outils restent accessibles. Parles-en avec lui s'il change d'avis : il peut le valider depuis le lien reçu par e-mail."
+        : `Comme tu as moins de 15 ans, un parent doit valider ton compte avant que tu puisses faire les quiz et les exercices. Un e-mail a été envoyé à ${userProfile && userProfile.parent_email ? userProfile.parent_email : 'ton parent'}. Les cours et les outils sont déjà accessibles !`;
+    $('btn-resend-parent').style.display = refused ? 'none' : '';
+    $('consent-modal').style.display = 'flex';
+}
+
+async function resendParentEmail() {
+    const mail = userProfile && userProfile.parent_email;
+    if (!mail) return;
+    const btn = $('btn-resend-parent');
+    btn.disabled = true;
+    const { error } = await sendParentValidation(mail);
+    btn.disabled = false;
+    if (error) return showToast(authErrorFr(error), 'error', 6000);
+    showToast(`E-mail renvoyé à ${mail}`, 'success');
+    $('consent-modal').style.display = 'none';
+}
+
+async function openParentSpace() {
+    const box = $('parent-children');
+    box.innerHTML = '<p class="auth-intro">Chargement…</p>';
+    navigateTo('view-parent');
+    const { data, error } = await sb.rpc('get_children_to_validate');
+    if (error) { box.innerHTML = '<p class="auth-intro">Impossible de charger les comptes. Réessayez dans un instant.</p>'; return; }
+    if (!data || !data.length) { box.innerHTML = "<p class=\"auth-intro\">Aucun compte enfant n'est rattaché à votre adresse e-mail.</p>"; return; }
+
+    const labels = { pending: 'En attente de votre accord', granted: 'Compte validé ✔', refused: 'Compte refusé' };
+    box.innerHTML = '';
+    data.forEach(child => {
+        const card = document.createElement('div');
+        card.className = 'child-card';
+        const born = child.birth_date ? new Date(child.birth_date + 'T00:00:00').toLocaleDateString('fr-FR') : '';
+        card.innerHTML = `
+            <h4>${escapeHTML(child.prenom || '')} ${escapeHTML(child.nom || '')}</h4>
+            <div class="child-meta">${born ? 'Né(e) le ' + born : ''}</div>
+            <div class="child-status ${child.parental_consent}">${labels[child.parental_consent] || ''}</div>
+            <div class="child-actions">
+                <button class="btn-nav" data-accept="1">✔ J'autorise</button>
+                <button class="btn-secondary" data-accept="0">Je refuse</button>
+            </div>`;
+        card.querySelectorAll('button[data-accept]').forEach(btn => btn.onclick = async () => {
+            const accept = btn.dataset.accept === '1';
+            const { error: err } = await sb.rpc('set_parental_consent', { child_id: child.id, accept });
+            if (err) return showToast("L'enregistrement a échoué, réessayez.", 'error');
+            showToast(accept ? `Merci ! Le compte de ${child.prenom} est validé.` : 'Votre refus est enregistré.', accept ? 'success' : 'info', 5000);
+            openParentSpace();
+        });
+        box.appendChild(card);
+    });
 }
 
 // 3. Déconnexion
@@ -2747,28 +3150,45 @@ async function handleLogout() {
     window.location.reload();
 }
 
+async function loadUserProfile() {
+    if (!currentUser) return null;
+    const { data } = await sb.from('profiles')
+        .select('prenom, account_type, parental_consent, parent_email')
+        .eq('id', currentUser.id)
+        .maybeSingle();
+    userProfile = data || null;
+    return userProfile;
+}
+
 // 4. Écouteur automatique d'état (Version Sécurisée)
-sb.auth.onAuthStateChange(async (event, session) => {
-    // On attend un micro-délai pour être sûr que le HTML est prêt
+sb.auth.onAuthStateChange((event, session) => {
+    // On attend un micro-délai (recommandé par Supabase : pas d'appel réseau directement ici)
     setTimeout(async () => {
-        const navAuth = document.getElementById('nav-auth');
-        const navUser = document.getElementById('nav-user');
-        const navLogout = document.getElementById('nav-logout');
-        const userNameSpan = document.getElementById('user-name');
+        const navAuth = $('nav-auth');
+        const navUser = $('nav-user');
+        const navLogout = $('nav-logout');
+        const userNameSpan = $('user-name');
+
+        // Arrivée depuis le lien « mot de passe oublié »
+        if (event === 'PASSWORD_RECOVERY') {
+            renderPasswordRules('new-password', 'pw-rules-reset');
+            navigateTo('view-reset-password');
+        }
 
         if (session && session.user) {
             currentUser = session.user;
-            
             try {
-                const { data: profile, error } = await sb
-                    .from('profiles')
-                    .select('prenom')
-                    .eq('id', currentUser.id)
-                    .maybeSingle();
-
-                if (profile && userNameSpan) {
-                    userProfile = profile;
-                    userNameSpan.innerText = profile.prenom;
+                const profile = await loadUserProfile();
+                if (userNameSpan) {
+                    userNameSpan.innerText = profile && profile.prenom ? profile.prenom
+                        : (profile && profile.account_type === 'parent') ? 'Espace parent' : 'Mon compte';
+                }
+                // Parent : clic sur le nom = espace parent ; arrivée depuis le lien de validation
+                if (navUser) navUser.onclick = (profile && profile.account_type === 'parent') ? openParentSpace : null;
+                const params = new URLSearchParams(location.search);
+                if (params.get('espace') === 'parent' && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+                    history.replaceState(null, '', location.pathname);
+                    openParentSpace();
                 }
             } catch (e) {
                 console.warn("Erreur récupération profil:", e);
@@ -2817,7 +3237,7 @@ function calculerMoyenneCible() {
     const resBox = document.getElementById('moy-resultat');
     const resText = document.getElementById('moy-result-text');
 
-    if (isNaN(actuelle) || isNaN(cible)) return alert("Remplis les moyennes !");
+    if (isNaN(actuelle) || isNaN(cible)) return showToast("Remplis les moyennes !", "error");
 
     // Formule pour calculer la note nécessaire
     const noteRequise = ((cible * (1 + coeff)) - actuelle) / coeff;

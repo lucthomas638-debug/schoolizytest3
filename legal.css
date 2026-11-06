@@ -1,0 +1,44 @@
+/* Pages légales (CGU, confidentialité) aux couleurs de Schoolizy */
+:root {
+    --brand-school: #8459cf; --brand-izy: #f5bf78;
+    --bg: #F9F9FB; --card: #ffffff; --text: #2D2D3A; --muted: #666; --line: #eee; --todo: #fff3cd;
+}
+body.dark { --bg: #13131f; --card: #1e1e2f; --text: #e9e8f2; --muted: #a3a3b8; --line: #34344c; --todo: #4a3c12; }
+* { box-sizing: border-box; }
+body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.65;
+}
+.legal-top {
+    position: sticky; top: 0; z-index: 2; display: flex; justify-content: space-between; align-items: center;
+    padding: 14px max(16px, env(safe-area-inset-left)); background: var(--card); border-bottom: 1px solid var(--line);
+}
+.logo { font-size: 1.4rem; font-weight: bold; color: var(--brand-school); text-decoration: none; }
+.logo span { color: var(--brand-izy); }
+.back { color: var(--brand-school); font-weight: 600; text-decoration: none; }
+.legal {
+    max-width: 780px; margin: 32px auto; padding: 32px max(20px, 4vw);
+    background: var(--card); border-radius: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+}
+h1 { color: var(--brand-school); font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 0 0 4px; line-height: 1.2; }
+.version { color: var(--muted); margin: 0 0 24px; font-size: 0.9rem; }
+.lead { font-size: 1.08rem; background: #f6f2ff; border-radius: 14px; padding: 14px 18px; }
+body.dark .lead { background: #241f36; }
+h2 { color: var(--brand-school); font-size: 1.2rem; margin: 30px 0 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+p, li { color: var(--text); }
+ul { padding-left: 22px; }
+li { margin: 4px 0; }
+a { color: var(--brand-school); }
+.toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 4px 16px; margin-bottom: 10px; font-size: 0.92rem; }
+.toc a { text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+.todo { background: var(--todo); border-radius: 4px; padding: 0 4px; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 0.92rem; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { background: #f6f2ff; color: var(--brand-school); }
+body.dark th { background: #241f36; }
+tr:last-child td { border-bottom: none; }
+.legal-foot { text-align: center; color: var(--muted); padding: 10px 16px 40px; font-size: 0.9rem; }
+.legal-foot a { color: var(--muted); }
+@media (max-width: 600px) { .legal { margin: 16px 12px; border-radius: 16px; } }
